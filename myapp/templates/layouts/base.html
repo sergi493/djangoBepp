@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiTienda</title>
+ 
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'styles/main.css' %}">
+</head>
+<body >
+
+<nav>
+   
+        <ul>
+            <li class="{% if request.path == '/ayuda/' %}nav-seleccion{% endif %}"><a href="/ayuda/" title="Ayuda"><i class="fa-solid fa-shop fa-2x"></i><p>AYUDA</p></a></li>
+            <li class="{% if request.path == '/vender/' %}nav-seleccion{% endif %}"><a href="/vender/" title="Ir al Punto de Venta"><i class="fa-solid fa-shop fa-2x"></i><p>Punto de venta</p></a></li>
+            <li class="{% if request.path == '/facturas/' %}nav-seleccion{% endif %}"><a href="/facturas/"  title="Ir a Facturas"><i class="fa-solid fa-file-invoice-dollar fa-2x"></i><p>Facturas</p></a></li>
+            <li class="{% if request.path == '/tickets/' %}nav-seleccion{% endif %}"><a href="/tickets/" title="Ir a Tickets"><i class="fa-solid fa-receipt fa-2x"></i><p>Tickets</p></a></li>
+            <li class="{% if request.path == '/reparacions/' %}nav-seleccion{% endif %}"><a href="/reparacions/" title="Ver Reparaciones"><i class="fa-solid fa-screwdriver-wrench fa-2x"></i><p>Reparacions</p></a></li>
+            <li class="{% if request.path == '/presupostos/' %}nav-seleccion{% endif %}"><a href="/presupostos/" title="Ver Presupuestos"><i class="fa-solid fa-hand-holding-dollar fa-2x"></i><p>Pressupostos</p></a></li>
+            <li class="{% if request.path == '/clientes/' %}nav-seleccion{% endif %}"><a href="/clientes/" title="Ver Clientes"><i class="fa-solid fa-users fa-2x"></i><p>Clients</p></a></li>
+            <li class="{% if request.path == '/stock/' %}nav-seleccion{% endif %}"><a href="/stock/"  title="Ir al Stock"><i class="fa-solid fa-boxes-stacked fa-2x"></i><p>Stock</p></a></li>
+            <li class="{% if request.path == '/pedidos/' %}nav-seleccion{% endif %}"><a href="/pedidos/" title="Ver Estado de Pedidos"><i class="fa-solid fa-truck fa-2x"></i><p>Pedidos</p></a></li>
+            <li class="{% if request.path == '/estadisticas/' %}nav-seleccion{% endif %}"><a href="/estadisticas/"  title="Ver Estadísticas"><i class="fa-solid fa-chart-pie fa-2x"></i><p>Estadistiques</p></a></li>
+            <li class="{% if request.path == '/hoy/' %}nav-seleccion{% endif %}" id="tancar-caixa"><a href="/hoy/"  title="Tancar Caixa"><i class="fa-solid fa-cash-register fa-2x"></i><p>Tancar Caixa</p></a></li>
+            {% if user.is_authenticated %}
+            <li class="{% if request.path == '/logout/' %}nav-seleccion{% endif %}"><a href="/logout/" title="Sortir"><i class="fa-solid fa-right-from-bracket fa-2x"></i><p>Logout</p></a></li>
+
+            <li class="{% if request.path == '/user/' %}nav-seleccion{% endif %}"><a href="/user/" title="Usuari"><i class="fa-solid fa-user fa-2x"></i><p>Usuari</p></a></li>
+           
+            {% else %}
+            <li class="{% if request.path == '/signup/' %}nav-seleccion{% endif %}"><a href="/signup/" title="SignUp"><i class="fa-solid fa-user-plus fa-2x"></i><p>Sign Up</p></a></li>
+            {% endif %}
+        </ul>
+
+
+</nav>
+
+
+<main class="container mx-auto mt-6 text-black">
+    {% block content %}
+    {% endblock %}
+</main>
+
+<script src="{% static 'script.js' %}"></script>
+<style>
+    .nav-seleccion{
+        background-color:rgb(212, 197, 133);
+        border-radius: 5px 5px 0 0;
+        
+    }
+    nav ul{
+        background-color: black;
+        margin:0;
+        display: flex;
+        justify-content: center;
+    }
+    nav{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        z-index: 1000;
+        margin:0;
+        
+    }
+
+    nav ul p{
+        color:white;
+    }
+    nav ul li{
+        min-width: 70px;
+        color: white;
+        list-style:none;
+        padding: 1%;
+        
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        
+    }
+
+    nav ul li:hover{
+        background-color:rgb(36, 36, 36);
+        border-radius: 5px;
+    }
+
+    nav ul{
+        display:flex;
+        text-align: center;
+      
+    }
+
+    a{
+        color: white;
+    }
+</body>
+</html>

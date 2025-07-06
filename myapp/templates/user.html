@@ -1,0 +1,38 @@
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    {{user.is_authenticated}}
+    <div class="main-content">
+        <h1>Perfil de {{ user.username }}</h1>
+        <p>Email: {{ user.email }}</p>
+        <p>Fecha de creación: {{ user.date_joined }}</p>
+        <p>NOTES:</p>
+        <textarea placeholder="Añadir una nota..."></textarea>
+        <button>Guardar nota</button>
+        <p>Reestablecer contaseña</p>
+        <input type="password" placeholder="Nueva contraseña">
+        <input type="password" placeholder="Confirmar contraseña">
+        <button>Reestablecer</button>
+        <div>
+        {% if user.is_authenticated %}
+            <a href="/logout/">Cerrar sesión</a>
+        {% else %}
+            <a href="/login/">Iniciar sesión</a>
+        {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
+        {% endblock %}

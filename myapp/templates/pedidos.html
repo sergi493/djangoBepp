@@ -1,0 +1,780 @@
+
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+<style>
+    .popup-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+      }
+
+    .popup-content {
+        position: absolute;
+        top: 50%;
+        left: 53%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width:80%;
+      }
+      
+    #pedidos-seccio{
+        display:flex;
+    }
+    #dreta{
+        margin-left:30px;
+        display:flex;   
+        align-items: flex-start;
+    }
+    #dreta div{
+        margin-left:110px;
+    }
+   
+    #referencia-pedido-input{
+        max-width:90px;
+    }
+    #quantitat-pedido-input{
+        max-width:45px;
+    }
+    .input-num-factura-pedidos{
+        max-width:100px;
+    }
+    .preu-factura-pedido-input{
+        max-width:65px;
+    }
+    .taula-factures-compra{
+        margin-top:30px;
+    }
+</style>
+<div class="main-content">
+    <div class="products-section">
+        <h1>PEDIDOS</h1>
+        <div id="pedidos-seccio">
+        
+    <div id="esquerra"> 
+        <table  style="font-size:13px;" >
+            <p>PENDENT D'ARRIBAR</p>
+            <thead>
+                <tr>
+                    <th>Codi</th>
+                    <th>Quant</th>
+                    <th>Descripcio</th>
+                    <th>Nota</th>
+                    <th>Nº Factura</th>
+                    <th>Preu Distribuidor</th>
+                    <th>Preu Venta</th>
+                    <th>MARGE %/€</TH>
+                    <th>BOTO</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                {% for producte in producte_pedidos_per_facturar %}
+                <tr>
+                    <td>{{ producte.referencia }}</td>
+                    <td>{{ producte.quantitat }}</td>
+                    <td>{{producte.descripcio}}</td>
+                    <td>{{ producte.nota }}</td>
+                    <td><input class="input-num-factura-pedidos" id="factura_{{ producte.id }}" placeholder="FV-9833"></td>
+
+                    <td>
+                        <input type="number" class="preu-factura-pedido-input compra-producte" id="producte_preu_unitat_{{ producte.id }}" placeholder="12.95" oninput="calcularMarge({{ producte.id }})">
+                      </td>
+                      
+                      <td>
+                        <input type="number" class="preu-factura-pedido-input venda-producte" id="producte_preu_unitat_venda{{ producte.id }}" value="{{producte.referencia_venda}}" placeholder="12.95" oninput="calcularMarge({{ producte.id }})">
+                      </td>
+                      
+                      <td ><span id="marge_{{ producte.id }}"></span></td>
+
+                    <td><button onclick="ficarFacturaPedido({{ producte.id }})" >Integrar</button><button>Eliminar </button></td>
+                </tr>
+
+                {% endfor %}
+<script>
+    function calcularMarge(producteId) {
+        var preuCompra = parseFloat(document.getElementById('producte_preu_unitat_' + producteId).value);
+        var preuVenda = parseFloat(document.getElementById('producte_preu_unitat_venda' + producteId).value);
+      
+        var resultat = "";
+        var percent=1;
+        if (!isNaN(preuCompra) && !isNaN(preuVenda) && preuCompra !== 0) {
+          resultat = (preuVenda-preuCompra).toFixed(2); // Es calcula la divisió amb 2 decimals
+          percent=(((preuVenda-preuCompra)/preuVenda)*100).toFixed(2);
+        }
+        console.log(preuCompra,preuVenda,resultat);
+        if (resultat<=0){
+            document.getElementById('marge_' + producteId).style="color:rgb(190,50,50)";
+        }
+        document.getElementById('marge_' + producteId).innerText = resultat + "/" + percent + "%";
+      }
+    </script>      
+                <tr>
+
+                    <td><input id="referencia-pedido-input" placeholder="HP123"></td>
+                    <td><input type="number" id="quantitat-pedido-input" placeholder="2"></td>
+                    <td></td>
+                    <td><input id="nota-pedido-input" placeholder="Reserva - Joan"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><button onclick="crearPedidoProducte()">✅</button></td>
+
+                </tr>
+            </tbody>
+        </table>
+        <div class="taula-factures-compra">
+        <table id="productTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nº FACTURA</th>
+                    <th>DATA</th>
+                    <th>TOTAL</th>
+                    <th>ESTAT</th>
+                    <th>BOTO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for factura in factures_compra %}
+                <tr>
+                    <td>{{factura.id}}</td>
+                    <td>{{factura.referencia_factura}}</td>
+                   <td>{{ factura.data|date:"d/m/Y H:i" }}</td>
+
+                    <td>{{factura.total}}</td>
+                    <TD class="{% if factura.estat == 'pendent' %}estat-pendent{% elif factura.estat == 'integrat' %}estat-integrat{% endif %}">{{factura.estat}}</TD>
+                    <td><button data-factura-referencia="{{factura.id}}" class="popup-trigger" >VEURE</button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        
+    
+        </table>
+    </div>
+    </div>
+    <div id="dreta">
+       <div>
+        <p>VENUT AVUI</p>
+        
+        <table class="venuts" style="font-size:13px;" >
+            
+            <thead>
+                <tr>
+                    <th>Codi</th>
+                    <th>Quant</th>
+                    <th>Descrip.</th>
+                    <th>Nº Factura</th>
+                    <th>Nº Ticket</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                {% for ticket_info in tickets_info %}
+                {% for producte in ticket_info.productes %}
+                    <tr>
+                        <td>{{ producte.referencia }}</td>
+                        <td>{{ producte.quantitat }} de {{ producte.stock }}</td>
+                        <td>{{ producte.descripcio }}</td>
+                        <td></td>
+                        <td>{{ ticket_info.ticket.id }}</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            {% for factura_info in factures_info %}
+            {% for producte in factura_info.productes %}
+                <tr>
+                    <td>{{ producte.referencia }}</td>
+                    <td>{{ producte.quantitat }} de {{ producte.stock }}</td>
+                    <td>{{ producte.descripcio }}</td>
+                    
+                    <td>{{ factura_info.factura.id }}</td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    </div>
+    </div>
+       <style>
+        #productTable {
+            border-radius: 20px;
+            overflow: hidden;
+            -webkit-border-radius: 20px;
+            -moz-border-radius: 20px;
+            -ms-border-radius: 20px;
+            -o-border-radius: 20px;
+            font-size: 14px;
+        }
+        table {
+            width: 98%;
+            border-collapse: collapse;
+        }
+       </style>
+      
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const triggerButtons = document.querySelectorAll('.popup-trigger');
+        const popup = document.getElementById('popup');
+
+        triggerButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const facturaReferencia = button.getAttribute('data-factura-referencia');
+                fetch(`/obtenir_factura_compra/${facturaReferencia}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const dateObj = new Date(data.date);
+                const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;    
+                const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+                const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
+                        // Renderizar los datos del ticket en la ventana emergente
+                        let popupContent = `
+                            <div class="popup-content">
+                            
+                                <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+                                    <div id="ticket-number"><h2>PRESSUPOST número: ${data.id}</h2>
+                                        
+                                        <div class="payment-container">
+                                            
+                                        </div></div>
+                                    <div style="text-align: left;">
+                                    <div id="date"><h4>Data: ${formattedDate}</h4></div>
+                                    <div id="time"><h4>Hora: ${hours}:${minutes}:${seconds}</h4></div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <ul>
+                                <div id="botons-integrar-factura-compra2">
+                                    <button>+</button>
+                                </div>
+                                    <table id="taula-productes-factura-compra">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>NOM</th>
+                                                <th>NOTA</th>
+                                                <th>QUANT.</th>
+                                                <th>PREU</th>
+                                                <th>TOTAL</th>
+                                                <th>IMG</th>
+                                                <th>ELIMINAR</th>
+                                            </tr>
+                                        </thead> <tbody>`;
+
+                        // Agregar productos y cantidades a la ventana emergente
+                        data.productos.forEach(producto => {
+                            popupContent += `
+                            
+                                
+                                    <tr>
+                                    <td id="producte">${producto.producto_id}</td>
+                                    <td>${producto.nombre}</td>
+                                    <td><input id="nota" value="${producto.nota}"> </td>
+                                    <td><input id="quantitat" value="${producto.cantidad}"></td>
+                                    <td>${producto.preu_compra} €</td>
+                                    
+                                    <td>${(producto.preu_compra * producto.cantidad).toFixed(2)} €</td>
+
+                                    <td><img style="max-height:30px;" src="${producto.producto_imagen}"></td>
+                                    <td><button>ELIMINAR</button></td>
+                                    </tr>
+                                
+                            
+                            
+                            
+                            `;
+                        });
+                        popupContent += `   </tbody></table>
+                        
+                                            <p>Total: ${data.total} </p>
+                                        </ul>
+                                        <div class="popup-buttons">
+                                            <div id="botons-integrar-factura-compra">
+                                                
+                                                <button onclick="eliminar(${data.id})" class="red-button">ELIMINAR</button>
+                                                
+                                                <button onclick="aplicar_rebre('${data.id}')"   class="yellow-button">APLICAR I REBRE</button>
+                                            
+                                            
+                                                <button onclick="aplicar('${data.id}')" class="green-button">Aplicar</button>
+                                              
+                                                
+                                                
+                                                
+                                                
+                                        
+                                        </div>
+                                        <button id="close-popup" class="close-popup">Cancelar</button>
+                                    </div>
+                                        
+                                        
+                                        `;
+                        popup.innerHTML = popupContent;
+                        popup.style.display = 'block';
+                        if (data.estat === 'integrat') {
+                            document.getElementById('botons-integrar-factura-compra').style.display = 'none';
+                          }
+                          if (data.estat === 'integrat') {
+                            document.getElementById('botons-integrar-factura-compra2').style.display = 'none';
+                          }
+                
+                        // Adjuntar event listener al botón de cerrar
+                        const closeButton = popup.querySelector('.close-popup');
+                        closeButton.addEventListener('click', function () {
+                            popup.style.display = 'none';
+                        });
+                    })
+                    .catch(error => console.error('Error al obtener datos del ticket:', error));
+            });
+        });
+    });
+
+    function aplicar_rebre(id){
+        var csrftoken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        var producte = [];
+    var rows = document.querySelectorAll('#taula-productes-factura-compra tbody tr');
+        rows.forEach(function(row) {
+            var producte_id = row.querySelector('td[id="producte"]').innerText;
+            var nota = row.querySelector('input[id="nota"]').value;
+            var quantitat = row.querySelector('input[id="quantitat"]').value;
+            producte.push({ producte_id: producte_id, quantitat: quantitat, nota:nota });
+        });
+        var data={
+            producte:producte,
+            id:id
+        };
+        console.log(data);
+        xhr.open("POST", "/aplicar_rebre_factura_compra/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        
+
+        xhr.send(JSON.stringify({data:data}));
+        
+
+    }
+    function aplicar(id){
+        var csrftoken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        var producte = [];
+    var rows = document.querySelectorAll('#taula-productes-factura-compra tbody tr');
+        rows.forEach(function(row) {
+            var producte_id = row.querySelector('td[id="producte"]').innerText;
+            var nota = row.querySelector('input[id="nota"]').value;
+            var quantitat = row.querySelector('input[id="quantitat"]').value;
+            producte.push({ producte_id: producte_id, quantitat: quantitat, nota:nota });
+        });
+        var data={
+            producte:producte,
+            id:id
+        };
+        console.log(data);
+        xhr.open("POST", "/aplicar_factura_compra/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        
+
+        xhr.send(JSON.stringify({data:data}));
+        
+
+    }
+</script>
+
+    
+   
+    
+
+   <!-- <div class="dret">
+        <p>Data: <span id="data-factura"></span>
+        </div>
+        <table id="taula-producte-factura-compra">
+            <theader>
+                <th>ID</th>
+                <th>REFERENCIA</th>
+                <th>NOM</th>
+                <th>QUANTITAT</th>
+                <th>NOTA</th>
+            </theader>
+            <tbody>
+
+            </tbody>
+            </table>
+                
+    </div>
+</div>-->
+    
+
+<!--<div class="unitat">
+    <div class="esfera verde"></div>
+    <div class="fecha">2024-05-27</div>
+    <div class="tabla-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Header 1</th>
+                    <th>Header 2</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Data 1</td>
+                    <td>Data 2</td>
+                </tr>
+                <tr>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                </tr>
+                <tr>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                </tr>   
+            </tbody>
+        </table>
+    </div>-->
+</div>
+</div>
+
+
+
+<script>
+   
+
+    function ficarFacturaPedido(producteId) {
+        
+        var inputId = "factura_" + producteId;
+        var inputTotaldistribuidor ="producte_preu_unitat_" + producteId;
+        var inputTotalvenda ="producte_preu_unitat_venda" + producteId;
+        var factura=document.getElementById(inputId).value;
+        var totalDistribuidor=document.getElementById(inputTotaldistribuidor).value;
+        var totalVenda=document.getElementById(inputTotalvenda).value;
+        console.log(factura);
+        var csrftoken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/ficar_factura_pedido/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        
+
+        xhr.send(JSON.stringify({producteId:producteId,factura:factura, totalDistribuidor:totalDistribuidor, totalVenda:totalVenda}));
+        
+    }
+
+   
+
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function crearPedidoProducte(){
+        var csrftoken = getCookie('csrftoken');
+        var referencia=document.getElementById("referencia-pedido-input").value;
+        console.log(referencia);
+        var quantitat=document.getElementById("quantitat-pedido-input").value;
+        var nota=document.getElementById("nota-pedido-input").value;
+
+        var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/crear_pedido/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                        
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                
+    
+                xhr.send(JSON.stringify({referencia:referencia,quantitat:quantitat, nota:nota}));
+            }
+    
+    function showOverlay() {
+
+        var overlay = document.getElementById("overlay");
+        overlay.style.display = "block";
+        console.log(overlay)
+    
+    }
+    
+    function hideOverlay() {
+    
+        var overlay = document.getElementById("overlay");
+        overlay.style.display = "none";
+        
+        
+        
+    }
+</script>
+    <style>
+       
+        .overlay{
+            display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        }
+         .popup {
+            position: absolute;
+        top: 50%;
+        left: 53%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width:80%;
+        display:flex;
+        
+        }
+        .tabla-container{
+            text-align:center;
+        }
+        .tabla-container p{
+            margin-top:-10px;
+            margin-bottom:-5px;
+        }
+        .boto-total {
+            display: flex; /* Usa flexbox para gestionar el layout */
+            align-items: center; /* Alinea verticalmente los elementos */
+        }
+        
+        .boto-total button {
+            margin-right: 10px; /* Ajusta el espacio entre el botón y el párrafo según sea necesario */
+        }
+        .fecha p {
+            margin: 0;
+            text-align:center;
+        }
+        
+        
+        .ped{
+            margin-left:20px;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start; /* Alineación izquierda */
+            padding: 20px;
+           
+           
+        }
+        .izq {
+            flex: 1;
+            
+            max-width:20%;
+        }
+        
+        .dret {
+            flex: 1;
+           
+        }
+        .unitat {
+            position: relative;
+            width: 150px;
+            
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .unitat .esfera {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .unitat .esfera.verde {
+            background-color: green;
+        }
+        .unitat .esfera.roja {
+            background-color: red;
+        }
+        .unitat .fecha {
+            font-size: 18px;
+            font-weight: bold;
+           
+        }
+        .unitat .tabla-container {
+            
+           
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .unitat table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size:10px;
+            margin-bottom:10px;
+        }
+        .unitat table, .unitat th, .unitat td {
+            border: 1px solid #ddd;
+        }
+        .unitat th, .unitat td {
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+
+<script>
+// script.js
+
+document.addEventListener('DOMContentLoaded', function () {
+    const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    afegirReparacioBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'flex'; // Mostrar el overlay
+    });
+
+    closeModalBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'none'; // Ocultar el overlay
+    });
+
+    // Opcional: cerrar el modal al hacer clic fuera del panel
+    modalOverlay.addEventListener('click', function (event) {
+        if (event.target === modalOverlay) {
+            modalOverlay.style.display = 'none'; // Ocultar el overlay
+        }
+    });
+});
+
+
+</script>
+<style>
+    /* styles.css */
+    .estat-pendent{
+        background-color:red;
+    }
+    .estat-integrat{
+        background-color:green;
+    }
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    #modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
+        display: none; /* Oculta el overlay al cargar la página */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Asegura que esté encima de todo */
+    }
+    
+    #modal-panel {
+        width: 50%;
+        max-width: 600px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+</style>
+</div>
+</div>
+  
+    <div class="popup-container" id="popup">
+    
+    </div> <!-- Moví el cierre de este div al final -->
+    
+</div>
+</body>
+</html>
+
+{% endblock %}

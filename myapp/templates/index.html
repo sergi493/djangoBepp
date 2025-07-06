@@ -1,0 +1,222 @@
+
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    <script>
+        function actualizarCantidad(id, cantidad) {
+            var input = document.getElementById('cantidad_real_' + id);
+            input.value = parseInt(input.value) + cantidad;
+            if (input.value < 0) {
+                input.value = 0;
+            }
+        }
+    </script>
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <div class="main-content">
+        <h1>RESERVES</h1><p> BOTO QUE PERMETI TANCAR CAIXA (a la pestaña "hoy"): Veure resum, total efectiu targeta verificar total i guardar info a base de datos? --> que es pugui veure  els dels altres dies i descarregar.////// que en funcio del que es ven a caixa, a la finestra de pedidos, que proposi els productes per afegirlos facilment///// A la pagina hoy??: treure la pagina signup -- fer que nomes es pugui crear comptes si estas connectat amb un compte, permet també cambiar la contrasenya. Afegir recordatori cuan passin 30 dies que el compte té la mateixa contrasenya + proposar contrasenya generada automaticament (basat amb els milisegons de qun s'ha apretat el boto de generar automaticament). Afegir un botor que permeti enviar preguntes a chat gpt amb una API. Al final, eliminar esta pagina(almacen-- index) y fer lo de vista protegida a la finestra stock.</p>
+        <input type="text" id="searchInput" placeholder="Buscar producto...">
+        <form method="post">
+        <table id="productTable1">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Código</th>
+                    <th>Cantidad</th>
+                    <th>Descripcion</th>
+                    <th>Precio</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.codigo }}</td>
+                    <td>{{ producto.cantidad }}
+                       
+                            
+                        
+                        
+                    </td>
+                    <td>{{ producto.descripcion|truncatechars:25 }}</td>
+                    <td>{{ producto.precio }}</td>
+                    
+                </tr>
+                
+                {% endfor %}
+                
+            </form>
+            </tbody>
+        </table>
+    </div>
+
+    <script >document.getElementById('searchInput').addEventListener('input', function() {
+        var filter, table, tr, td, i, txtValue;
+        filter = this.value.toUpperCase();
+        table = document.getElementById('productTable');
+        tr = table.getElementsByTagName('tr');
+    
+        var visibleProducts = 0;
+        var productName = '';
+    
+        for (i = 0; i < tr.length; i++) {
+            var found = false;
+            // Iterar sobre ambas columnas
+            for (var j = 0; j < 2; j++) { // Modificado para iterar sobre las dos primeras columnas
+                td = tr[i].getElementsByTagName('td')[j];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = '';
+                        visibleProducts++;
+                        productName = txtValue;
+                        found = true;
+                        break; // Salir del bucle interior si se encuentra el texto en alguna columna
+                    }
+                }
+            }
+            if (!found) {
+                tr[i].style.display = 'none';
+            }
+        }
+    
+        if (visibleProducts === 1) {
+            document.getElementById('searchInput').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    var visibleProduct = table.querySelector('tr[style=""]');
+                    var visibleProductName = visibleProduct.querySelector('td:nth-child(2)').innerText; // Se mantiene para la segunda columna
+                    if (productName === visibleProductName) {
+                        addToCart(productName);
+                    }
+                }
+            });
+        } else {
+            // Si hay más de un producto visible o ninguno, eliminamos el event listener
+            document.getElementById('searchInput').removeEventListener('keypress', function() {});
+        }
+    });
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    function addToCart(productName) {
+        var cart = document.getElementById('cart');
+        var existingCartItem = cart.querySelector(`li[data-product="${productName}"]`);
+        if (existingCartItem) {
+            var quantityElement = existingCartItem.querySelector('.quantity');
+            var quantity = parseInt(quantityElement.innerText);
+            quantityElement.innerText = quantity + 1;
+        } else {
+            var li = document.createElement('li');
+            li.setAttribute('data-product', productName);
+            li.innerHTML = `${productName} <button class="decrease-btn">-</button> <span class="quantity">1</span> <button class="increase-btn">+</button> <button class="remove-btn">Eliminar</button>`;
+            cart.appendChild(li);
+        }
+        updateTotal();
+    }
+    
+    // Función para actualizar la cantidad de unidades en la cesta
+    function updateCartQuantity(action, productName) {
+        var cart = document.getElementById('cart');
+        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+        var quantityElement = cartItem.querySelector('.quantity');
+        var quantity = parseInt(quantityElement.innerText);
+    
+        if (action === 'increase') {
+            quantity++;
+        } else if (action === 'decrease') {
+            quantity--;
+        }
+    
+        quantityElement.innerText = quantity;
+    }
+    
+    // Función para eliminar un producto de la cesta
+    function removeFromCart(productName) {
+        var cart = document.getElementById('cart');
+        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+        cartItem.remove();
+    }
+    
+    // Event listeners para los botones en la cesta
+    document.getElementById('cart').addEventListener('click', function(event) {
+        if (event.target.classList.contains('increase-btn')) {
+            var productName = event.target.parentNode.getAttribute('data-product');
+            updateCartQuantity('increase', productName);
+        } else if (event.target.classList.contains('decrease-btn')) {
+            var productName = event.target.parentNode.getAttribute('data-product');
+            updateCartQuantity('decrease', productName);
+        } else if (event.target.classList.contains('remove-btn')) {
+            var productName = event.target.parentNode.getAttribute('data-product');
+            removeFromCart(productName);
+        }
+    });
+    
+    // Event listener para los botones "Añadir a la cesta" en la tabla de productos
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            var productName = this.parentNode.parentNode.querySelector('td:first-child').innerText;
+            addToCart(productName);
+        });
+    });
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const filterSelect = document.getElementById("filterSelect");
+        const codigoTable = document.getElementById("codigoTable");
+        const productoTable = document.getElementById("productoTable");
+    
+        filterSelect.addEventListener("change", function() {
+            if (filterSelect.value === "codigo") {
+                codigoTable.classList.remove("hidden");
+                productoTable.classList.add("hidden");
+            } else {
+                codigoTable.classList.add("hidden");
+                productoTable.classList.remove("hidden");
+            }
+        });
+    });
+    
+
+
+
+
+
+
+    </script>
+</body>
+</html>
+
+{% endblock %}

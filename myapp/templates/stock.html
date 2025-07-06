@@ -1,0 +1,653 @@
+
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    <script>
+        function actualizarCantidad(id, cantidad) {
+            var input = document.getElementById('cantidad_real_' + id);
+            input.value = parseInt(input.value) + cantidad;
+            if (input.value < 0) {
+                input.value = 0;
+            }
+        }
+    </script>
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+    <div class="main-content">
+        <h1>ALMACEN</h1>
+        <!--<p>Avans d'esta pagina, ficar una altra ("finestra protegida, confirma que vols modificar els productes:s/n")-->
+        
+        <!--<p>Añadir producto: <button >+</button></p>
+        <p>Actualizar todo: <button type="submit"><i class="fa-solid fa-rotate"></i></button></p>-->
+        <div>
+        <button id="afegir-reparacio-btn">Afegir Producte</button>
+        </div>
+<style>
+    #modal-panel input{
+        border:1px black solid;
+    }
+    .error {
+        color: red;
+        display: none;
+    }
+    .popup-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+      }
+      
+      .popup-content {
+        position: absolute;
+        top: 50%;
+        left: 53%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width:30%;
+      }
+
+      .close-popup {
+        
+        padding: 5px 10px;
+        background-color: #ddd;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left:20%;
+      }
+      
+      .close-popup:hover {
+        background-color: #ccc;
+      }
+    img{
+        max-height:10px;
+        height:auto;
+    }
+    .dreta{
+        padding-left:30%;
+    }
+
+    #barra-dies{
+        display: flex;
+        align-items: center;
+    }
+    .contenidor p {
+        margin: 0 10px;
+    }
+    .contenidor input {
+        margin: 0 10px;
+    }
+    .green-button, .red-button{
+        height: 30px;
+        font-weight: 40px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+</style>
+<div id="modal-overlay" class="hidden">
+    <div id="modal-panel">
+        <h2>NOU PRODUCTE</h2>
+        
+        <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>LABELS</th>
+                    <th>INPUTS</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><label>Referencia</label></td>
+                <td><input class="text"  id="referencia-producte-nou" placeholder="HP1254"></input></td>
+            </tr>
+            <tr>
+                <td><label>Nom</label></td>
+                <td><input class="text" id="nom-producte-nou" placeholder="Maleta, PC..."></input></td>
+            </tr>
+            <tr>
+                <td><label>Descripció</label></td>
+                <td><input  id="descripcio-producte-nou" placeholder="Maleta, PC..."></input></td>
+            </tr>
+
+            <tr>
+                <td><label>Preu</label></td>
+                <td><input  id="preu-producte-nou" placeholder="12.95" ></input></td>
+            </tr>
+            <tr>
+                <td><label>Preu Compra</label></td>
+                <td><input  id="preu-compra-producte-nou" placeholder="12.95" ></input></td>
+            </tr>
+
+
+           
+            <tr>
+                <td><label>Quantitat</label></td>
+                <td><input  id="quantitat-producte-nou" placeholder="12.95" onkeypress="executarFuncio(event)"></input></td>
+            </tr>
+            <tr>
+                <td><label>Imatge</label></td>
+                <td><input type="file" id="fileInput"> </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
+                
+    <!--<input id="imatge-producte-nou" type="file" >-->
+                
+    <p id="fileName"></p>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            // Agafar el nom del fitxer
+            const fileName = event.target.files[0].name;
+            // Mostrar el nom del fitxer al <p>
+            document.getElementById('fileName').innerText = "imagenes/";
+            document.getElementById('fileName').innerText += fileName;
+        });
+    </script>
+                <p class="error" id="errorMessageFloat">Si us plau, introdueix un número float per preu</p>
+                <p class="error" id="errorMessageInt">Si us plau, introdueix un número int per quantitat</p>
+                <p class="error" id="errorMessageText">Si us plau, omple totes les caselles</p>
+        <button class="green-button" onclick="crearProducte()" id="crear-producte">Crear Producte</button>
+        
+        <button class="red-button" id="close-modal-btn">Cerrar</button>
+    </div>
+</div>
+<script>
+    document.getElementById('crear-producte').addEventListener('click', function(event) {
+        var inputField = document.getElementById('text').value;
+        var errorMessageText = document.getElementById('errorMessageText');
+
+        // Validar si hi ha almenys 2 lletres o 2 números
+        var hasTwoLetters = /[a-zA-Z].*[a-zA-Z]/.test(inputField);
+        var hasTwoNumbers = /\d.*\d/.test(inputField);
+
+        if (!hasTwoLetters && !hasTwoNumbers) {
+            errorMessageText.style.display = 'block';
+        } else {
+            errorMessageText.style.display = 'none';
+            alert('Valor vàlid: ' + inputField); 
+            // Aquí pots afegir la lògica per processar el valor vàlid
+        }
+    });
+    document.getElementById('crear-producte').addEventListener('click', function(event) {
+        var floatInput = document.getElementById('preu-producte-nou').value;
+        var errorMessageFloat = document.getElementById('errorMessageFloat');
+
+        // Validar si és un número flotant
+        if (isNaN(floatInput) || floatInput.trim() === '') {
+            errorMessageFloat.style.display = 'block';
+        } else {
+            errorMessageFloat.style.display = 'none';
+            modalOverlay.style.display = 'none'; // Ocultar el overlay
+        }
+    });
+    document.getElementById('crear-producte').addEventListener('click', function(event) {
+        var intInput = document.getElementById('quantitat-producte-nou').value;
+        var errorMessageInt = document.getElementById('errorMessageInt');
+
+        // Validar si és un número flotant
+        if (isNaN(intInput) || !Number.isInteger(parseFloat(intInput)) || intInput.trim() === '') {
+            errorMessageInt.style.display = 'block';
+        } else {
+            errorMessageInt.style.display = 'none';
+            //window.location.reload()
+        }
+    });
+
+
+// script.js
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+function crearProducte() {
+    
+           
+        
+        var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
+        var referencia = document.getElementById("referencia-producte-nou").value;
+        var descripcio= document.getElementById("descripcio-producte-nou").value;
+        var nom= document.getElementById("nom-producte-nou").value;
+        var imatge= document.getElementById("fileName").innerText;
+        var preu = parseFloat(document.getElementById("preu-producte-nou").value);
+        var preuCompra = parseFloat(document.getElementById("preu-compra-producte-nou").value);
+        var quantitat = parseFloat(document.getElementById("quantitat-producte-nou").value);
+        
+        if (!referencia,!descripcio,!nom){
+            errorMessageText.style.display = 'block';
+        }
+        else{
+            errorMessageText.style.display = 'none';
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/crear_producte/", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                    
+                } else {
+                    console.error("Error en la solicitud:", xhr.statusText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Error de red al enviar la solicitud.");
+            };
+            console.log(nom)
+
+            xhr.send(JSON.stringify({referencia: referencia,nom:nom, descripcio:descripcio, imatge:imatge, preu:preu,preuCompra:preuCompra, quantitat:quantitat}));
+        }
+        
+        
+        
+}
+        
+
+document.addEventListener('DOMContentLoaded', function () {
+    const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    afegirReparacioBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'flex'; // Mostrar el overlay
+    });
+
+    closeModalBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'none'; // Ocultar el overlay
+    });
+
+    // Opcional: cerrar el modal al hacer clic fuera del panel
+    modalOverlay.addEventListener('click', function (event) {
+        if (event.target === modalOverlay) {
+            modalOverlay.style.display = 'none'; // Ocultar el overlay
+        }
+    });
+});
+
+
+</script>
+<style>
+    /* styles.css */
+
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    #modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
+        display: none; /* Oculta el overlay al cargar la página */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Asegura que esté encima de todo */
+    }
+    
+    #modal-panel {
+        width: 50%;
+        max-width: 600px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .hidden {
+        display: none;
+    }
+   #imatge_producte{
+        width:100px;
+        min-height:100px;
+   }
+    
+</style>
+<div>
+        <input type="text" id="searchInput" placeholder="Buscar producte...">
+</div>
+
+        <table id="productTable">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Referencia</th>
+                    <th>Quantitat</th>
+                    <th>Descripció</th>
+                    <th>Preu</th>
+                    <th>Acció</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <form method="POST">
+                <tr>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.codigo }}</td>
+                    
+                    <td>{{ producto.cantidad }}
+
+                        
+                            {% csrf_token %}
+                            <input type="number" name="cantidad_real_{{ producto.id }}" value="{{ producto.cantidad }}" onkeypress="actualitzarStock(event)">
+                        
+                        
+                        
+                    </td>
+                    <td>{{ producto.descripcion|truncatechars:25 }}</td>
+                    <td>{{ producto.precio }} €</td>
+                </form>  
+                    <td><button type="button" class="popup-trigger" data-producte-id="{{ producto.codigo }}"><i
+                        class="fa-regular fa-pen-to-square"></i></button></td>
+                </tr>
+                
+                {% endfor %}
+                
+                
+            
+            
+            </tbody>
+        </table>
+    </div>
+    <div class="popup-container" id="popup">
+    
+    </div> <!-- Moví el cierre de este div al final -->
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const triggerButtons = document.querySelectorAll('.popup-trigger');
+            const popup = document.getElementById('popup');
+    
+            triggerButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const producteId = button.getAttribute('data-producte-id');
+                    fetch(`/producte_datos/${producteId}/`)
+                        .then(response => response.json())
+                        .then(producte_dades => {
+
+                            let popupContent = `
+                            <div style="text-align:center;" class="popup-content">
+                               
+                                
+                                  <div>
+                                    <p >PRODUCTE: <span id="referencia">${producte_dades.producto_id}</span></p>
+                                  <img id="imatge_producte" src="${producte_dades.imatge}">                                   
+                                  </div>
+                                  <div><label>REFERENCIA:</label>
+                                    <input id="referencia-modificat" value="${producte_dades.producto_id}"> 
+                                  </div>
+                                  <div>
+                                  <label>NOM:</label>
+                                    <input id="nom-modificat" value="${producte_dades.nombre}">
+                                  </div>
+                                  <div>
+                                  <label>QUANTITAT:</label>
+                                    <input id="quantitat-modificat" type="number" value="${producte_dades.cantidad}"> 
+                                  </div>
+                                  <div>
+                                  <label>PREU VENDA:</label>
+                                    <input id="preu-modificat" oninput="calcularMargen()" type="number" value="${producte_dades.preu}"> 
+                                  </div>
+                                  <div>
+                                  <label>PREU COMPRA:</label>
+                                    <input id="preu-compra-modificat" oninput="calcularMargen()" type="number" value="${producte_dades.preu_distribuidor}"> 
+                                  </div>
+                                  <!--<div>
+                                    <label>BUSCAR IMATGE:</label>
+                                    <input id="fileInput" type="image">
+                                    <p id="filePath"></p>
+                                  </div>-->
+                                  <p>Marge:<span id="marge-diferencia"></span></p>
+
+
+                               
+                               
+                                   
+`;
+                        // Agregar productos y cantidades a la ventana emergente
+                       
+                        popupContent += `  
+                                        <div class="popup-buttons">
+                                            <div>
+                                               
+                                              
+                                               
+                                            
+                                            
+                                                <button onclick="aplicarModificacio()" class="green-button">Aplicar</button>
+                                                
+                                                
+                                                
+                                                <button id="close-popup" class="close-popup">Cancelar</button>
+                                                
+                                          
+                                        </div>
+                                    </div>`;
+                                    
+                        popup.innerHTML = popupContent;
+                        popup.style.display = 'block';
+                        calcularMargen();
+                        // Adjuntar event listener al botón de cerrar
+                        const closeButton = popup.querySelector('.close-popup');
+                        closeButton.addEventListener('click', function () {
+                            popup.style.display = 'none';
+                        });
+                        })
+                        .catch(error => console.error('Error al obtener datos del ticket:', error));
+                });
+            });
+        });
+        function calcularMargen() {
+            // Obtener los valores de los inputs
+            const preuVenda = parseFloat(document.getElementById('preu-modificat').value);
+            const preuCompra = parseFloat(document.getElementById('preu-compra-modificat').value);
+            console.log("MOOOD")
+            // Calcular el margen en diferencia y en porcentaje
+            const margenDiferencia = preuVenda - preuCompra;
+            const margenPorcentaje = (margenDiferencia / preuCompra) * 100;
+
+            // Actualizar los elementos HTML con los resultados
+            document.getElementById('marge-diferencia').innerText = margenDiferencia.toFixed(2) + "/" + margenPorcentaje.toFixed(2) + '%';
+            
+        }
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.getElementById('preu-modificat').addEventListener('input', calcularMargen);
+            document.getElementById('preu-compra-modificat').addEventListener('input', calcularMargen);
+        });
+        function aplicarModificacio(){
+            var producte=document.getElementById("referencia").innerText;
+            var referencia=document.getElementById("referencia-modificat").value;
+            var quantitat=document.getElementById("quantitat-modificat").value;
+            var preu=document.getElementById("preu-modificat").value;
+            var preuCompra=document.getElementById("preu-compra-modificat").value;
+            var nom=document.getElementById("nom-modificat").value;
+            console.log(producte,referencia,quantitat,preuCompra)
+            // Obtenemos el contenido de texto del <span> y lo convertimos a número
+                var csrftoken = getCookie('csrftoken'); 
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/modificar_producte/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({preu:preu, preuCompra:preuCompra, quantitat:quantitat,nom:nom,referencia:referencia, producte:producte })); 
+
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            var filePathElement = document.getElementById('filePath');
+            var file = event.target.files[0];
+            
+            if (file) {
+                var fakePath = event.target.value;
+                var fileName = fakePath.split('\\').pop(); // Obtenim només el nom del fitxer
+                filePathElement.textContent = 'images\\' + fileName;
+            } else {
+                filePathElement.textContent = '';
+            }
+        });
+
+        
+        document.getElementById('searchInput').addEventListener('input', function() {
+        var filter, table, tr, td, i, txtValue;
+        filter = this.value.toUpperCase();
+        table = document.getElementById('productTable');
+        tr = table.getElementsByTagName('tr');
+    
+        var visibleProducts = 0;
+        var productName = '';
+    
+        for (i = 0; i < tr.length; i++) {
+            var found = false;
+            // Iterar sobre ambas columnas
+            for (var j = 0; j < 2; j++) { // Modificado para iterar sobre las dos primeras columnas
+                td = tr[i].getElementsByTagName('td')[j];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = '';
+                        visibleProducts++;
+                        productName = txtValue;
+                        found = true;
+                        break; // Salir del bucle interior si se encuentra el texto en alguna columna
+                    }
+                }
+            }
+            if (!found) {
+                tr[i].style.display = 'none';
+            }
+        }
+    
+        if (visibleProducts === 1) {
+            document.getElementById('searchInput').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    var visibleProduct = table.querySelector('tr[style=""]');
+                    var visibleProductName = visibleProduct.querySelector('td:nth-child(2)').innerText; // Se mantiene para la segunda columna
+                    if (productName === visibleProductName) {
+                        addToCart(productName);
+                    }
+                }
+            });
+        } else {
+            // Si hay más de un producto visible o ninguno, eliminamos el event listener
+            document.getElementById('searchInput').removeEventListener('keypress', function() {});
+        }
+    });
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // Función para actualizar la cantidad de unidades en la cesta
+    function updateCartQuantity(action, productName) {
+        var cart = document.getElementById('cart');
+        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+        var quantityElement = cartItem.querySelector('.quantity');
+        var quantity = parseInt(quantityElement.innerText);
+    
+        if (action === 'increase') {
+            quantity++;
+        } else if (action === 'decrease') {
+            quantity--;
+        }
+    
+        quantityElement.innerText = quantity;
+    }
+    
+    // Función para eliminar un producto de la cesta
+  
+    
+    // Event listeners para los botones en la cesta
+   
+    
+    // Event listener para los botones "Añadir a la cesta" en la tabla de productos
+   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const filterSelect = document.getElementById("filterSelect");
+        const codigoTable = document.getElementById("codigoTable");
+        const productoTable = document.getElementById("productoTable");
+    
+        filterSelect.addEventListener("change", function() {
+            if (filterSelect.value === "codigo") {
+                codigoTable.classList.remove("hidden");
+                productoTable.classList.add("hidden");
+            } else {
+                codigoTable.classList.add("hidden");
+                productoTable.classList.remove("hidden");
+            }
+        });
+    });
+    
+
+
+
+
+
+
+    </script>
+</body>
+</html>
+
+{% endblock %}

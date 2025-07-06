@@ -1,0 +1,785 @@
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+<style>
+    .popup-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+     
+      
+      .popup-content {
+        position: absolute;
+        top: 50%;
+        left: 53%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width:80%;
+      }
+      
+      
+      .close-popup {
+        
+        padding: 5px 10px;
+        background-color: #ddd;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left:20%;
+      }
+      
+      .close-popup:hover {
+        background-color: #ccc;
+    img{
+        max-height:10px;
+        height:auto;
+    }
+    .dreta{
+        padding-left:30%;
+    }
+    
+    
+   #barra-dies{
+    display: flex;
+    align-items: center;
+}
+.contenidor p {
+    margin: 0 10px;
+}
+.contenidor input {
+    margin: 0 10px;
+}
+#searchInput{
+    height:2000px;
+    margin:5px 30px 5px 30px;
+    padding:10px 30px 10px 30px;
+}
+
+    </style>
+   
+    <div class="main-content">
+        <div class="products-section" id="barra-dies">
+            <h1>TICKETS</h1>
+           <!-- <p>(es pot eliminar, descarregar, filtrar per preu negatiu (reembolsos), fecha, ID, veure datos, enviar per
+                mail?)mostra els ultims 50( per que no tardi massa en carregar la pagina) + opció per mostrar tots els que vol( 50, 100, 150, xifra personalitzada o tots, o per periode de temps x dia fins x dia)</p>-->
+               
+                   
+            
+                <span style="display: flex; align-items: center; margin-bottom:5px;">
+                    <p style="margin: 0 5px 0 0;">De:</p>
+                    <input type="date" id="data-inicio" style="margin-right: 10px;">
+                    <p style="margin: 0 5px 0 0;">A:</p>
+                    <input type="date" id="data-fin" style="margin-right: 10px;">
+                    <button id="refresca" onclick="filtrarDies()">Refresca</button>
+                </span>
+          
+          
+            
+           
+                    
+        </div>
+        <style>
+            .hidden {
+                display: none;
+            }
+        </style>
+        <script>
+            function filtrarDies() {
+                var inici= document.getElementById("data-inicio").value;
+                var fi=document.getElementById("data-fin").value;
+                var csrftoken = getCookie('csrftoken'); 
+               
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/filtrar_tickets/", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                    var tickets_list = JSON.parse(xhr.responseText);
+                    mostrarResultats(tickets_list);
+                } else {
+                    console.error("Error en la solicitud:", xhr.statusText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Error de red al enviar la solicitud.");
+            };
+            xhr.send(JSON.stringify({inici:inici, fi:fi }));
+           
+            
+            
+        }
+        function mostrarResultats(tickets) {
+            var resultatsDiv = document.getElementById("resultats");
+            resultatsDiv.innerHTML = ""; // Netejar resultats anteriors
+            
+            var table = document.createElement("table");
+            var headerRow = document.createElement("tr");
+
+            // Definir les capçaleres de les columnes
+            var headers = ["ID",  "Data", "TOTAL", "PAGAMENT","VEURE"];
+            headers.forEach(function(header) {
+                var th = document.createElement("th");
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            tickets.forEach(function(ticket) {
+                var row = document.createElement("tr");
+
+                var idCell = document.createElement("td");
+                idCell.textContent = ticket.id;
+                
+                const numerosAbono = JSON.parse('{{ numeros_abono|safe }}');
+                if (numerosAbono.includes(ticket.id)) {
+                    idCell.style.backgroundColor = 'red'; // Aplicar fons roig si coincideix
+                }
+        
+                
+                row.appendChild(idCell);
+
+                var dateCell = document.createElement("td");
+                dateCell.textContent = new Date(ticket.date).toLocaleString();
+                row.appendChild(dateCell);
+
+            
+                var totalCell = document.createElement("td");
+                totalCell.textContent = ticket.total;
+                row.appendChild(totalCell);
+
+                
+
+                var metodoPagoCell = document.createElement("td");
+                metodoPagoCell.textContent = ticket.metodo_pago;
+                row.appendChild(metodoPagoCell);
+
+                var accionCell = document.createElement("td");
+                var boton = document.createElement("button");
+                boton.textContent = "Acció";
+                console.log(ticket.id);
+                boton.setAttribute("data-ticket-id", ticket.id );
+                boton.classList.add("accio-button", "popup-trigger");
+                
+                accionCell.appendChild(boton);
+                row.appendChild(accionCell);
+
+                boton.addEventListener('click', function() {
+                    console.log(ticket.id);
+                });
+                table.appendChild(row);
+            });
+
+            resultatsDiv.appendChild(table);
+            afegirListenersPopup();
+        }
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+
+           
+            
+        </script> 
+            <div class="popup-container" id="popup">
+    
+        </div> <!-- Moví el cierre de este div al final -->
+        <div>
+            <div id="resultats">
+                <!-- Els resultats es mostraran aquí -->
+            </div>
+        <form method="post">
+            <table id="productTable">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>DATA</th>
+                    <th>TOTAL</th>
+                    <th>PAGAMENT</th>
+                    <th>VEURE</th>
+                </tr>
+                </thead>
+                <tbody>
+                   
+                   
+            
+                {% for ticket in tickets %}
+                <tr class="filaTicket">
+                    <td class="TicketIdColor">{{ ticket.id }}</td>
+                    <td>{{ ticket.date|date:"d/m/Y H:i" }}</td>
+
+                    <td class="totalTicketColor">{{ ticket.total }} €</td>
+                    <td>{{ ticket.metodo_pago }}</td>
+                   
+                    <td><button type="button" class="popup-trigger" data-ticket-id="{{ ticket.id }}"><i
+                            class="fa-regular fa-pen-to-square"></i></button></td>
+                </tr>
+                {% endfor %}
+            
+                </tbody>
+            </table>
+        </form>
+   
+    </div>
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Recuperar los números de abono del contexto de Django
+        const numerosAbono = JSON.parse('{{ numeros_abono|safe }}');
+    
+        // Obtener todos los elementos con la clase TicketIdColor
+        var ticketIdElements = document.getElementsByClassName("TicketIdColor");
+    
+        // Recorrer los elementos y compararlos con los números de abono
+        for (var i = 0; i < ticketIdElements.length; i++) {
+            var ticketId = ticketIdElements[i].textContent.trim();  // Obtener el texto y eliminar espacios en blanco
+    
+            // Comprobar si el número de ticket está en la lista de números de abono
+            if (numerosAbono.includes(parseInt(ticketId))) {
+                // Aplicar el background rojo si hay coincidencia
+                ticketIdElements[i].style.backgroundColor = 'red';
+            }
+        }
+    });
+    
+    
+
+
+  
+</script>
+    <style>
+      
+        
+        .overlay{
+            display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        }
+        .popup2 {
+            position: absolute;
+        top: 50%;
+        left: 53%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width:80%;
+        display:flex;
+        }
+        .izq{
+            flex:1;
+            margin-top:30px;
+        }
+        .der{
+            flex:1;
+            margin-top:30px;
+        }
+        .tick-fac-num{
+
+            position:absolute;
+            
+        }
+        .boto-tancar-facturar{
+           position:absolute;
+            
+            margin-left:45%;
+            margin-top:25%;
+           height:30px;
+           font-weight:750;
+           background:red;
+           color:white;
+           border:none;
+           border-radius:10px;
+        }
+        .clientNou{
+            height:30px;
+           font-weight:750;
+           margin-left:40%;
+           margin-top:15px;
+           background:rgb(0, 190, 0);;
+           color:white;
+           border:none;
+           border-radius:10px;
+        }
+    </style>
+    <div class="overlay" id="overlay">
+        <!-- Popup con inputs -->
+        
+            
+            
+        
+        <div class="popup2">
+            <div class="tick-fac-num">
+            <p>FACTURACIO DEL TICKET NUM: <span id="ticket-id-facturar">a</span></p>
+            </div>
+            
+            
+            <div class="izq">
+                <p>CREAR CLIENT:</p>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><label>NOM:</label></td>
+                            <td><input id="nom-input" type="text"></td>
+                            </tr>
+                            <tr>
+                                <td><label>TELEFON:</label></td>
+                                <td><input id="telefon-input" type="number"></td>
+                                </tr>
+                                <tr>
+                             <td><label>LOCALITAT:</label></td>
+                                    <td><input id="localitat-input" type="text"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>DIRECCIO:</label></td>
+                                        <td><input id="direccio-input" type="text"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><label>NIF:</label></td>
+                                            <td><input id="nif-input" type="text"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><label>EMAIL:</label></td>
+                                                <td><input id="email-input" type="text"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><label></label>COMPTE BANC:</td>
+                                                    <td><input id="banc-input" type="text"></td>
+                                                    </tr>
+                    </tbody>
+                </table>
+                <button class="clientNou" onclick="FacturarTicketClientNou()">Afegir i crear client</button>
+                
+                
+            </div>
+            <button class="boto-tancar-facturar" onclick="hideOverlay()">Cancelar</button>
+            <div class="der">
+                <p>BUSCAR CLIENT</p>
+                <input type="text">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NOM</th>
+                            <th>tlf</th>
+                            <th>NIF</th>
+                        </tr>
+                    </thead>
+                    <tbody >
+                        {% for pers in persona %}
+                        <tr class="cliente-row">
+                            <td> {{ pers.id }} </td>  
+                            <td>{{ pers.nombre }}</td>
+                            <td>{{ pers.telefono }}</td>
+                            <td>{{ pers.nif }}</td>
+                            <td><button onclick="FacturarTicketClientExistent({{ pers.id }})" ><i class="fa-regular fa-pen-to-square"></i></button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3">
+                                <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
+                                <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        
+    </div>
+    </div>
+    <script>
+
+
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const rows = document.querySelectorAll('.cliente-row');
+            const rowsPerPage = 3;
+            let currentPage = 0;
+            const totalPages = Math.ceil(rows.length / rowsPerPage);
+        
+            function showPage(page) {
+                const start = page * rowsPerPage;
+                const end = start + rowsPerPage;
+        
+                rows.forEach((row, index) => {
+                    if (index >= start && index < end) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+        
+                document.getElementById('prev-btn').disabled = currentPage === 0;
+                document.getElementById('next-btn').disabled = currentPage === totalPages - 1;
+            }
+        
+            window.changePage = function (direction) {
+                currentPage += direction;
+                showPage(currentPage);
+            };
+        
+            showPage(currentPage);
+        });
+
+        function FacturarTicketClientNou() {
+            var csrftoken = getCookie('csrftoken');
+
+            var nom=document.getElementById("nom-input").value;
+            var telefon=document.getElementById("telefon-input").value;
+            var banc=document.getElementById("banc-input").value;
+            var localitat=document.getElementById("localitat-input").value;
+            var direccio=document.getElementById("direccio-input").value;
+            var nif=document.getElementById("nif-input").value;
+            var email=document.getElementById("email-input").value;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/crear_client/", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                } else {
+                    console.error("Error en la solicitud:", xhr.statusText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Error de red al enviar la solicitud.");
+            };
+            xhr.send(JSON.stringify({ nom:nom, telefon:telefon, nif:nif, email:email, localitat:localitat, direccio:direccio, banc:banc }));
+            hideOverlay();
+        }
+        function FacturarTicketClientExistent(idClient){
+            var csrftoken = getCookie('csrftoken');
+            var idTicket=document.getElementById("ticket-id-facturar").innerText
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/facturar_ticket/", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                } else {
+                    console.error("Error en la solicitud:", xhr.statusText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Error de red al enviar la solicitud.");
+            };
+            xhr.send(JSON.stringify({ idClient:idClient,idTicket:idTicket }));
+            hideOverlay();
+        }
+
+
+        function showOverlay(id) {
+
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "block";
+            var idTicket = document.getElementById("ticket-id-facturar");
+            idTicket.textContent= id;
+            
+            
+        }
+
+        function hideOverlay() {
+
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "none";
+            
+            
+            
+        }
+        function afegirListenersPopup() {
+            const triggerButtons = document.querySelectorAll('.popup-trigger');
+            const popup = document.getElementById('popup');
+        
+            triggerButtons.forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const ticketId = button.getAttribute('data-ticket-id');
+                    fetch(`/get_ticket_data/${ticketId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const dateObj = new Date(data.date);
+                            const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
+                            const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+                            const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+                            const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
+        
+                            // Renderizar los datos del ticket en la ventana emergente
+                            let popupContent = `
+                                <div class="popup-content">
+                                    <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+                                        <div id="ticket-number">
+                                            <h2>Ticket número: ${data.id}</h2>
+                                            <div class="payment-container">
+                                                <label for="paymentMethod">Métode de Pagament:</label>
+                                                <div>
+                                                    <select id="paymentMethod" name="paymentMethod">
+                                                        <option value="Tarjeta" ${data.metodo_pago === 'Targeta' ? 'selected' : ''}>Tarjeta</option>
+                                                        <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                                    </select>
+                                                    <p>a ${data.abono}</p>
+                                                <p>qq Reembolso: No / Si -- Nº13  </p>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: left;">
+                                            <div id="date">
+                                                <h4>Data: ${formattedDate}</h4>
+                                            </div>
+                                            <div id="time">
+                                                <h4>Hora: ${hours}:${minutes}:${seconds}</h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <ul>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>NOM</th>
+                                                    <th>QUANT.</th>
+                                                    <th>PREU</th>
+                                                    <th>TOTAL</th>
+                                                    <th>IMG</th>
+                                                    
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
+                            // Agregar productos y cantidades a la ventana emergente
+                            data.productos.forEach(producto => {
+                                popupContent += `
+                                    <tr>
+                                        <td>${producto.producto_id}</td>
+                                        <td>${producto.nombre}</td>
+                                        <td>${producto.cantidad}</td>
+                                        <td>${producto.preu} €</td>
+                                        <td>${(producto.preu * producto.cantidad).toFixed(2)} €</td>
+                                        <td><img style="max-height:30px;" src="${producto.producto_imagen}"></td>
+                                    </tr>`;
+                            });
+                            popupContent += `
+                                            </tbody>
+                                        </table>
+                                        <p>Total: ${data.total} €</p>
+                                    </ul>
+                                    <div class="popup-buttons">
+                                        <div>
+                                            <button class="blue-button">DESCARGAR</button>
+                                            <button onclick="reembolsarTicket(${data.id})" class="red-button">REEMBOLSAR</button>
+                                            <button onclick="showOverlay()" class="yellow-button">FACTURAR</button>
+                                            <button class="green-button">Aplicar</button>
+                                            <button>Enviar per mail</button>
+                                            <button id="close-popup" class="close-popup">Cancelar</button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            popup.innerHTML = popupContent;
+                            popup.style.display = 'block';
+        
+                            // Adjuntar event listener al botón de cerrar
+                            const closeButton = popup.querySelector('.close-popup');
+                            closeButton.addEventListener('click', function () {
+                                popup.style.display = 'none';
+                            });
+                        })
+                        .catch(error => console.error('Error al obtener datos del ticket:', error));
+                });
+            });
+        }
+
+        
+
+
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const triggerButtons = document.querySelectorAll('.popup-trigger');
+                const popup = document.getElementById('popup');
+        
+                triggerButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const ticketId = button.getAttribute('data-ticket-id');
+                        fetch(`/get_ticket_data/${ticketId}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const dateObj = new Date(data.date);
+                        const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;    
+                        const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+                        const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+                        const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
+                                // Renderizar los datos del ticket en la ventana emergente
+                                let popupContent = `
+                                    <div class="popup-content">
+                                    
+                                        <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+                                            <div id="ticket-number"><h2>Ticket número: ${data.id}</h2>
+                                                
+                                                <div class="payment-container">
+                                                    <label for="paymentMethod">Metode de Pagament:</label>
+                                                    <div>
+                                                        <select id="paymentMethod" name="paymentMethod">
+                                                            <option value="Tarjeta" ${data.metodo_pago === 'Targeta' ? 'selected' : ''}>Tarjeta</option>
+                                                            <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                                        </select>
+                                                    </div>
+                                                    <p>Reembolso id: ${data.abono ? data.abono : ''}</p>
+                                                </div></div>
+                                            <div style="text-align: left;">
+                                            <div id="date"><h4>Data: ${formattedDate}</h4></div>
+                                            <div id="time"><h4>Hora: ${hours}:${minutes}:${seconds}</h4></div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <ul>
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>NOM</th>
+                                                        <th>QUANT.</th>
+                                                        <th>PREU</th>
+                                                        <th>TOTAL</th>
+                                                        <th>IMG</th>
+                                                    </tr>
+                                                </thead> <tbody>`;
+
+                                // Agregar productos y cantidades a la ventana emergente
+                                data.productos.forEach(producto => {
+                                    popupContent += `
+                                    
+                                        
+                                            <tr>
+                                            <td>${producto.producto_id}</td>
+                                            <td>${producto.nombre}</td>
+                                            <td>${producto.cantidad}</td>
+                                            <td>${producto.preu} €</td>
+                                            <td>${(producto.preu * producto.cantidad).toFixed(2)} €</td>
+
+                                            <td><img style="max-height:30px;" src="${producto.producto_imagen}"></td>
+                                            </tr>
+                                        
+                                    
+                                    
+                                    
+                                    `;
+                                });
+                                popupContent += `   </tbody></table>
+                                                    <p>Total: ${data.total} €</p>
+                                                </ul>
+                                                <div class="popup-buttons">
+                                                    <div>
+                                                        <button class="blue-button">DESCARGAR</button>
+                                                        <button onclick="reembolsarTicket(${data.id})" class="red-button">REEMBOLSAR</button>
+                                                        <button onclick="showOverlay(${data.id})"   class="ellow-button">FACTURAR</button>
+                                                    
+                                                    
+                                                        <button class="green-button">Aplicar</button>
+                                                        <button >Enviar per mail</button>
+                                                        
+                                                        
+                                                        <button id="close-popup" class="close-popup">Cancelar</button>
+                                                        
+                                                
+                                                </div>
+                                            </div>
+                                                
+                                                
+                                                `;
+                                popup.innerHTML = popupContent;
+                                popup.style.display = 'block';
+                                // Adjuntar event listener al botón de cerrar
+                                const closeButton = popup.querySelector('.close-popup');
+                                closeButton.addEventListener('click', function () {
+                                    popup.style.display = 'none';
+                                });
+                            })
+                            .catch(error => console.error('Error al obtener datos del ticket:', error));
+                    });
+                });
+            });
+        
+
+       /* document.addEventListener("click", function(event) {
+            var popupContent = document.querySelector(".popup-content");
+            var closeButton = document.querySelector(".close-popup");
+            var notes = document.querySelector('.notes');
+            var expandir = document.querySelector('.expandir');
+            // Verifica si el clic fue fuera del popup-content y dentro del documento
+            if (!popupContent.contains(event.target) && event.target !== closeButton) {
+                // Verificar si el clic no ocurrió dentro de .notes o .expandir
+                if (!notes.contains(event.target) && !expandir.contains(event.target)) {
+                closeButton.click();
+            }
+        }
+    });*/
+    function reembolsarTicket(id){
+        var csrftoken = getCookie('csrftoken');
+    
+          
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/reembolsar_ticket/", true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    console.log("Respuesta del servidor:", xhr.responseText);
+                    
+                    
+                } else {
+                    console.error("Error en la solicitud:", xhr.statusText);
+                }
+            };
+            xhr.onerror = function () {
+                console.error("Error de red al enviar la solicitud.");
+            };
+            xhr.send(JSON.stringify({ id:id }));
+           
+    }
+    </script>
+    
+</body>
+</html>
+
+{% endblock %}

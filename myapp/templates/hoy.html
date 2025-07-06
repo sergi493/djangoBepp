@@ -1,0 +1,160 @@
+
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<style>
+    #espai {
+        display: flex;
+        justify-content: space-between; /* Distribuye el espacio equitativamente entre los elementos */
+        width: 100%;
+
+    }
+    
+    #esquerra {
+        /* Opcional: puedes añadir estilos específicos para este elemento */
+        flex: 2; /* Hace que ocupe espacio disponible */
+        margin-left:10%;
+        min-width:400px;;
+        
+    }
+    
+    #dreta {
+        /* Opcional: puedes añadir estilos específicos para este elemento */
+        /* Hace que ocupe espacio disponible */
+        min-width:400px;
+        margin-left:20%;
+        
+    }
+</style>
+
+<div class="main-content">
+    <div class="products-section">
+        <h1>AVUI</h1>
+        <div id="espai">
+       <div id="esquerra">
+        <table style="font-size:13px;" >
+            <p>TOTAL</p>
+            <thead>
+                <tr>
+                    <th>TICKET</th>
+                    <th>FACTURA</th>
+                    <th>CLIENT</th>
+                    <TH>HORA</th>
+                    <TH>METODO-PAGO</th>
+                    <th>total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for factura in factures %}
+                <tr>
+                    <td></td>
+                    <td><p>{{factura.id}}</p></td>
+                    <td><p>{{factura.persona_id}}</p></td>
+                    <td><p>{{factura.date|date:"H:i:s"}}</p></td>
+                    <td><p>{{factura.metodo_pago}}</p></td>
+                    <td><p id="total">{{factura.total}}</p></td>
+                </tr>
+                {% endfor %}
+                {% for ticket in tickets %}
+                <tr>
+                    <td><p>{{ticket.id}}</p></td>
+                    <td></td>
+                    <td></td>
+                    <td><p>{{ticket.date|date:"H:i:s"}}</p></td>
+                    <td><p>{{ticket.metodo_pago}}</p></td>
+                    <td><p id="total">{{ticket.total}}</p></td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div id="dreta">
+        <h1>TOTAL FET: <span id="total_avui"></span> <br> Marge-avui: {{marge}}€ <br>{{marge_benefici}}%</h1>
+        <h1> Efectiu al calaix: {{preu_efectiu}} </h1>
+        <h1> Total Targeta: {{preu_targeta}} </h1>
+        <label>Ingres al banc</label>
+        <input id="ingressar_banc" type="text"></input>
+        <button onclick="Tancar_Caixa('{{total}}','{{marge}}','{{preu_efectiu}}','{{preu_targeta}}')">Tancar caixa </button>
+    </div>
+</div>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        sumarTotales();
+    });
+    
+    function sumarTotales() {
+        // Obtener todos los elementos con id="total"
+        const totales = document.querySelectorAll('#total');
+        
+        let suma = 0;
+    
+        // Recorrer los elementos y sumar sus valores
+        totales.forEach(function(elemento) {
+            suma += parseFloat(elemento.textContent) || 0; // Convertir a número y sumar, si no es un número se suma 0
+        });
+    
+        // Mostrar la suma en el elemento con id="total_avui"
+        document.getElementById('total_avui').textContent = suma.toFixed(2); // Formato de dos decimales
+    }
+
+
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+function Tancar_Caixa(total,marge,efectiu,targeta){
+        var csrftoken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        banc=document.getElementById("ingressar_banc").value
+            
+        
+        xhr.open("POST", "/tancar_caixa/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        
+
+        xhr.send(JSON.stringify({total:total,marge:marge,efectiu:efectiu,targeta:targeta,banc:banc}));
+        
+
+    }
+</script>
+</body>
+</html>
+
+{% endblock %}

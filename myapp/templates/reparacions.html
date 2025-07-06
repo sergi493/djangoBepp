@@ -1,0 +1,1425 @@
+
+{% extends "layouts/base.html" %}
+
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+
+<div class="main-content">
+    <div class="products-section">
+        <h1>REPARACIONS</h1>
+<p>(es pot eliminar, descarregar, reembolsar, veure datos, enviar per mail?)</p>
+<input type="text" id="searchInput" placeholder="Buscar producte...">
+<button id="afegir-reparacio-btn">Afegir Reparacio</button>
+
+    </div>
+    <form method="post">
+        <table id="productTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>FECHA</th>
+               <th>Client</th>
+                
+                <th>Total</th>
+                <th>VEURE</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for reparacio in reparacions %}
+            <tr class="filaTicket">
+                <td>{{ reparacio.id }}</td>
+                <td>{{ reparacio.date|date:"d/m/Y H:i" }}</td>
+
+                <td>{{ reparacio.persona_id }} </td>
+                <td>{{ reparacio.total }} </td>
+                 <!-- A IMPLEMENTAR A MODELS, VIEWS...
+                <td>{{ factura.total }} €</td>-->
+              
+                <td><button type="button" class="popup-trigger" data-reparacio-id="{{ reparacio.id }}"><i
+                        class="fa-regular fa-pen-to-square"></i></button></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    
+    </form>
+<div id="modal-overlay" class="hidden">
+    <div id="modal-panel">
+        <div class="clientReparacio">
+        <h2>Afegir Reparacio</h2>
+        <button onclick="showOverlay()">Afegir client</button>
+        <span id="clientIdReparacio" ></span>
+        <span id="clientNomReparacio"></span>
+        <span id="clientNifReparacio"></span>
+        <span id="clientTelReparacio"></span>
+        </div>
+        <div class="inputDESCRIPCIO">
+        <label>INFO ADICIONAL<br></label>
+        <textarea  id="DescripcioReparacio" placeholder="MA D'OBRA: CANVI DE PANTALA..."></textarea>
+        </div>
+        <div style="text-align:left;">
+        <button onclick="showOverlay2()">+</button>
+        </div>
+        <table id="taulaReparacioProductes">
+        <thead>
+            <tr>
+                <th>Cod</th>
+                <th>Desc</th>
+                <th>Preu unitat</th>
+                <th>Quantitat</th>
+                <th>Preu total</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+           
+        </tbody>
+        <tfoot >
+            <tr>
+                <td style="background:white;"></td>
+                <td style="background:white;"></td>
+                <td></td>
+                <td>Productes: <span id="sumQuantitat"></span></td>
+                <td style="background:white;">Total: <span id="sumTotal"></span></td>
+
+            </tr>
+        
+        </tfoot>
+        </table>
+        <button class="red-button" id="close-modal-btn">Cerrar</button>
+        <button class="green-button" onclick="CrearNouReparacio()">Aplicar</button>
+        <!--<button >Descargar</button>
+        <button >Imprimir</button>
+        <button >Facturar</button>
+        <button >Enviar per correu</button>
+        <button >Eliminar</button>-->
+    </div>
+</div>
+<style>
+    .clientReparacio{
+        margin-bottom:25px;
+        margin-top:20px;
+    }
+    .overlay{
+        display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    }
+    .popup2{
+        position: absolute;
+    top: 50%;
+    left: 53%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width:80%;
+    display:flex;
+    }
+    .overlay3{
+        position: absolute;
+    top: 50%;
+    left: 53%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width:80%;
+    display:flex;
+    }
+    .izq{
+        flex:1;
+        margin-top:30px;
+    }
+    .der{
+        flex:1;
+        margin-top:30px;
+    }
+    .tick-fac-num{
+
+        position:absolute;
+        
+    }
+    .boto-tancar-facturar{
+        position:absolute;
+         
+         margin-left:45%;
+         margin-top:25%;
+        height:30px;
+        font-weight:750;
+        background:red;
+        color:white;
+        border:none;
+        border-radius:10px;
+     }
+     .overlay2{
+        display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    }
+    .overlay4{
+        display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    }
+     .popup3 {
+        position: absolute;
+    top: 50%;
+    left: 53%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width:80%;
+    display:flex;
+    
+    }
+    .popup4 {
+        position: absolute;
+    top: 50%;
+    left: 53%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width:80%;
+    display:flex;
+    
+    }
+   
+</style>
+<div class="overlay4" id="overlay4">
+    <div class="popup4">
+        <div class="izq">
+            <p>CREAR PRODUCTE: 2</p>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label>NOM:</label></td>
+                        <td><input id="nom-input-nou" type="text"></td>
+                        </tr>
+                        <tr>
+                            <td><label>REFERENCIA:</label></td>
+                            <td><input id="referencia-input" type="text"></td>
+                            </tr>
+                            <tr>
+                         <td><label>DESCRIPCIO:</label></td>
+                                <td><input id="descripcio-input" type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td><label>QUANTITAT:</label></td>
+                                    <td><input id="quantitat-input" type="number"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>PREU DISTRIBUIDOR:</label></td>
+                                        <td><input id="preu-compra-input" type="number"></td>
+                                        </tr>
+                                    <tr>
+                                        <td><label>PREU:</label></td>
+                                        <td><input id="preu-input" type="number"></td>
+                                        </tr>
+                                        
+                </tbody>
+            </table>
+            <button class="clientNou" onclick="ReparacioCrearProducte()">Afegir i crear client</button>
+            
+            
+        </div>
+        <button class="boto-tancar-facturar" onclick="hideOverlay4()">Cancelar</button>
+        <div class="der">
+            <p>BUSCAR PRODUCTE</p>
+            <input type="text">
+            <table id="taula_prod_reparacio">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NOM</th>
+                        <th>tlf</th>
+                        <th>NIF</th>
+                    </tr>
+                </thead>
+                <tbody >
+                    {% for prod in producte %}
+                    <tr class="cliente-row0">
+                        <td>{{ prod.id }}</td>
+                        <td> {{ prod.nombre }} </td>  
+                        <td>{{ prod.codigo }}</td>
+                        <td>{{ prod.cantidad }}</td>
+                        <td>{{ prod.descripcion }}</td>
+                        <td>{{ prod.precio }}</td>
+                        <td><button onclick="ImportarProducteExistentReparacio('{{ prod.id }}', '{{ prod.nombre }}', '{{ prod.codigo }}', '{{ prod.cantidad }}', '{{ prod.descripcion }}','{{ prod.precio }}'  )" ><i class="fa-regular fa-pen-to-square"></i></button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+                <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            <button id="prev-btn0" onclick="changePage(-1)" disabled>&larr; Anterior</button>
+                            <button id="next-btn0" onclick="changePage(1)">Siguiente &rarr;</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+                    
+    function ImportarProducteExistentReparacio(id_producte, nom, referencia,quantitat,descripcio,preu){
+        var csrftoken = getCookie('csrftoken');
+
+    var idReparacio=document.getElementById("reparacio_id_obtenir").innerHTML;  
+        console.log(idReparacio + "dd");
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/afegir_producte_reparacio/", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRFToken', csrftoken);
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("Respuesta del servidor:", xhr.responseText);
+            
+            updateTotalGeneral();
+            
+        } else {
+            console.error("Error en la solicitud:", xhr.statusText);
+        }
+    };
+    xhr.onerror = function () {
+        console.error("Error de red al enviar la solicitud.");
+    };
+    xhr.send(JSON.stringify({ idReparacio:idReparacio,id_producte:id_producte }));
+   
+    }
+
+
+   function VeureUltimProducteReparacio(id_producte,nom, referencia,quantitat,descripcio,preu){
+    var table = document.getElementById("taula-productes-reparacio");
+
+    // Crea una nueva fila
+    var newRow = table.insertRow();
+    newRow.className = `linea_productes_reparacio_${id_producte}`;
+    newRow.id = `linea_productes_reparacio`;
+    // Crea y añade las celdas a la nueva fila
+    var cell1 = newRow.insertCell(0);
+    var cell2 = newRow.insertCell(1);
+    var cell3 = newRow.insertCell(2);
+    var cell4 = newRow.insertCell(3);
+    var cell5 = newRow.insertCell(4);
+    var cell6 = newRow.insertCell(5);
+    var cell7 = newRow.insertCell(6);
+    
+
+    // Asigna el contenido a cada celda
+    cell1.textContent = referencia;   // Reemplaza con el valor real
+    cell1.id=`producte_id_reparacio`;
+    cell2.textContent = nom;           // Reemplaza con el valor real
+      // Reemplaza con el valor real
+      var input = document.createElement("input");
+      input.type = "number";
+      input.id = "quantitat_" + referencia;   
+             // Assigna un ID a l'element d'entrada
+      input.value = 1;   
+      input.className="producte-input-quantitat";        // Reemplaça amb el valor real si cal
+      cell3.appendChild(input);   // Reemplaza con el valor real
+      
+
+
+      var pElement = document.createElement("p");
+
+
+    // Crear el elemento span
+    var spanElement = document.createElement("span");
+    var spanElements = document.createElement("span");
+    // Asignar el contenido de texto al span
+    spanElement.textContent = preu;
+    // Agregar el span al p
+    spanElements.appendChild(spanElement);
+    // Agregar el símbolo del euro al p como texto
+    spanElements.appendChild(document.createTextNode("€"));
+    // Vaciar el contenido actual de cell4 (opcional)
+    cell4.textContent = "";
+    // Agregar el p a cell4
+    cell4.appendChild(spanElements);
+    spanElement.className="producte-preu-unitat";
+
+    var spanElements2 = document.createElement("span");
+    
+    // Crear el elemento span
+    var spanElement2 = document.createElement("span");
+    // Asignar el contenido de texto al span
+    spanElement2.textContent = preu;
+    // Agregar el span al p
+    spanElements2.appendChild(spanElement2);
+    // Agregar el símbolo del euro al p como texto
+    spanElements2.appendChild(document.createTextNode("€"));
+    // Vaciar el contenido actual de cell4 (opcional)
+    cell5.textContent = "";
+    // Agregar el p a cell4
+    cell5.appendChild(spanElements2);
+    spanElement2.className="producte-preu-total";
+    var button = document.createElement("button");
+    button.innerHTML="BORRAR";
+    repara_id=document.getElementById("reparacio_id_obtenir").innerHTML;
+    button.onclick = function() {
+        esborrarDeReparacio(id_producte,repara_id);
+    };
+    cell7.appendChild(button);
+
+
+
+
+    function updateRowTotal(fila) {
+        const quantitatInput = fila.querySelector('.producte-input-quantitat');
+        const preuPerUnitat = parseFloat(fila.querySelector('.producte-preu-unitat').textContent);
+        const total = fila.querySelector('.producte-preu-total');
+        const quantitat = parseFloat(quantitatInput.value);
+        total.textContent = (preuPerUnitat * quantitat).toFixed(2);
+    }
+
+    // Actualizar el total general
+     // Actualizar el total general
+     function updateTotalGeneral() {
+        let total = 0;
+        document.querySelectorAll('#taula-productes-reparacio tbody tr').forEach(row => {
+            const rowTotal = parseFloat(row.querySelector('.producte-preu-total').textContent);
+            total += rowTotal;
+        });
+        document.getElementById('total-general').textContent = `${total.toFixed(2)} €`;
+    }
+
+    // Attach event listeners to quantity inputs
+    document.querySelectorAll('.producte-input-quantitat').forEach(input => {
+        input.addEventListener('input', function () {
+            const fila = input.closest('tr');
+            updateRowTotal(fila);
+            updateTotalGeneral();
+        });
+    });
+           // Reemplaza con el valor real
+};
+   
+</script>
+<div class="overlay" id="overlay">
+  
+    <div class="popup2">
+
+        <div class="izq">
+            <p>CREAR CLIENT:</p>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label>NOM:</label></td>
+                        <td><input id="nom-input" type="text"></td>
+                        </tr>
+                        <tr>
+                            <td><label>TELEFON:</label></td>
+                            <td><input id="telefon-input" type="number"></td>
+                            </tr>
+                            <tr>
+                         <td><label>LOCALITAT:</label></td>
+                                <td><input id="localitat-input" type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td><label>DIRECCIO:</label></td>
+                                    <td><input id="direccio-input" type="text"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>NIF:</label></td>
+                                        <td><input id="nif-input" type="text"></td>
+                                        </tr>
+                                        <tr>
+                                            <td><label>EMAIL:</label></td>
+                                            <td><input id="email-input" type="text"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><label></label>COMPTE BANC:</td>
+                                                <td><input id="banc-input" type="text"></td>
+                                                </tr>
+                </tbody>
+            </table>
+            <button class="clientNou" onclick="ReparacioClientNou()">Afegir i crear client</button>
+            
+            
+        </div>
+        <button class="boto-tancar-facturar" onclick="hideOverlay()">Cancelar</button>
+        <div class="der">
+            <p>BUSCAR CLIENT</p>
+            <input type="text">
+            <table id="taula_client_reparacio">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NOM</th>
+                        <th>tlf</th>
+                        <th>NIF</th>
+                        <th>Importar</th>
+                    </tr>
+                </thead>
+                <tbody >
+                    {% for pers in persona %}
+                    <tr class="cliente-row">
+                        <td> {{ pers.id }} </td>  
+                        <td>{{ pers.nombre }}</td>
+                        <td>{{ pers.telefono }}</td>
+                        <td>{{ pers.nif }}</td>
+                       
+                        <td><button onclick="ImportarClientReparacio ('{{ pers.id }}' ,'{{ pers.nombre }}','{{ pers.telefono }}','{{ pers.nif }}')" ><i class="fa-regular fa-pen-to-square"></i></button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
+                            <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    
+</div>
+</div>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const triggerButtons = document.querySelectorAll('.popup-trigger');
+        const popupContainer = document.getElementById('popup');
+        const popupContent = popupContainer.querySelector('.popup-content');
+    
+        triggerButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const reparacioId = button.getAttribute('data-reparacio-id');
+                fetch(`/obtenir_reparacio/${reparacioId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const dateObj = new Date(data.date);
+                        const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
+                        const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+                        const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+                        const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
+    
+                        let popupContentHTML = `
+                            <div class="popup-content-inner">
+                                <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
+                                    <div id="ticket-number">
+                                        <h2>REPARACIO número:<span id="reparacio_id_obtenir"> ${data.id}</span><br> ${data.persona_id} <br> ${data.persona_nom}</h2>
+                                        <p>Facturat ${data.facturat === '' ? 'qq' : data.facturat}</p>
+                                        <div class="payment-container">
+                                            <label for="paymentMethod">Metode de Pagament:</label>
+                                            <div>
+                                                <select id="paymentMethod" name="paymentMethod">
+                                                    <option value="Tarjeta" ${data.metodo_pago === 'Targeta' ? 'selected' : ''}>Tarjeta</option>
+                                                    <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                                                </select>
+                                            </div>
+                                            <p>${data.abono ? data.abono : ''}</p>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <div id="date"><h4>Data: ${formattedDate}</h4></div>
+                                        <div id="time"><h4>Hora: ${hours}:${minutes}:${seconds}</h4></div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <ul>
+                                    <button onclick="showOverlay3()">+</button>
+                                    <table id="taula-productes-reparacio">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>NOM</th>
+                                                <th>QUANT.</th>
+                                                <th>PREU</th>
+                                                <th>TOTAL</th>
+                                                <th>IMG</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+    
+                        data.productos.forEach(producto => {
+                            popupContentHTML += `
+                                <tr class="linea_productes_reparacio_${producto.id}" id="linea_productes_reparacio">
+                                    <td id="producte_id_reparacio">${producto.producto_id}</td>
+                                    <td>${producto.nombre}</td>
+                                    <td><input class="producte-input-quantitat" id="quantitat_${producto.producto_id}" value="${producto.cantidad}"></input></td>
+                                    <td><span class="producte-preu-unitat">${producto.preu}</span> €</td>
+                                    <td><span class="producte-preu-total">${(producto.preu * producto.cantidad).toFixed(2)}</span> €</td>
+                                    <td><img style="max-height:30px;" src="${producto.producto_imagen}"></td>
+                                    <td><button onclick="esborrarDeReparacio('${producto.id}', '${data.id}')">BORRAR</button></td>
+                                </tr>`;
+                        });
+    
+                        popupContentHTML += `
+                                        </tbody>
+                                    </table>
+                                    <p>Total: <span id="total-general"> ${data.total}</span> €</p>
+                                </ul>
+                                <div class="popup-buttons">
+                                    <div id="botons-integrar-reparacio">
+                                        <button class="blue-button">DESCARGAR</button>
+                                        <button class="red-button">ELIMINAR</button>
+                                        <button onclick="facturarReparacio(${data.id})" class="yellow-button">FACTURAR</button>
+                                        <button onclick="aplicarReparacio(${data.id})" class="green-button">Aplicar</button>
+                                        <button>Enviar per mail</button>
+                                        
+                                    </div>
+                                    <button id="close-popup" class="close-popup">Cancelar</button>
+                                </div>
+                            </div>`;
+    
+                        popupContent.innerHTML = popupContentHTML;
+                        popupContainer.style.display = 'block';
+                        if (data.facturat !== 'no') {
+                            document.getElementById('botons-integrar-reparacio').style.display = 'none';
+                          }
+                          
+                        // Adjuntar event listener al botón de cerrar
+                        // Función para actualizar el total de una fila
+                    function updateRowTotal(fila) {
+                        const quantitatInput = fila.querySelector('.producte-input-quantitat');
+                        const preuPerUnitat = parseFloat(fila.querySelector('.producte-preu-unitat').textContent);
+                        const total = fila.querySelector('.producte-preu-total');
+                        const quantitat = parseFloat(quantitatInput.value);
+                        total.textContent = (preuPerUnitat * quantitat).toFixed(2);
+                    }
+
+                    // Actualizar el total general
+                     // Actualizar el total general
+                     function updateTotalGeneral() {
+                        let total = 0;
+                        document.querySelectorAll('#taula-productes-reparacio tbody tr').forEach(row => {
+                            const rowTotal = parseFloat(row.querySelector('.producte-preu-total').textContent);
+                            total += rowTotal;
+                        });
+                        document.getElementById('total-general').textContent = `${total.toFixed(2)} €`;
+                    }
+
+                    // Attach event listeners to quantity inputs
+                    document.querySelectorAll('.producte-input-quantitat').forEach(input => {
+                        input.addEventListener('input', function () {
+                            const fila = input.closest('tr');
+                            updateRowTotal(fila);
+                            updateTotalGeneral();
+                        });
+                    });
+
+                        const closeButton = popup.querySelector('.close-popup');
+                        
+                        closeButton.addEventListener('click', function () {
+                            popup.style.display = 'none';
+                        
+
+                            
+                        });
+                    })
+                    .catch(error = console.error('Error al obtener datos del ticket:', error));
+            });
+        });
+    });
+    function updateTotalGeneral() {
+        let total = 0;
+        document.querySelectorAll('#taula-productes-reparacio tbody tr').forEach(row => {
+            const rowTotal = parseFloat(row.querySelector('.producte-preu-total').textContent);
+            total += rowTotal;
+        });
+        document.getElementById('total-general').textContent = `${total.toFixed(2)} €`;
+    }
+    function esborrarDeReparacio(producte_id, reparacio_id){
+        const row = document.querySelector(`.linea_productes_reparacio_${producte_id}`);
+            if (row) {
+                row.remove();   
+                console.log(`Producto con ID ${producte_id} y data ID ${reparacio_id} ha sido eliminado.`);
+                // Aquí puedes añadir lógica adicional para manejar la eliminación en el servidor si es necesario
+            }
+        updateTotalGeneral();
+        alert("ESBORRA EL PRODUCTE " + producte_id +" DE LA REPARACIO " + reparacio_id);
+        var csrftoken = getCookie('csrftoken');
+        var xhr = new XMLHttpRequest();
+        console.log("qq"+producte_id+"ww");
+        xhr.open("POST", "/borrar_de_reparacio/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({producte_id:producte_id,reparacio_id:reparacio_id}));
+    }
+    
+ 
+    function aplicarReparacio(id_reparacio) {
+        var csrftoken = getCookie('csrftoken');
+        
+        // Recopilar datos de la tabla
+        var productes = [];
+        var rows = document.querySelectorAll(`#linea_productes_reparacio`);  // Seleccionar todas las filas de la tabla
+        
+        rows.forEach(row => {
+            var producteId = row.querySelector('#producte_id_reparacio').innerText;
+            var quantitat = row.querySelector(`#quantitat_${producteId}`).value;
+            console.log( producteId + "  " + quantitat);
+            if (producteId && quantitat) {
+                productes.push({
+                    producte_id: producteId,
+                    quantitat: parseInt(quantitat)
+                });
+            console.log(producteId + " " + quantitat);
+            }
+        });
+        console.log("Productos a enviar:", productes);
+        // Enviar datos al backend
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/aplicar_reparacio/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                obtenirUltimClient();
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({ productes: productes,id_reparacio:id_reparacio }));
+    }
+
+   
+
+    function showOverlay3(){
+        var overlay = document.getElementById("overlay4");
+        overlay.style.display = "block";
+    }
+
+    function facturarReparacio(id){
+
+        var csrftoken = getCookie('csrftoken');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/facturar_reparacio/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                obtenirUltimClient();
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({ id:id }));
+        
+
+    }
+
+function ImportarClientReparacio(id,nom,nif,tel){
+    var idClient=document.getElementById("clientIdReparacio");
+    var nomClient=document.getElementById("clientNomReparacio");
+    var nifClient=document.getElementById("clientNifReparacio");
+    var telClient=document.getElementById("clientTelReparacio");
+    console.log("aa",nif);
+    idClient.textContent=id;
+    nomClient.textContent=nom;
+    nifClient.textContent=nif;
+    telClient.textContent=tel;
+    hideOverlay();
+}
+    function ReparacioClientNou(){
+        var csrftoken = getCookie('csrftoken');
+
+        var nom=document.getElementById("nom-input").value;
+        var telefon=document.getElementById("telefon-input").value;
+        var banc=document.getElementById("banc-input").value;
+        var localitat=document.getElementById("localitat-input").value;
+        var direccio=document.getElementById("direccio-input").value;
+        var nif=document.getElementById("nif-input").value;
+        var email=document.getElementById("email-input").value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/crear_client/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                obtenirUltimClient();
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({ nom:nom, telefon:telefon, nif:nif, email:email, localitat:localitat, direccio:direccio, banc:banc }));
+        hideOverlay();
+    }
+    
+    function obtenirUltimClient() {
+        fetch('/ultim_client_id/')
+            .then(response => response.json())
+            .then(data => {
+                
+        
+
+        document.getElementById("clientIdReparacio").textContent=`${data.id}`;
+        document.getElementById("clientNomReparacio").textContent=`${data.nom}`;
+        document.getElementById("clientNifReparacio").textContent=`${data.nif}`;
+        document.getElementById("clientTelReparacio").textContent=`${data.telefon}`;
+                    
+        
+        var taula = document.getElementById("taula_client_reparacio").getElementsByTagName('tbody')[0];
+                    var fila = taula.insertRow(-1);
+                    var celda0 = fila.insertCell(0);
+                    var celda1 = fila.insertCell(1);
+                    var celda2 = fila.insertCell(2);
+                    var celda3 = fila.insertCell(3);
+                    var celda4 = fila.insertCell(4);
+                    
+                    celda0.textContent = `${data.id}`;
+                    celda1.textContent = `${data.nom}`;
+                    
+                    celda2.textContent = `${data.telefon}`
+                    celda3.textContent = `${data.nif}`;
+                    
+                    
+                    celda4.innerHTML = `<button onclick="ImportarClientReparacio('${data.id}', '${data.nom}', '${data.telefon}', '${data.nif}')"><i class="fa-regular fa-pen-to-square"></i></button>`;
+
+
+
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+    function showOverlay() {
+
+        var overlay = document.getElementById("overlay");
+        overlay.style.display = "block";
+
+    }
+
+    function hideOverlay() {
+
+        var overlay = document.getElementById("overlay");
+        overlay.style.display = "none";
+        
+        
+        
+    }
+    function hideOverlay4() {
+
+        var overlay = document.getElementById("overlay4");
+        overlay.style.display = "none";
+        
+        
+        
+    }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    afegirReparacioBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'flex'; // Mostrar el overlay
+    });
+
+    closeModalBtn.addEventListener('click', function () {
+        modalOverlay.style.display = 'none'; // Ocultar el overlay
+    });
+
+    // Opcional: cerrar el modal al hacer clic fuera del panel
+    modalOverlay.addEventListener('click', function (event) {
+        if (event.target === modalOverlay) {
+            modalOverlay.style.display = 'none'; // Ocultar el overlay
+        }
+    });
+});
+
+
+</script>
+<div class="overlay2" id="overlay2">
+  
+    <div class="popup3">
+
+        <div class="izq">
+            <p>CREAR PRODUCTE: 222</p>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label>NOM:</label></td>
+                        <td><input id="nom-input-nou1" type="text"></td>
+                        </tr>
+                        <tr>
+                            <td><label>REFERENCIA:</label></td>
+                            <td><input id="referencia-input1" type="text"></td>
+                            </tr>
+                            <tr>
+                         <td><label>DESCRIPCIO:</label></td>
+                                <td><input id="descripcio-input1" type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td><label>QUANTITAT:</label></td>
+                                    <td><input id="quantitat-input1" type="number"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>PREU DISTRIBUIDOR:</label></td>
+                                        <td><input id="preu-compra-input1" type="number"></td>
+                                        </tr>
+                                    <tr>
+                                        <td><label>PREU:</label></td>
+                                        <td><input id="preu-input1" type="number"></td>
+                                        </tr>
+                                        
+                </tbody>
+            </table>
+            <button class="clientNou" onclick="ReparacioCrearProducte1()">Afegir i crear client</button>
+            
+            
+        </div>
+        <button class="boto-tancar-facturar" onclick="hideOverlay2()">Cancelar</button>
+        <div class="der">
+            <p>BUSCAR PRODUCTE</p>
+            <input type="text">
+            <table id="taula_prod_reparacio">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NOM</th>
+                        <th>tlf</th>
+                        <th>NIF</th>
+                    </tr>
+                </thead>
+                <tbody >
+                    {% for prod in producte %}
+                    <tr class="cliente-row2">
+                        <td>{{ prod.id }}</td>
+                        <td> {{ prod.nombre }} </td>  
+                        <td>{{ prod.codigo }}</td>
+                        <td>{{ prod.cantidad }}</td>
+                        <td>{{ prod.descripcion }}</td>
+                        <td>{{ prod.precio }}</td>
+                        <td><button onclick="ImportarProducteExistent('{{ prod.codigo }}', '{{ prod.descripcion }}','{{ prod.precio }}'   )" ><i class="fa-regular fa-pen-to-square"></i></button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+                <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            <button id="prev-btn2" onclick="changePage(-1)" disabled>&larr; Anterior</button>
+                            <button id="next-btn2" onclick="changePage(1)">Siguiente &rarr;</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    
+</div>
+</div>
+<script>
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        function initializePagination(rowClass, prevBtnId, nextBtnId) {
+            const rows = document.querySelectorAll(rowClass);
+            const rowsPerPage = 5;
+            let currentPage = 0;
+            const totalPages = Math.ceil(rows.length / rowsPerPage);
+    
+            function showPage(page) {
+                const start = page * rowsPerPage;
+                const end = start + rowsPerPage;
+    
+                rows.forEach((row, index) => {
+                    if (index >= start && index < end) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+    
+                document.getElementById(prevBtnId).disabled = currentPage === 0;
+                document.getElementById(nextBtnId).disabled = currentPage === totalPages - 1;
+            }
+    
+            function changePage(direction) {
+                currentPage += direction;
+                showPage(currentPage);
+            }
+    
+            document.getElementById(prevBtnId).addEventListener('click', () => changePage(-1));
+            document.getElementById(nextBtnId).addEventListener('click', () => changePage(1));
+    
+            showPage(currentPage);
+        }
+    
+        initializePagination('.cliente-row0', 'prev-btn0', 'next-btn0');
+        initializePagination('.cliente-row2', 'prev-btn2', 'next-btn2');
+        initializePagination('.cliente-row', 'prev-btn', 'next-btn');
+    });
+    
+
+    function ImportarProducteExistent(referencia, descripcio, preu){
+        var taula = document.getElementById("taulaReparacioProductes");
+        console.log("WW");
+        // Crear una nueva fila al final de la tabla
+        var newRow = taula.insertRow(taula.rows.length - 1);
+        
+        
+        // Crear y añadir celdas a la nueva fila
+        var cell1 = newRow.insertCell(0);
+        var cell2 = newRow.insertCell(1);
+        var cell3 = newRow.insertCell(2);
+        var cell4 = newRow.insertCell(3);
+        var cell5 = newRow.insertCell(4);
+    
+        // Rellenar las celdas con los datos pasados como parámetros
+        cell1.textContent = referencia;
+        cell1.id="referencia-producte-taula-reparacio";
+        cell2.textContent = descripcio;
+        cell3.textContent = preu;
+        
+        // Crear elementos para el input y el span
+        var inputQuantitat = document.createElement("input");
+        inputQuantitat.id = "input-quantitat-producte";
+        inputQuantitat.type = "number";
+        inputQuantitat.value = "1"; // Valor por defecto o inicial
+        
+        
+        
+        // Función para actualizar el span y el total cuando cambia el valor del input
+        inputQuantitat.addEventListener("input", function() {
+            var quantitat = parseInt(inputQuantitat.value); // Convertir el valor del input a entero
+            var preuUnitari = parseFloat(preu); // Convertir el precio a número decimal
+            var total = quantitat * preuUnitari; // Calcular el total
+            
+            // Mostrar el total en la celda5
+            cell5.textContent = total.toFixed(2); // Asegurar que el total tenga 2 decimales
+            calcularTotal();
+            calcularSumaProductes();
+        });
+        
+        // Añadir el input y el span a la celda correspondiente
+        
+        cell4.appendChild(inputQuantitat);
+        
+        // Mostrar el precio inicial en la celda5
+        cell5.textContent = parseFloat(preu).toFixed(2); // Mostrar el precio por unidad inicial
+    
+        cell5.className = "preu-total";
+        calcularTotal();
+        calcularSumaProductes();
+    }
+    
+    
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function ReparacioCrearProducte1(){
+        var csrftoken = getCookie('csrftoken');
+
+        var nom=document.getElementById("nom-input-nou1").value;
+        var referencia=document.getElementById("referencia-input1").value;
+        var descripcio=document.getElementById("descripcio-input1").value;
+        var preu=document.getElementById("preu-input1").value;
+        var quantitat=document.getElementById("quantitat-input1").value;
+        var preuCompra=document.getElementById("preu-compra-input1").value;
+        console.log("aa" + nom +quantitat);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/crear_producte/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                var response = JSON.parse(xhr.responseText);
+        // Obtener el ID del producto
+                var productId = response.id;
+                console.log(productId+"sss");
+                ImportarProducteExistent(referencia, descripcio, preu);
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({ nom:nom, referencia:referencia, quantitat:quantitat, descripcio:descripcio, preu:preu,preuCompra:preuCompra }));
+        hideOverlay2();
+        
+        afegirUltimProducte();
+        
+    }
+
+
+    function ReparacioCrearProducte(){
+        var csrftoken = getCookie('csrftoken');
+
+        var nom=document.getElementById("nom-input-nou").value;
+        var referencia=document.getElementById("referencia-input").value;
+        var descripcio=document.getElementById("descripcio-input").value;
+        var preu=document.getElementById("preu-input").value;
+        var quantitat=document.getElementById("quantitat-input").value;
+        var preuCompra=document.getElementById("preu-compra-input").value;
+        console.log("aa" + nom +quantitat);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/crear_producte/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                var response = JSON.parse(xhr.responseText);
+        // Obtener el ID del producto
+                var producteId = response.id;
+                console.log(producteId+"sss");
+                ImportarProducteExistentReparacio(producteId, nom, referencia,quantitat,descripcio,preu);
+                VeureUltimProducteReparacio(producteId,nom, referencia,quantitat,descripcio,preu);
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send(JSON.stringify({ nom:nom, referencia:referencia, quantitat:quantitat, descripcio:descripcio, preu:preu,preuCompra:preuCompra }));
+        hideOverlay2();
+        
+        
+        
+    }
+
+  
+    
+    function importarProducteCreat(nom, referencia, quantitat, descripcio, preu){
+        var taula = document.getElementById("taulaReparacioProductes");
+    
+        // Crear una nueva fila al final de la tabla
+        var newRow = taula.insertRow(taula.rows.length - 1);
+    
+        // Crear y añadir celdas a la nueva fila
+        var cell1 = newRow.insertCell(0);
+        var cell2 = newRow.insertCell(1);
+        var cell3 = newRow.insertCell(2);
+        var cell4 = newRow.insertCell(3);
+        var cell5 = newRow.insertCell(4);
+    
+        // Rellenar las celdas con los datos pasados como parámetros
+        cell1.textContent = referencia;
+        cell1.id="referencia-producte-taula-reparacio";
+        cell2.textContent = descripcio;
+        cell3.textContent = preu;
+        
+        // Crear elementos para el input y el span
+        var inputQuantitat = document.createElement("input");
+        inputQuantitat.id = "input-quantitat-producte";
+        inputQuantitat.type = "number";
+        inputQuantitat.value = "1"; // Valor por defecto o inicial
+        
+        
+        
+        // Función para actualizar el span y el total cuando cambia el valor del input
+        inputQuantitat.addEventListener("input", function() {
+            var quantitat = parseInt(inputQuantitat.value); // Convertir el valor del input a entero
+            var preuUnitari = parseFloat(preu); // Convertir el precio a número decimal
+            var total = quantitat * preuUnitari; // Calcular el total
+            
+            // Mostrar el total en la celda5
+            cell5.textContent = total.toFixed(2); // Asegurar que el total tenga 2 decimales
+            calcularTotal();
+            calcularSumaProductes();
+        });
+        
+        // Añadir el input y el span a la celda correspondiente
+        
+        cell4.appendChild(inputQuantitat);
+        
+        // Mostrar el precio inicial en la celda5
+        cell5.textContent = parseFloat(preu).toFixed(2); // Mostrar el precio por unidad inicial
+    
+        cell5.className = "preu-total";
+        calcularTotal();
+        calcularSumaProductes();
+    }
+    
+
+    function calcularTotal() {
+        var total = 0;
+        var preusTotalElements = document.querySelectorAll("#taulaReparacioProductes .preu-total");
+        var totalRep=document.getElementById("sumTotal");
+        preusTotalElements.forEach(function(element) {
+            total += parseFloat(element.textContent);
+        });
+    
+        totalRep.textContent=total;
+    }
+
+    function calcularSumaProductes() {
+        var total = 0;
+        var quantitatProductesElements = document.querySelectorAll("#taulaReparacioProductes #input-quantitat-producte");
+        console.log(quantitatProductesElements)
+        var QuantitatProductes = document.getElementById("sumQuantitat");
+    
+        quantitatProductesElements.forEach(function(element) {
+            total += parseInt(element.value); // Asegurar que el valor sea numérico o cero si es vacío
+            // total += parseFloat(element.value); // Si los valores pueden ser decimales
+        });
+    
+        console.log(total);
+        QuantitatProductes.textContent = total;
+    }
+    
+
+
+    function actualitzarSumaQuantitatPreu(){
+        var sum = 0;
+       
+        var quantities = document.querySelectorAll('.cantidad');
+        quantities.forEach(function(cell) {
+            sum += parseFloat(cell.textContent) || 0;
+        });
+        document.getElementById('sumQuantitat').textContent = sum;
+
+        var total=0;
+        var preus = document.querySelectorAll('.preu');
+        preus.forEach(function(cell) {
+            total += parseFloat(cell.textContent) || 0;
+        });
+        document.getElementById('sumTotal').textContent = total;
+    }
+    function afegirUltimProducte(){
+        var csrftoken = getCookie('csrftoken');
+
+        console.log("ultimmm")
+        
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/afegir_ultim_producte/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken);
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                var prod = JSON.parse(xhr.responseText);
+                    console.log("Respuesta del servidor:", prod,"ee");
+
+                    var taula = document.getElementById("taula_prod_reparacio").getElementsByTagName('tbody')[0];
+                    var fila = taula.insertRow();
+                    var celda0 = fila.insertCell(0);
+                    var celda1 = fila.insertCell(1);
+                    var celda2 = fila.insertCell(2);
+                    var celda3 = fila.insertCell(3);
+                    var celda4 = fila.insertCell(4);
+                    var celda5 = fila.insertCell(5);
+                    var celda6 = fila.insertCell(6);
+                    celda0.textContent = prod.id;
+                    celda1.textContent = prod.nom;
+                    celda2.textContent = prod.referencia;
+                    celda3.textContent = prod.quantitat;
+                    celda4.textContent = prod.descripcio;
+                    celda5.textContent = prod.preu;
+                    console.log(prod.preu)
+                    celda6.innerHTML = '<button onclick="ImportarProducteExistent({{ prod.codigo }}, {{prod.descripcion}},{{prod.precio}})"><i class="fa-regular fa-pen-to-square"></i></button>';
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        xhr.send();
+        
+
+    }
+    
+
+function showOverlay2() {
+
+    var overlay2 = document.getElementById("overlay2");
+    overlay2.style.display = "block";
+    console.log(overlay2)
+
+}
+
+function hideOverlay2() {
+
+    var overlay2 = document.getElementById("overlay2");
+    overlay2.style.display = "none";
+    
+    
+}
+
+function CrearNouReparacio(){
+    var clientId=document.getElementById("clientIdReparacio").innerHTML;
+    var descripcio=document.getElementById("DescripcioReparacio").value;
+    var total=document.getElementById("sumTotal").innerHTML;
+    var referenciesProd=document.querySelectorAll("#taulaReparacioProductes #referencia-producte-taula-reparacio");
+    var quantitatsProd=document.querySelectorAll("#input-quantitat-producte");
+
+    var diccionariProductes = {};
+    
+    
+    referenciesProd.forEach(function(element, index) {
+        let referencia = element.innerHTML;
+        let quantitat = quantitatsProd[index].value;
+        diccionariProductes[referencia] = quantitat;
+    });
+    
+    console.log(diccionariProductes);
+    console.log(clientId);
+    var csrftoken = getCookie('csrftoken'); 
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/crear_nou_reparacio/", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("Respuesta del servidor:", xhr.responseText);
+            
+        } else {
+            console.error("Error en la solicitud:", xhr.statusText);
+            alert("Falten dades per omplir. Revisa el client i els productes")
+        }
+    };
+    xhr.onerror = function () {
+        console.error("Error de red al enviar la solicitud.");
+    };
+    xhr.send(JSON.stringify({diccionariProductes:diccionariProductes, descripcio:descripcio,clientId:clientId,total:total}));
+   
+    
+
+}
+</script>
+<style>
+    /* styles.css */
+
+    .popup-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 10;
+        overflow-y: auto; /* Enable vertical scrolling if necessary */
+    }
+    
+    .popup-content {
+        position: relative;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-height: 80%; /* Limit the height of the content */
+        overflow-y: auto; /* Enable vertical scrolling for content */
+        width: 80%;
+        box-sizing: border-box; /* Ensure padding is included in the width */
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+    }
+    
+    #modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
+        display: none; /* Oculta el overlay al cargar la página */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000; /* Asegura que esté encima de todo */
+    }
+    
+    #modal-panel {
+        width: 50%;
+        max-width: 600px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+</style>
+        
+    </div>
+    <div id="popup" class="popup-container">
+        <div class="popup-content">
+            <!-- The content will be inserted here by JavaScript -->
+        </div>
+    </div>
+    
+</div>
+
+</body>
+</html>
+
+{% endblock %}

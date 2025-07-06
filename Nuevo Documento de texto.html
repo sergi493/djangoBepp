@@ -1,0 +1,103 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Login and Create Account Page</title>
+    <style>
+    .container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .form-container {
+      width: 45%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .form-container.collapsed {
+      width: 0;
+      padding: 0;
+    }
+
+    .login-form {
+      display: block;
+    }
+
+    .login-form.collapsed {
+      display: none;
+    }
+
+    .create-form {
+      display: none;
+    }
+
+    .create-form.collapsed {
+      display: block;
+    }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+      <div class="form-container login-form">
+        <h2>Login Form</h2>
+        <form>
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required>
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required>
+          <button type="submit">Login</button>
+        </form>
+      </div>
+      <div class="form-container create-form">
+        <h2>Create Account Form</h2>
+        <form>
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required>
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required>
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required>
+          <button type="submit">Create Account</button>
+        </form>
+      </div>
+      <button class="toggle-form" data-form="login">Login</button>
+      <button class="toggle-form" data-form="create">Create Account</button>
+    </div>
+    <script>
+    const toggleForms = document.querySelectorAll('.toggle-form');
+
+    toggleForms.forEach((button) => {
+      button.addEventListener('click', () => {
+        const formName = button.dataset.form;
+        const loginForm = document.querySelector('.login-form');
+        const createForm = document.querySelector('.create-form');
+        const loginButton = document.querySelector('.toggle-form[data-form="login"]');
+        const createButton = document.querySelector('.toggle-form[data-form="create"]');
+
+        if (formName === 'login') {
+          loginForm.classList.remove('collapsed');
+          createForm.classList.add('collapsed');
+          loginButton.classList.add('active');
+          createButton.classList.remove('active');
+        } else {
+          loginForm.classList.add('collapsed');
+          createForm.classList.remove('collapsed');
+          loginButton.classList.remove('active');
+          createButton.classList.add('active');
+        }
+      });
+    });
+    </script>
+    </body>
+    </html>
+
+    This code contains an HTML structure with two forms inside a container. The forms are initially hidden using CSS, and they are displayed based on the button that is clicked. The script attached to the buttons toggle the forms by adding and removing the 'collapsed' class. This class changes the width of the forms, effectively hiding or showing them.
+
+    The user can switch between the Login and Create Account forms by clicking on the corresponding button. The other form will collapse, and the selected form will expand. The transition is smooth and visually appealing, making it easy for the user to interact with the page.

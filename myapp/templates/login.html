@@ -1,0 +1,85 @@
+{% extends "layouts/base1.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login</title>
+    <!-- Fonts i icons (si no están en base1.html) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/8e16281abb.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="box">
+      <form method="POST">
+        <h2>ACCES</h2>
+        {% csrf_token %}
+        <p class="error-message">{{ error }}</p>
+
+<h2>Accés al teu compte</h2>
+<p class="error-message">{{ error }}</p>
+
+<div class="input-group">
+  <i class="fas fa-user"></i>
+  <input type="text" name="{{ form.username.name }}" placeholder="Nom d'usuari" />
+</div>
+
+<div class="input-group">
+  <i class="fas fa-lock"></i>
+  <input type="password" name="{{ form.password.name }}" placeholder="Contrasenya" />
+</div>
+
+<div class="input-group">
+  <input type="submit" value="Entra" class="submit-btn" />
+</div>
+
+<div class="input-group" style="text-align: center">
+  <p>
+    <a href="#">He oblidat la contrasenya</a> o
+    <a href="/signup/">Crear un compte nou</a>
+  </p>
+</div>
+
+      </form>
+    </div>
+  </body>
+
+  <!-- ESTIL EXTRA que SE AÑADE AL CSS GENERAL -->
+  <style>
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 24px;
+      font-size: 1.8rem;
+    }
+
+    .input-group input[type="submit"] {
+      background-color: #4a90e2;
+      color: white;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .input-group input[type="submit"]:hover {
+      background-color: #367cd6;
+    }
+
+    .error-message {
+      color: red;
+      text-align: center;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+  </style>
+</html>
+{% endblock %}

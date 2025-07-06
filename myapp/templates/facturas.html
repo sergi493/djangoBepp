@@ -1,0 +1,404 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+<div class="main-content">
+   <h1>🧾 FACTURES</h1>
+  <div class="products-section" id="barra-dies">
+            
+           <!-- <p>(es pot eliminar, descarregar, filtrar per preu negatiu (reembolsos), fecha, ID, veure datos, enviar per
+                mail?)mostra els ultims 50( per que no tardi massa en carregar la pagina) + opció per mostrar tots els que vol( 50, 100, 150, xifra personalitzada o tots, o per periode de temps x dia fins x dia)</p>-->
+               
+                   
+            
+                <span style="display: flex; align-items: center; margin-bottom:5px;">
+                    <p style="margin: 0 5px 0 0;">De:</p>
+                    <input type="date" id="data-inicio" style="margin-right: 10px;">
+                    <p style="margin: 0 5px 0 0;">A:</p>
+                    <input type="date" id="data-fin" style="margin-right: 10px;">
+                    <button id="refresca" onclick="filtrarDies()">Refresca</button>
+                </span>
+          
+          
+            
+           
+                    
+        </div>
+  <section class="products-header">
+   
+  </section>
+<script>
+
+</script>
+  <div id="popup" class="popup-container"></div>
+
+  <form method="post">
+    <table class="invoice-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>DATA</th>
+          <th>CLIENT</th>
+          <th>TIPUS PAGAMENT</th>
+          <th>TOTAL</th>
+          <th>VEURE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for factura in facturas %}
+        <tr>
+          <td>{{ factura.id }}</td>
+          <td>{{ factura.date|date:"d/m/Y H:i" }}</td>
+
+          <td>{{ factura.persona_id }}</td>
+          <td>{{ factura.metodo_pago }}</td>
+          <td>{{ factura.total }} €</td>
+          <td>
+            <button type="button" class="popup-trigger" data-factura-id="{{ factura.id }}">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<style>
+  .products-header h1 {
+    font-size: 2rem;
+    margin: 1rem 0;
+    text-align: center;
+  }
+
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    padding: 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .invoice-table th {
+    background-color: #f4f4f4;
+  }
+
+  .popup-container {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .popup-content {
+    background-color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .popup-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .popup-buttons button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .blue-button { background-color: #3498db; color: white; }
+  .red-button { background-color: #e74c3c; color: white; }
+  .green-button { background-color: #2ecc71; color: white; }
+  .close-popup { background-color: #bdc3c7; }
+
+  .popup-buttons button:hover {
+    opacity: 0.9;
+  }
+
+  .popup-content table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+  }
+
+  .popup-content th,
+  .popup-content td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+
+  .popup-content img {
+    max-height: 40px;
+    border-radius: 4px;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const popup = document.getElementById('popup');
+    const triggerButtons = document.querySelectorAll('.popup-trigger');
+
+    triggerButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const facturaId = button.dataset.facturaId;
+        fetch(`/get_factura_data/${facturaId}/`)
+          .then(res => res.json())
+          .then(data => showFacturaPopup(data))
+          .catch(err => console.error('Error carregant la factura:', err));
+      });
+    });
+
+    function showFacturaPopup(data) {
+       localStorage.setItem(`factura-${data.id}`, JSON.stringify(data)); // ⬅️ AÑÁDELA AQUÍ
+      const dateObj = new Date(data.date);
+      const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
+      const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+
+      let rows = data.productos.map(p => `
+        <tr>
+          <td>${p.producto_id}</td>
+          <td>${p.nombre}</td>
+          <td>${p.cantidad}</td>
+          <td>${p.preu} €</td>
+          <td>${(p.preu * p.cantidad).toFixed(2)} €</td>
+          <td><img src="${p.producto_imagen}"></td>
+        </tr>
+      `).join('');
+      
+      popup.innerHTML = `
+        <div class="popup-content">
+          <h2>Factura núm. ${data.id}</h2>
+          <p><strong>Procedència:</strong> ${data.procedencia} (ID: ${data.taula_id_procedencia})</p>
+          <p><strong>Data:</strong> ${formattedDate} - <strong>Hora:</strong> ${time}</p>
+          <p><strong>Client:</strong> ${data.persona_nombre} (ID: ${data.persona_id}) - ${data.telefon} - ${data.email}</p>
+
+          <label for="paymentMethod">Mètode de pagament:</label>
+          <select id="paymentMethod">
+            <option value="Tarjeta" ${data.metodo_pago === 'Targeta' ? 'selected' : ''}>Targeta</option>
+            <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectiu</option>
+          </select>
+
+          <table id="taulaFactura">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Quantitat</th>
+                <th>Preu</th>
+                <th>Total</th>
+                <th>Imatge</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+
+          <h3>Total factura: ${data.total} €</h3>
+
+          <div class="popup-buttons">
+            <button id="descarregarFactura" class="blue-button">Descarregar</button>
+            <button class="red-button" onclick="reembolsarFactura(${data.id})">Reemborsar</button>
+            <button class="green-button">Aplicar</button>
+           <button class="green-button" onclick="mostrarEditorEmail(${data.id})">Enviar per mail</button>
+
+            <button class="close-popup">Tancar</button>
+          </div>
+        </div>
+      `;
+       
+      popup.style.display = 'flex';
+        popup.querySelector('#descarregarFactura').onclick = () => genFactura(data);
+      popup.querySelector('.close-popup').addEventListener('click', () => {
+        popup.style.display = 'none';
+      });
+    }
+  });
+
+  function getCookie(name) {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+  }
+
+  function reembolsarFactura(id) {
+    const csrftoken = getCookie('csrftoken');
+
+    fetch('/reembolsar_factura/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify({ id })
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('Reemborsament correcte:', data);
+      location.reload();
+    })
+    .catch(err => console.error('Error al reemborsar:', err));
+  }
+
+
+  function genFactura(data) {
+  const dateObj = new Date(data.date);
+  const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+  const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+
+  const docDefinition = {
+    content: [
+      { text: `Factura núm. ${data.id}`, style: 'header' },
+      { text: `Data: ${formattedDate} - Hora: ${time}`, style: 'subheader' },
+      { text: `Client: ${data.persona_nombre} (ID: ${data.persona_id})`, style: 'subheader' },
+      { text: `Telèfon: ${data.telefon}`, style: 'subheader' },
+      { text: `Procedència: ${data.procedencia} (ID: ${data.taula_id_procedencia})`, style: 'subheader' },
+      { text: `Mètode de pagament: ${data.metodo_pago}`, style: 'subheader' },
+      { text: '\n' },
+
+      {
+        table: {
+          headerRows: 1,
+          widths: ['auto', '*', 'auto', 'auto', 'auto'],
+          body: [
+            ['ID', 'Nom', 'Quantitat', 'Preu', 'Total'],
+            ...data.productos.map(p => [
+              p.producto_id,
+              p.nombre,
+              p.cantidad,
+              `${p.preu} €`,
+              `${(p.preu * p.cantidad).toFixed(2)} €`
+            ])
+          ]
+        }
+      },
+      { text: '\n' },
+      { text: `Total factura: ${data.total} €`, style: 'total' }
+    ],
+    styles: {
+      header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+      subheader: { fontSize: 12, margin: [0, 2, 0, 2] },
+      total: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
+    }
+  };
+
+  pdfMake.createPdf(docDefinition).download(`factura_${data.id}.pdf`);
+}
+
+
+function mostrarEditorEmail(facturaId) {
+  const facturaData = JSON.parse(localStorage.getItem(`factura-${facturaId}`));
+  if (!facturaData) return alert("Factura no trobada");
+
+  const popup = document.getElementById('popup');
+  const container = popup.querySelector('.popup-content');
+
+  const textarea = document.createElement('textarea');
+  textarea.id = 'email-message';
+  textarea.placeholder = 'Missatge que s’enviarà per correu...';
+  textarea.style.width = '100%';
+  textarea.style.minHeight = '100px';
+  textarea.style.marginTop = '1rem';
+  textarea.value = `Hola ${facturaData.persona_nombre},\n\nEt fem arribar adjunta la factura núm. ${facturaData.id}.\n\nSalutacions.`;
+
+  const btn = document.createElement('button');
+  btn.textContent = '✉️ Enviar correu';
+  btn.className = 'blue-button';
+  btn.style.marginTop = '1rem';
+
+  btn.onclick = () => {
+    const missatge = textarea.value;
+
+    // 🔁 Generar el mateix PDF que a `genFactura()`
+    const dateObj = new Date(facturaData.date);
+    const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+    const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+
+    const docDefinition = {
+      content: [
+        { text: `Factura núm. ${facturaData.id}`, style: 'header' },
+        { text: `Data: ${formattedDate} - Hora: ${time}`, style: 'subheader' },
+        { text: `Client: ${facturaData.persona_nombre} (ID: ${facturaData.persona_id})`, style: 'subheader' },
+        { text: `Telèfon: ${facturaData.telefon}`, style: 'subheader' },
+        { text: `Procedència: ${facturaData.procedencia} (ID: ${facturaData.taula_id_procedencia})`, style: 'subheader' },
+        { text: `Mètode de pagament: ${facturaData.metodo_pago}`, style: 'subheader' },
+        { text: '\n' },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '*', 'auto', 'auto', 'auto'],
+            body: [
+              ['ID', 'Nom', 'Quantitat', 'Preu', 'Total'],
+              ...facturaData.productos.map(p => [
+                p.producto_id,
+                p.nombre,
+                p.cantidad,
+                `${p.preu} €`,
+                `${(p.preu * p.cantidad).toFixed(2)} €`
+              ])
+            ]
+          }
+        },
+        { text: '\n' },
+        { text: `Total factura: ${facturaData.total} €`, style: 'total' }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+        subheader: { fontSize: 12, margin: [0, 2, 0, 2] },
+        total: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
+      }
+    };
+
+    pdfMake.createPdf(docDefinition).getDataUrl(pdfBase64 => {
+      fetch('/enviar_factura_email/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({
+          factura: facturaData,
+          missatge: missatge,
+          pdf: pdfBase64
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert('Correu enviat correctament!');
+        popup.style.display = 'none';
+      })
+      .catch(err => {
+        console.error('Error al enviar:', err);
+        alert('Error enviant el correu.');
+      });
+    });
+  };
+
+  container.appendChild(textarea);
+  container.appendChild(btn);
+}
+
+
+  
+
+</script>
+{% endblock %}
