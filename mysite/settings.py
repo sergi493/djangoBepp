@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-p*uyxsf2btu**qravk3u^vq4%#xc7#mba*eh7b9@4x%39jz0*b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'django.beepmoraebre.work', 'app.beepmoraebre.work']
+
 
 
 # Application definition
@@ -137,3 +138,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'gineriussergi@gmail.com'
 EMAIL_HOST_PASSWORD = 'sfla yrtt ntby gytq'  # No uses tu contraseña normal si usas Gmail
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://django.beepmoraebre.work',
+    'https://app.beepmoraebre.work',
+]
