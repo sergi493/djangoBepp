@@ -3,6 +3,8 @@ from django.http import HttpResponse,JsonResponse
 # Create your views here.
 #from .models import Project, Task
 from django.core.mail import EmailMessage
+from django.core.paginator import Paginator
+from django.shortcuts import render
 
 from .models import Producto,Pressupost,ProducteEnPressupost,Pedidos,FacturaCompra,Reparacio, ProducteEnReparacio,Avui
 from .models import Persona
@@ -144,14 +146,46 @@ def borrar_de_reparacio(request):
 
 @login_required
 def facturas(request):
-    facturas= Facturas.objects.all()
-    for factura in facturas:
+    data_inici = request.GET.get('data_inicio')
+    data_fi = request.GET.get('data_fi')
+    search = request.GET.get('search')
+    
+    factures_queryset = Facturas.objects.all().order_by('-date')
+    
+    # Filtrar por búsqueda: buscar todas las personas que coinciden
+    if search:
+        personas_nom = Persona.objects.filter(nombre__icontains=search)
+        personas_tel = Persona.objects.filter(telefono__icontains=search)
+        personas = personas_nom | personas_tel
+        factures_queryset = factures_queryset.filter(persona_id__in=personas.values_list('id', flat=True))
+    
+    # Filtrar por fechas
+    if data_inici and data_fi:
+        try:
+            data_inici_obj = datetime.strptime(data_inici, "%Y-%m-%d")
+            data_fi_obj = datetime.strptime(data_fi, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            factures_queryset = factures_queryset.filter(date__range=(data_inici_obj, data_fi_obj))
+        except ValueError:
+            pass
 
-        nom_cli=Persona.objects.get(id=factura.persona_id).nombre
-       
-        factura.persona_id=nom_cli
-    return render(request, "facturas.html", {"facturas":facturas})
+    # Paginación
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(factures_queryset, 5)
+    page = paginator.get_page(page_number)
 
+    # Reemplazar persona_id por nombre
+    for factura in page:
+        try:
+            factura.persona_id = Persona.objects.get(id=factura.persona_id).nombre
+        except Persona.DoesNotExist:
+            factura.persona_id = "Desconegut"
+
+    return render(request, "facturas.html", {
+        "facturas": page,
+        "data_inicio": data_inici or '',
+        "data_fi": data_fi or '',
+        "search": search or ''
+    })
 
 
 @login_required
