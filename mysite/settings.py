@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+#cloudflared tunnel run django-tunnel
+
 
 from pathlib import Path
 import os
@@ -57,7 +59,7 @@ ROOT_URLCONF = 'mysite.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ BASE_DIR / "templates" ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,7 +122,10 @@ USE_TZ = True
 import os
 STATIC_URL = '/static/'
 #STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES=["static"]
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
 MEDIA_URL=""
 MEDIA_ROOT = os.path.join(BASE_DIR, '')
 LOGIN_URL= "/login/"

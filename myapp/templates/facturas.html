@@ -1,4 +1,5 @@
   {% extends "layouts/base.html" %}
+{% load static %}
 
 {% block content %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -13,22 +14,21 @@
                
                    
             
-                <span style="display: flex; align-items: center; margin-bottom:5px;">
-                    <form method="get" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <label for="data-inicio">De:</label>
-                    <input type="date" id="data-inicio" name="data_inicio" value="{{ data_inicio }}">
-                    <label for="data-fin">A:</label>
-                     
-                    <input type="date" id="data-fin" name="data_fi" value="{{ data_fi }}">
-                 <input type="text" name="search" value="{{ search }}" placeholder="Buscar persona...">
-
-                    <button type="submit" class="blue-button">🔍</button> 
-                  </form>
-  <form method="get">
-    <button type="submit" class="blue-button">🔄</button>
+               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+  <form method="get" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <label for="data-inicio">De:</label>
+    <input type="date" id="data-inicio" name="data_inicio" value="{{ data_inicio }}">
+    <label for="data-fin">A:</label>
+    <input type="date" id="data-fin" name="data_fi" value="{{ data_fi }}">
+    <input type="text" name="search" value="{{ search }}" placeholder="Buscar persona...">
+    <button type="submit" class="blue-button">🔍</button>
   </form>
 
-                </span>
+  <form method="get" style="margin: 0; margin-left: 10px;">
+    <button type="submit" class="blue-button">🔄</button>
+  </form>
+</div>
+
           
           
             
@@ -90,91 +90,7 @@
 </div>
 
 <style>
-  .products-header h1 {
-    font-size: 2rem;
-    margin: 1rem 0;
-    text-align: center;
-  }
-
-  .invoice-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-  }
-
-  .invoice-table th,
-  .invoice-table td {
-    padding: 0.75rem;
-    text-align: center;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .invoice-table th {
-    background-color: #f4f4f4;
-  }
-
-  .popup-container {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .popup-content {
-    background-color: white;
-    border-radius: 10px;
-    padding: 2rem;
-    max-width: 800px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  }
-
-  .popup-buttons {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .popup-buttons button {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-
-  .blue-button { background-color: #3498db; color: white; }
-  .red-button { background-color: #e74c3c; color: white; }
-  .green-button { background-color: #2ecc71; color: white; }
-  .close-popup { background-color: #bdc3c7; }
-
-  .popup-buttons button:hover {
-    opacity: 0.9;
-  }
-
-  .popup-content table {
-    width: 100%;
-    margin-top: 1rem;
-    border-collapse: collapse;
-  }
-
-  .popup-content th,
-  .popup-content td {
-    padding: 0.5rem;
-    border-bottom: 1px solid #eee;
-    text-align: center;
-  }
-
-  .popup-content img {
-    max-height: 40px;
-    border-radius: 4px;
-  }
+ 
 </style>
 
 <script>
