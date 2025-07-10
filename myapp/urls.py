@@ -8,7 +8,7 @@ urlpatterns = [
      path("signup/", views.signup, name="ind"),
      path("logout/", views.signout, name="logout"),
      path("user/", views.user, name="user"),
-     path("", views.signup, name="home"),
+     path("", views.signin, name="home"),
     path("pedidos/", views.pedidos, name="pedidos"),
     path("hoy/", views.hoy, name="hoy"),
     path("presupostos/", views.presupostos, name="presupostos"),
@@ -68,6 +68,7 @@ urlpatterns = [
     
     path('tancar_caixa/', views.tancar_caixa, name='tancar_caixa'),
     path('enviar_factura_email/', views.enviar_factura_email, name='enviar_factura_email'),
+    
 
     
     

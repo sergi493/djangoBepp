@@ -529,7 +529,12 @@
                             <div class="popup-content-inner">
                                 <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
                                     <div id="ticket-number">
-                                        <h2>PRESSUPOST número:<span id="pressupost_id_obtenir"> ${data.id}</span><br> ${data.persona_id} <br> ${data.persona_nom}</h2>
+                                        <h2>PRESSUPOST número:<span id="pressupost_id_obtenir"> ${data.id}</span><br>  <br> </h2>
+                                        <button onclick="showOverlay()">Cambiar client</button>
+                                         <span id="clientIdPressupostEdit" >${data.persona_id}</span>
+        <span id="clientNomPressupostEdit">${data.persona_nom}</span>
+        <span id="clientNifPressupostEdit"></span>
+        <span id="clientTelPressupostEdit"></span>
                                         <p>Facturat ${data.facturat === '' ? 'qq' : data.facturat}</p>
                                         <div class="payment-container">
                                             <label for="paymentMethod">Metode de Pagament:</label>
@@ -677,43 +682,48 @@
     
  
     function aplicarPressupost(id_pressupost) {
-        var csrftoken = getCookie('csrftoken');
-        
-        // Recopilar datos de la tabla
-        var productes = [];
-        var rows = document.querySelectorAll(`#linea_productes_pressupost`);  // Seleccionar todas las filas de la tabla
-        
-        rows.forEach(row => {
-            var producteId = row.querySelector('#producte_id_pressupost').innerText;
-            var quantitat = row.querySelector(`#quantitat_${producteId}`).value;
-            console.log(producteId + quantitat + "jjj");
-            if (producteId && quantitat) {
-                productes.push({
-                    producte_id: producteId,
-                    quantitat: parseInt(quantitat)
-                });
-                console.log(producteId + quantitat + "j88");
-            }
-        });
-        console.log("Productos a enviar:", productes);
-        // Enviar datos al backend
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/aplicar_pressupost/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                obtenirUltimClient();
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({ productes: productes,id_pressupost:id_pressupost }));
-    }
+    const csrftoken = getCookie('csrftoken');
+    
+    // 1️⃣ Recopilar línies de productes
+    const productes = [];
+    document.querySelectorAll('.linea_productes_pressupost').forEach(row => {
+        const producteId = row.querySelector('#producte_id_pressupost').innerText.trim();
+        const quantitat = row.querySelector(`#quantitat_${producteId}`).value;
+        if (producteId && quantitat) {
+            productes.push({
+                producte_id: producteId,
+                quantitat: parseInt(quantitat, 10)
+            });
+        }
+    });
+
+    // 2️⃣ Recollir nova persona i mètode de pagament
+    const novaPersonaId = document.getElementById('clientIdPressupostEdit').innerText.trim();
+    const metodePagament = document.getElementById('paymentMethod').value;
+
+    console.log("Enviant:", { productes, id_pressupost, novaPersonaId, metodePagament });
+
+    // 3️⃣ Enviar al backend
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/aplicar_pressupost/", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRFToken', csrftoken);
+    xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            console.log("Resposta servidora:", xhr.responseText);
+            obtenirUltimClient();
+        } else {
+            console.error("Error sol·licitud:", xhr.statusText);
+        }
+    };
+    xhr.onerror = () => console.error("Error de xarxa.");
+    xhr.send(JSON.stringify({
+        productes: productes,
+        id_pressupost: id_pressupost,
+        persona_id: novaPersonaId,
+        metodo_pago: metodePagament
+    }));
+}
 
    
 
@@ -752,11 +762,21 @@ function ImportarClientPressupost(id,nom,nif,tel){
     var nomClient=document.getElementById("clientNomPressupost");
     var nifClient=document.getElementById("clientNifPressupost");
     var telClient=document.getElementById("clientTelPressupost");
+
+    var idClientEdit=document.getElementById("clientIdPressupostEdit");
+    var nomClientEdit=document.getElementById("clientNomPressupostEdit");
+    var nifClientEdit=document.getElementById("clientNifPressupostEdit");
+    var telClientEdit=document.getElementById("clientTelPressupostEdit");
     console.log("aa",nif);
     idClient.textContent=id;
     nomClient.textContent=nom;
     nifClient.textContent=nif;
     telClient.textContent=tel;
+
+    idClientEdit.textContent=id;
+    nomClientEdit.textContent=nom;
+    nifClientEdit.textContent=nif;
+    telClientEdit.textContent=tel;
     hideOverlay();
 }
     function PressupostClientNou(){

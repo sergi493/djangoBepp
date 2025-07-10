@@ -83,11 +83,16 @@ class Pedidos(models.Model):
 
     
 class Pressupost(models.Model):
-    persona_id=models.IntegerField()
-    date=models.DateTimeField()
-    facturat=models.CharField(max_length=100, default="no")
-    total= models.DecimalField(max_digits=9999999, decimal_places=2)
-   
+    persona_id      = models.IntegerField()
+    date            = models.DateTimeField()
+    facturat        = models.CharField(max_length=100, default="no")
+    total           = models.DecimalField(max_digits=12, decimal_places=2)
+    metodo_pago     = models.CharField(
+                          max_length=20,
+                          choices=[('Targeta','Targeta'),('Efectivo','Efectiu')],
+                          default='Targeta'
+                      )
+
 class ProducteEnPressupost(models.Model):
     pressupost = models.ForeignKey(Pressupost, on_delete=models.CASCADE)
     producte = models.ForeignKey(Producto, on_delete=models.CASCADE)

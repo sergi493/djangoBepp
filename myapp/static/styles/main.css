@@ -1,6 +1,4 @@
-.main-content{
-    margin-top:10vh;
-}
+
 @import url("https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900¬display=swap");
 
 
@@ -9,7 +7,7 @@ body {
     padding: 0;
     font-family: Arial, sans-serif;
    
-background: rgb(212, 197, 133);
+background: rgba(255, 255, 255, 0.499);
 color: #000000;
 }
 button:hover{
@@ -40,7 +38,7 @@ button:hover{
     }
 
 .main-content {
-    padding-left: 9%;
+    padding: 2%;
     overflow: hidden; 
     margin-top:130px;
     
@@ -74,7 +72,7 @@ button:hover{
 }
 
 table {
-    width: 98%;
+    width: auto;
     border-collapse: collapse;
     
    
@@ -82,9 +80,10 @@ table {
 
 table th, table td {
    
-    padding: 1px;
+    
     text-align: center;
-    border: 3px solid #ddd;
+    padding: 8px;
+   
 }
 
 table th {
@@ -96,12 +95,12 @@ table th {
 
           /* Estilos para filas pares */
           tr:nth-child(even) {
-            background-color: #a0a0a0;
+            background-color: #bbbbbb;
         }
         
         /* Estilos para filas impares */
         tr:nth-child(odd) {
-            background-color: #848484;
+            background-color: #787878;
         }
 .add-to-cart-btn {
     background-color: #002477;
@@ -525,4 +524,347 @@ td button, cart-button button {
 }
 
 
--- FACTURA --
+
+
+
+
+
+  .nav-seleccion{
+        background-color:rgb(212, 197, 133);
+        border-radius: 5px 5px 0 0;
+        
+    }
+    nav ul{
+        background-color: black;
+        margin:0;
+        display: flex;
+        justify-content: center;
+    }
+    nav{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        z-index: 1000;
+        margin:0;
+        
+    }
+
+    nav ul p{
+        color:white;
+    }
+    nav ul li{
+        min-width: 70px;
+        color: white;
+        list-style:none;
+        padding: 1%;
+        
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        
+    }
+
+    nav ul li:hover{
+        background-color:rgb(36, 36, 36);
+        border-radius: 5px;
+    }
+
+    nav ul{
+        display:flex;
+        text-align: center;
+      
+    }
+
+    a{
+        color: white;
+    }
+
+
+
+
+
+
+
+
+
+-- factura --
+
+     .products-header h1 {
+    font-size: 2rem;
+    margin: 1rem 0;
+    text-align: center;
+  }
+
+  .taula-general {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .taula-general th,
+  .taula-general td {
+    padding: 0.9rem;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+
+
+
+  .popup-container {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .popup-content {
+    background-color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .popup-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .popup-buttons button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .blue-button { background-color: #3498db; color: white; }
+  .red-button { background-color: #e74c3c; color: white; }
+  .green-button { background-color: #2ecc71; color: white; }
+  .close-popup { background-color: #bdc3c7; }
+
+  .popup-buttons button:hover {
+    opacity: 0.9;
+  }
+
+  .popup-content table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+  }
+
+  .popup-content th,
+  .popup-content td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+
+  .popup-content img {
+    max-height: 40px;
+    border-radius: 4px;
+  }
+
+
+
+
+
+
+
+
+  -- vender
+   .datos-client{
+                                display: block;
+                            }
+                            
+                            #switch:checked ~ .datos-client {
+                                display: none;
+                            }
+                            .toggle-container {
+                                display: flex;
+                                align-items: center;
+                                
+                            }
+                    
+                            .toggle-container p {
+                                margin: 0;
+                                margin-right: 10px; /* Espacio entre el texto y el interruptor */
+                            }
+                    
+                            .toggle-switch {
+                                position: relative;
+                                display: inline-block;
+                                width: 60px;
+                                height: 34px;
+                            }
+                    
+                            .toggle-switch input[type="checkbox"] {
+                                display: none;
+                            }
+                    
+                            .toggle-switch label {
+                                position: absolute;
+                                cursor: pointer;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background-color: green;
+                                border-radius: 34px;
+                                transition: background-color 0.3s;
+                            }
+                            .toggle-container p{
+                                margin:0 20px 0 20px;
+                            }
+                            .toggle-switch label:before {
+                                position: absolute;
+                                content: "";
+                                height: 26px;
+                                width: 26px;
+                                left: 4px;
+                                bottom: 4px;
+                                background-color: black;
+                                border-radius: 50%;
+                                transition: transform 0.3s;
+                            }
+                            .toggle-switch label:before .datos-cliente{
+                                display:none;
+                            }
+                    
+                            .toggle-switch input:checked + label {
+                                background-color: #2196F3;
+                            }
+                    
+                            .toggle-switch input:checked + label:before {
+                                transform: translateX(26px);
+                                
+                            }
+                            #cart{
+                                font-size: 14px; /* Tamaño de letra reducido */
+                                border-collapse: collapse; /* Eliminar espacio entre celdas */
+                                
+                            }
+                            .botoTicketFactura{
+                                align-items: center;
+                                display:flex;
+                                justify-content:center;
+                                
+                            }    
+
+
+
+                            body{
+                color: #000000;
+                text-align:center;
+            }
+            
+        
+            
+            
+            .popup {
+                position: absolute;
+            top: 50%;
+            left: 53%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width:80%;
+            display:flex;
+            }
+            
+            .izq {
+                flex: 1;
+                
+                max-width:20%;
+            }
+            
+            .dret {
+                flex: 1;
+            
+            }
+            
+            .popup h1 {
+                text-align: center;
+            }
+            
+            .popup p {
+                margin-top: 0;
+            }
+            
+            .popup input[type="text"] {
+                width: 100%;
+                padding: 5px;
+                margin-bottom: 5px;
+            }
+            
+            .popup label {
+                display: block;
+            }
+            
+        
+            
+            #searchInput {
+                width: 85%;
+                padding: 10px;
+                margin-bottom: 10px;
+                align-items: center;
+                margin-left:30px;
+            }
+            
+            #productTable {
+                width: 100%;
+                border-collapse: collapse;
+                
+            }
+            
+            
+            #productTable th,
+            #productTable td {
+                border: 3px solid #ddd;
+                padding: 8px;
+                text-align: center;
+                
+            }
+            
+            #productTable th {
+                background-color: black;
+            }
+            
+            button{
+                display: inline-block;
+                border: none;
+                border-radius: 50px;
+                border: 1px solid black;
+                background:white;
+                padding:1%;
+                margin-top:5px;
+                
+            }
+            .cesta{
+                border:2px solid black;
+                border-radius:15px;
+                padding: 1%;
+                background:grey;
+                backdrop-filter:blur(50px);
+            }
+            .overlay{
+                display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            }

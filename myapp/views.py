@@ -170,7 +170,7 @@ def facturas(request):
 
     # Paginación
     page_number = request.GET.get('page', 1)
-    paginator = Paginator(factures_queryset, 5)
+    paginator = Paginator(factures_queryset, 15)
     page = paginator.get_page(page_number)
 
     # Reemplazar persona_id por nombre
@@ -202,10 +202,6 @@ def tickets(request):
                 continue
                 
     if request.method == 'POST':
-        
-
-
-        
         for ticket in tickets:
             cantidad_real = request.POST.get('cantidad_real_' + str(ticket.id))
             if cantidad_real:
@@ -216,8 +212,27 @@ def tickets(request):
             else:
                 print("No se recibió la cantidad real")
 
+
+
+    ticket_queryset = Ticket.objects.all().order_by('-date')
+
+
+    # Paginación
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(ticket_queryset, 15)
+    page = paginator.get_page(page_number)
+
+   
+
+   # return render(request, "facturas.html", {
+        #"facturas": page,
+        #"data_inicio": data_inici or '',
+        #"data_fi": data_fi or '',
+        #"search": search or ''
+   # })
+
     
-    return render(request, "tickets.html", {'tickets': tickets,'persona':persona,'numeros_abono':numeros_abono})
+    return render(request, "tickets.html", {'tickets': page,'persona':persona,'numeros_abono':numeros_abono})
 
 
 
@@ -479,31 +494,38 @@ def ultim_client_id(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
     
 def aplicar_pressupost(request):
-    data=json.loads(request.body)
-    id_pressupost=data.get("id_pressupost")
-    productes_i_quant=data.get("productes",[])
-    print(productes_i_quant,"qqq",id_pressupost)
-    total_preu_pressupost=0
+    data = json.loads(request.body)
+    id_pressupost    = data.get("id_pressupost")
+    persona_id_nou   = data.get("persona_id")
+    metodo_pago_nou  = data.get("metodo_pago")
+    productes_i_quant = data.get("productes", [])
+
+    total_preu = 0
     for unitat in productes_i_quant:
-            producte_id = unitat.get('producte_id')
-            quantitat = unitat.get('quantitat')
-            producte_id=Producto.objects.get(codigo=producte_id).id
-            producte_preu=Producto.objects.get(id=producte_id).precio
-            total_linea=quantitat*producte_preu
-            total_preu_pressupost+=total_linea
-            
-            # Filtrar todas las filas que correspondan al pressupost y producte_id actual
-            files = ProducteEnPressupost.objects.filter(pressupost_id=id_pressupost, producte_id=producte_id)
-            for fila in files:
-                print(f"Actualizando Producte ID: {fila.producte_id}, Cantidad antigua: {fila.quantitat}, Nueva cantidad: {quantitat}")
-                fila.quantitat = quantitat  # Actualizar la cantidad
-                fila.save()  # Guardar los cambios
-    pressupost=Pressupost.objects.get(id=id_pressupost)
-    pressupost.total=total_preu_pressupost
+        prod_code = unitat.get('producte_id')
+        quantitat = unitat.get('quantitat', 0)
+        # Obtenir instància i preu
+        prod_obj = Producto.objects.get(codigo=prod_code)
+        preu_unit = prod_obj.precio
+        total_preu += preu_unit * quantitat
+
+        # Actualitzar cada línia
+        files = ProducteEnPressupost.objects.filter(
+            pressupost_id=id_pressupost,
+            producte_id=prod_obj.id
+        )
+        for fila in files:
+            fila.quantitat = quantitat
+            fila.save()
+
+    # Actualitzar Pressupost global
+    pressupost = Pressupost.objects.get(id=id_pressupost)
+    pressupost.total       = total_preu
+    pressupost.persona_id  = persona_id_nou    # ← **Actualització** persona
+    pressupost.metodo_pago = metodo_pago_nou    # ← **Actualització** mètode pagament
     pressupost.save()
-    return HttpResponse("aa")
-        
-    
+
+    return HttpResponse("Pressupost actualitzat correctament"+metodo_pago_nou)    
     
 
 def aplicar_reparacio(request):

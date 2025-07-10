@@ -19,12 +19,27 @@
     <div class="products-section">
         <h1>REPARACIONS</h1>
 <p>(es pot eliminar, descarregar, reembolsar, veure datos, enviar per mail?)</p>
-<input type="text" id="searchInput" placeholder="Buscar producte...">
+         
+            
+               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+  <form method="get" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <label for="data-inicio">De:</label>
+    <input type="date" id="data-inicio" name="data_inicio" value="{{ data_inicio }}">
+    <label for="data-fin">A:</label>
+    <input type="date" id="data-fin" name="data_fi" value="{{ data_fi }}">
+    <input type="text" name="search" value="{{ search }}" placeholder="Buscar persona...">
+    <button type="submit" class="blue-button">🔍</button>
+  </form>
+
+  <form method="get" style="margin: 0; margin-left: 10px;">
+    <button type="submit" class="blue-button">🔄</button>
+  </form>
+</div>
 <button id="afegir-reparacio-btn">Afegir Reparacio</button>
 
     </div>
     <form method="post">
-        <table id="productTable">
+        <table class="taula-general">
             <thead>
             <tr>
                 <th>ID</th>

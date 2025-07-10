@@ -84,14 +84,22 @@
                 mail?)mostra els ultims 50( per que no tardi massa en carregar la pagina) + opció per mostrar tots els que vol( 50, 100, 150, xifra personalitzada o tots, o per periode de temps x dia fins x dia)</p>-->
                
                    
+                     
             
-                <span style="display: flex; align-items: center; margin-bottom:5px;">
-                    <p style="margin: 0 5px 0 0;">De:</p>
-                    <input type="date" id="data-inicio" style="margin-right: 10px;">
-                    <p style="margin: 0 5px 0 0;">A:</p>
-                    <input type="date" id="data-fin" style="margin-right: 10px;">
-                    <button id="refresca" onclick="filtrarDies()">Refresca</button>
-                </span>
+               <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+  <form method="get" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <label for="data-inicio">De:</label>
+    <input type="date" id="data-inicio" name="data_inicio" value="{{ data_inicio }}">
+    <label for="data-fin">A:</label>
+    <input type="date" id="data-fin" name="data_fi" value="{{ data_fi }}">
+    <input type="text" name="search" value="{{ search }}" placeholder="Buscar ticket">
+    <button type="submit" class="blue-button">🔍</button>
+  </form>
+
+  <form method="get" style="margin: 0; margin-left: 10px;">
+    <button type="submit" class="blue-button">🔄</button>
+  </form>
+</div>
           
           
             
@@ -222,7 +230,7 @@
                 <!-- Els resultats es mostraran aquí -->
             </div>
         <form method="post">
-            <table id="productTable">
+            <table class="taula-general">
                 <thead>
                 <tr>
                     <th>ID</th>
@@ -251,6 +259,22 @@
             
                 </tbody>
             </table>
+
+              <div style="text-align: center; margin-top: 2rem;">
+  {% if tickets.has_previous %}
+    <a href="?page={{ tickets.previous_page_number }}" class="blue-button">⬅️ Anteriors</a>
+  {% endif %}
+
+  <span style="margin: 0 1rem; font-weight: bold;">
+    Pàgina {{ tickets.number }} de {{ tickets.paginator.num_pages }}
+  </span>
+
+  {% if tickets.has_next %}
+    <a href="?page={{ tickets.next_page_number }}" class="blue-button">➡️ Següents</a>
+  {% endif %}
+</div>
+
+
         </form>
    
     </div>

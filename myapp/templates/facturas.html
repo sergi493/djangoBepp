@@ -44,7 +44,7 @@
   <div id="popup" class="popup-container"></div>
 
   <form method="post">
-    <table class="invoice-table">
+    <table class="taula-general">
       <thead>
         <tr>
           <th>ID</th>
@@ -73,6 +73,7 @@
         {% endfor %}
       </tbody>
     </table>
+    
     <div style="text-align: center; margin-top: 2rem;">
   {% if facturas.has_previous %}
     <a href="?page={{ facturas.previous_page_number }}" class="blue-button">⬅️ Anteriors</a>

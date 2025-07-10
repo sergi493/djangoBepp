@@ -1,1510 +1,1564 @@
 
 
 
-{% extends "layouts/base.html" %}
-{% load static %}
-{% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda</title>
-    <style>
-        table img{
-            max-width: 40px;
-            height:auto;
-            border-radius:5px;
-            
-        }
-        #botoClient{
-            display:;
-        }
-        
-    </style>
-
-    
-   
-<script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
-</head>
-<body>
-   
-    <div class="main-content">
-        <div class="products-section">
-            <h1>PUNT DE VENDA</h1>
-            
-            <input type="text" id="searchInput" placeholder="Buscar producte...">
-            
-            <script>
-                var cestaProductos = [];
-            </script>
-
-
-            <table id="productTable">
-
-                <thead>
-                    <tr>
-                        <th>Foto</th>
-                        <th>Nom</th>
-                        <th>Referencia</th>
-                        <th>Quantitat</th>
-                        <th>Descripcio</th>
-                        <th>Preu</th>
-                        <th>Acció</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-
-                    {% for producto in productos %}
-                    <tr>
-                        {% if producto.imagen %}
-                            <td><img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"></td>
-                        {% else %}
-                            <td><img src="/imagenes/configure.png" alt="Imatge"></td>
-                        {% endif %}
-                        <td>{{ producto.nombre }}</td> 
-                        <td>{{ producto.codigo }}</td>
-                        <td>{{ producto.cantidad }}</td>
-                        <td>{{ producto.descripcion|truncatechars:10 }}</td>
-                        <td>{{ producto.precio }} € </td>
-                        <td><button class="add-to-cart-btn"><i class="fa-solid fa-cart-shopping"></i></button></td>
-                    </tr>
-                    {% endfor %}
-                   
-                   
-                   <!-- <tr>
-                        <td></td>
-
-
-
-                        <td>Nom <textarea rows="1" style="max-width:70px;"></textarea> <button>✅</button></td> Muestra popup con descripcion del producto
-                        <td>PER1</td>
-                        <td>inf
-                           
-                        </td>
-                        <td>Descrip. <textarea rows="1"  style="max-width:70px;"></textarea> <button>✅</button> </td>
-                        <td>14 <textarea rows="1"  style="max-width:30px;"></textarea> <button>✅</button>
-                            
-                            <td><button class="add-to-cart-btn"><i class="fa-solid fa-cart-shopping"></i></button></td>
-                        </td>
-                        
-
-                    </tr>-->
-
-
-                    
-                </form>
-                </tbody>
-
-
-              <!-- <thead>
-                    <tr>
-                        
-                       <th>Producto</th>
-                       <th>Codigo</th>
-                        <th>Imagen</th>
-                        
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        
-                        <td>Producto 1 </td>
-                        <td> CH 3892</td>
-                        <td>.img1</td>
-                       
-                        <td>9</td>
-                        <td>$10.00</td>
-                        <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
-                    </tr>
-                    <tr>
-                       
-                        <td>Producto cacaaaa  </td>
-                        <td>CH 4892</td>
-                         <td>.img2</td>
-                       
-                        <td>10</td>
-                        <td>$10.00</td>
-                        <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
-                    </tr>
-                    <tr>
-                       
-                        <td>Producto Personalizable  </td>
-                        <td>PER123</td>
-                         <td>.img2</td>
-                       
-                        <td>INFINITO</td>
-                        <td>€</td>
-                        <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
-                    </tr>
-                    <!-- Agrega más productos aquí -->
-                </tbody> 
-            </table>
-        </div>
-        <div class="cart-section">
-            <h1>CISTELL</h1>
-            <div class="cesta">
+    {% extends "layouts/base.html" %}
+    {% load static %}
+    {% block content %}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tienda</title>
+        <style>
+            table img{
+                max-width: 40px;
+                height:auto;
+                border-radius:5px;
                 
-                <div class="toggle-container">
-                    <p>Ticket:<span id="ticket-number" style="display:none;"></span></p>
-<div class="toggle-switch">
-    <input type="checkbox" id="switch" />
-    <label for="switch"></label>
-</div>
-<p>Factura:<span id="factura-number" style="display:none;"></span></p>
-
-<p class="datos-client"  id="datos-client">Nom: <span id="nom"> </span> DNI: <span id="dni"> </span> TLF: <span id="tlf"> </span> LOC: <span id="localitat"> </span>  Client num: <span id="num_cli"> </span></p>
-
-       <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var switchElement = document.getElementById('switch');
-            var datosClient = document.getElementById('datos-client');
-            var botoClient = document.getElementById('mostrarPopup');
-            var botoFacturar = document.getElementById('botoFacturar');
-            var botoTicket = document.getElementById('botoTicket');
-            // Verificació inicial
-            if (switchElement.checked) {
-                datosClient.style.display = 'block';
-                botoClient.style.display = 'block';
-                botoTicket.style.display = 'none';
-                botoFacturar.style.display = 'block';
-            } else {
-                datosClient.style.display = 'none';
-                botoClient.style.display = 'none';
-                botoTicket.style.display = 'block';
-                botoFacturar.style.display = 'none';
             }
+            #botoClient{
+                display:;
+            }
+            
+        </style>
+
         
-            // Event listener per canvis en el switch
-            switchElement.addEventListener('change', function() {
-                if (this.checked) {
+    
+    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
+    </head>
+    <body>
+    
+        <div class="main-content">
+            <div class="products-section">
+                <h1>PUNT DE VENDA</h1>
+                
+                <input type="text" id="searchInput" placeholder="Buscar producte...">
+                
+                <script>
+                    var cestaProductos = [];
+                </script>
+
+
+                <table id="productTable">
+
+                    <thead>
+                        <tr>
+                            <th>Foto</th>
+                            <th>Nom</th>
+                            <th>Referencia</th>
+                            <th>Quantitat</th>
+                            <th>Descripcio</th>
+                            <th>Preu</th>
+                            <th>Acció</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+
+                        {% for producto in productos %}
+                        <tr>
+                            {% if producto.imagen %}
+                                <td><img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"></td>
+                            {% else %}
+                                <td><img src="/imagenes/configure.png" alt="Imatge"></td>
+                            {% endif %}
+                            <td>{{ producto.nombre }}</td> 
+                            <td>{{ producto.codigo }}</td>
+                            <td>{{ producto.cantidad }}</td>
+                            <td>{{ producto.descripcion|truncatechars:10 }}</td>
+                            <td>{{ producto.precio }} € </td>
+                            <td><button class="add-to-cart-btn"><i class="fa-solid fa-cart-shopping"></i></button></td>
+                        </tr>
+                        {% endfor %}
+                    
+                    
+                    <!-- <tr>
+                            <td></td>
+
+
+
+                            <td>Nom <textarea rows="1" style="max-width:70px;"></textarea> <button>✅</button></td> Muestra popup con descripcion del producto
+                            <td>PER1</td>
+                            <td>inf
+                            
+                            </td>
+                            <td>Descrip. <textarea rows="1"  style="max-width:70px;"></textarea> <button>✅</button> </td>
+                            <td>14 <textarea rows="1"  style="max-width:30px;"></textarea> <button>✅</button>
+                                
+                                <td><button class="add-to-cart-btn"><i class="fa-solid fa-cart-shopping"></i></button></td>
+                            </td>
+                            
+
+                        </tr>-->
+
+
+                        
+                    </form>
+                    </tbody>
+
+
+                <!-- <thead>
+                        <tr>
+                            
+                        <th>Producto</th>
+                        <th>Codigo</th>
+                            <th>Imagen</th>
+                            
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            
+                            <td>Producto 1 </td>
+                            <td> CH 3892</td>
+                            <td>.img1</td>
+                        
+                            <td>9</td>
+                            <td>$10.00</td>
+                            <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
+                        </tr>
+                        <tr>
+                        
+                            <td>Producto cacaaaa  </td>
+                            <td>CH 4892</td>
+                            <td>.img2</td>
+                        
+                            <td>10</td>
+                            <td>$10.00</td>
+                            <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
+                        </tr>
+                        <tr>
+                        
+                            <td>Producto Personalizable  </td>
+                            <td>PER123</td>
+                            <td>.img2</td>
+                        
+                            <td>INFINITO</td>
+                            <td>€</td>
+                            <td><button class="add-to-cart-btn">Añadir a la cesta</button></td>
+                        </tr>
+                        <!-- Agrega más productos aquí -->
+                    </tbody> 
+                </table>
+            </div>
+            <div class="cart-section">
+                <h1>CISTELL</h1>
+                <div class="cesta">
+                    
+                    <div class="toggle-container">
+                        <p>Ticket:<span id="ticket-number" style="display:none;"></span></p>
+    <div class="toggle-switch">
+        <input type="checkbox" id="switch" />
+        <label for="switch"></label>
+    </div>
+    <p>Factura:<span id="factura-number" style="display:none;"></span></p>
+
+    <p class="datos-client"  id="datos-client">Nom: <span id="nom"> </span> DNI: <span id="dni"> </span> TLF: <span id="tlf"> </span> LOC: <span id="localitat"> </span>  Client num: <span id="num_cli"> </span></p>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var switchElement = document.getElementById('switch');
+                var datosClient = document.getElementById('datos-client');
+                var botoClient = document.getElementById('mostrarPopup');
+                var botoFacturar = document.getElementById('botoFacturar');
+                var botoTicket = document.getElementById('botoTicket');
+                // Verificació inicial
+                if (switchElement.checked) {
                     datosClient.style.display = 'block';
                     botoClient.style.display = 'block';
                     botoTicket.style.display = 'none';
-                botoFacturar.style.display = 'block';
+                    botoFacturar.style.display = 'block';
                 } else {
                     datosClient.style.display = 'none';
                     botoClient.style.display = 'none';
                     botoTicket.style.display = 'block';
-                botoFacturar.style.display = 'none';
+                    botoFacturar.style.display = 'none';
                 }
+            
+                // Event listener per canvis en el switch
+                switchElement.addEventListener('change', function() {
+                    if (this.checked) {
+                        datosClient.style.display = 'block';
+                        botoClient.style.display = 'block';
+                        botoTicket.style.display = 'none';
+                    botoFacturar.style.display = 'block';
+                    } else {
+                        datosClient.style.display = 'none';
+                        botoClient.style.display = 'none';
+                        botoTicket.style.display = 'block';
+                    botoFacturar.style.display = 'none';
+                    }
+                });
             });
-        });
-    </script>                     
-                    
-                    
-                    
-                      <button onclick="showOverlay()" id="mostrarPopup">Client</button>
-                      
-                </div>
-                
-                  <script>
-                    document.addEventListener('DOMContentLoaded', (event) => {
-                        const switchElement = document.getElementById('switch');
-                        const textElement = document.getElementByClass('datos-cliente');
-                    
-                        // Función para actualizar la visibilidad del texto
-                        const updateTextVisibility = () => {
-                            if (switchElement.checked) {
-                                textElement.style.display = 'block';
-                            } else {
-                                textElement.style.display = 'none';
-                            }
-                        };
-                    
-                        // Escuchar cambios en el checkbox
-                        switchElement.addEventListener('change', updateTextVisibility);
-                    
-                        // Actualizar la visibilidad inicial
-                        updateTextVisibility();
-                    });
-                </script>
-                    <style>
-                        .datos-client{
-                            display: block;
-                        }
+        </script>                     
                         
-                        #switch:checked ~ .datos-client {
-                            display: none;
-                        }
-                        .toggle-container {
-                            display: flex;
-                            align-items: center;
-                            
-                        }
-                
-                        .toggle-container p {
-                            margin: 0;
-                            margin-right: 10px; /* Espacio entre el texto y el interruptor */
-                        }
-                
-                        .toggle-switch {
-                            position: relative;
-                            display: inline-block;
-                            width: 60px;
-                            height: 34px;
-                        }
-                
-                        .toggle-switch input[type="checkbox"] {
-                            display: none;
-                        }
-                
-                        .toggle-switch label {
-                            position: absolute;
-                            cursor: pointer;
-                            top: 0;
-                            left: 0;
-                            right: 0;
-                            bottom: 0;
-                            background-color: green;
-                            border-radius: 34px;
-                            transition: background-color 0.3s;
-                        }
-                        .toggle-container p{
-                            margin:0 20px 0 20px;
-                        }
-                        .toggle-switch label:before {
-                            position: absolute;
-                            content: "";
-                            height: 26px;
-                            width: 26px;
-                            left: 4px;
-                            bottom: 4px;
-                            background-color: black;
-                            border-radius: 50%;
-                            transition: transform 0.3s;
-                        }
-                        .toggle-switch label:before .datos-cliente{
-                            display:none;
-                        }
-                
-                        .toggle-switch input:checked + label {
-                            background-color: #2196F3;
-                        }
-                
-                        .toggle-switch input:checked + label:before {
-                            transform: translateX(26px);
-                            
-                        }
-                        #cart{
-                            font-size: 14px; /* Tamaño de letra reducido */
-                            border-collapse: collapse; /* Eliminar espacio entre celdas */
-                            
-                          }
-                         
-                    </style>
-                
-                    <hr>
-                    <table id="cart">
-                        <thead>
-                            <tr>
-                                <th>Cod.</th>
-                                <th>Produc.</th>
-                                <th>Preu</th>
-                                <th>-</th>
-                                <th>Quant.</th>
-                                <th>+</th>
-                                <th>Total</th>
-                                <th>Eliminar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Los elementos de la tabla se generarán dinámicamente aquí -->
-                        </tbody>
-                    </table>
-                    <hr>
-                    <div class="cart-options">
-                        <p>Total: <span id="total"></span> €</p>
-                    <div class="ef">
-                        <label>Efectiu: </label>
-                        <input type="number" id="Efectivo" placeholder="50€">
+                        
+                        
+                        <button onclick="showOverlay()" id="mostrarPopup">Client</button>
+                        
                     </div>
-                    <form id="FormTipusPagament">
-                        <label for="checkbox0">Targeta</label>
-                        <input value="Targeta" type="checkbox" id="checkbox0" name="pagament">
-                        
-                        <label for="checkbox1">Efectiu</label>
-                        <input value="Efectiu" type="checkbox" id="checkbox1" name="pagament">
-                        
-                        <label for="checkbox2">Transferencia</label>
-                        <input value="Transferencia" type="checkbox" id="checkbox2" name="pagament">
-                        
-                        <label for="checkbox3">Chec bancari</label>
-                        <input value="Chec bancari" type="checkbox" id="checkbox3" name="pagament">
-                        
-                        <label for="checkbox4">domiciliació</label>
-                        <input value="Domiciliacio" type="checkbox" id="checkbox4" name="pagament">
-                        
-                       
-                    </form>
                     
                     <script>
-                        // Función para manejar el cambio en el checkbox
-                        document.getElementById('checkbox').addEventListener('change', function() {
-                            var efDiv = document.querySelector('.ef');
-                            var cambioParagraph = document.querySelector('#cambio').parentNode; // Obtener el párrafo que contiene el texto "CAMBIO"
-                    
-                            // Si el checkbox está marcado, ocultar el div "ef" y el párrafo del cambio
-                            if (this.checked) {
-                                efDiv.style.display = 'none';
-                                cambioParagraph.style.display = 'none';
-                            } else { // Si no está marcado, mostrar el div "ef" y el párrafo del cambio
-                                efDiv.style.display = 'block';
-                                cambioParagraph.style.display = 'block';
-                            }
+                        document.addEventListener('DOMContentLoaded', (event) => {
+                            const switchElement = document.getElementById('switch');
+                            const textElement = document.getElementByClass('datos-cliente');
+                        
+                            // Función para actualizar la visibilidad del texto
+                            const updateTextVisibility = () => {
+                                if (switchElement.checked) {
+                                    textElement.style.display = 'block';
+                                } else {
+                                    textElement.style.display = 'none';
+                                }
+                            };
+                        
+                            // Escuchar cambios en el checkbox
+                            switchElement.addEventListener('change', updateTextVisibility);
+                        
+                            // Actualizar la visibilidad inicial
+                            updateTextVisibility();
                         });
                     </script>
-                    <style>
-                        .botoTicketFactura{
-                            align-items: center;
-                            display:flex;
-                            justify-content:center;
-                             
-                        }                    </style>
+                        <style>
+                           
+                            
+                        </style>
                     
-                     <p>CANVI: <span id="cambio"></span></p>
-                     <div class="botoTicketFactura">
-                     <button  id="botoFacturar" onclick="genFactura()">FACTURAR (Imprimir + Guardar + Buidar cistell)</button>
-    <button id="botoTicket" class="cart-button" onclick="genTicketYEnviar()"> TICKET DE VENTA (Imprimir + Guardar + Buidar cistell)</button>
-                </div>
-                     <script>
-                        // Función para calcular el cambio
-                        function calcularCambio() {
-                            // Obtenemos el valor total y el efectivo introducido
-                           // Obtener el contenido del elemento 'total'
-                            var total = document.getElementById('total').textContent;
-
-// Eliminar el símbolo de dólar del principio y luego convertir la cadena a un número de punto flotante
-
-                            var efectivo = parseFloat(document.getElementById('Efectivo').value);
+                        <hr>
+                        <table id="cart">
+                            <thead>
+                                <tr>
+                                    <th>Cod.</th>
+                                    <th>Produc.</th>
+                                    <th>Preu</th>
+                                    <th>-</th>
+                                    <th>Quant.</th>
+                                    <th>+</th>
+                                    <th>Total</th>
+                                    <th>Eliminar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los elementos de la tabla se generarán dinámicamente aquí -->
+                            </tbody>
+                        </table>
+                        <hr>
+                        <div class="cart-options">
+                            <p>Total: <span id="total"></span> €</p>
+                        <div class="ef">
+                            <label>Efectiu: </label>
+                            <input type="number" id="Efectivo" placeholder="50€">
+                        </div>
+                        <form id="FormTipusPagament">
+                            <label for="checkbox0">Targeta</label>
+                            <input value="Targeta" type="checkbox" id="checkbox0" name="pagament">
                             
-                            // Mensajes de depuración
-                            console.log("Total:", total);
-                            console.log("Efectivo:", efectivo);
+                            <label for="checkbox1">Efectiu</label>
+                            <input value="Efectiu" type="checkbox" id="checkbox1" name="pagament">
                             
-                            // Verificamos si los valores son números válidos
-                            if (isNaN(total) || isNaN(efectivo)) {
-                                console.log("Al menos uno de los valores no es un número válido.");
-                                document.getElementById('cambio').textContent = '';
-                                return;
+                            <label for="checkbox2">Transferencia</label>
+                            <input value="Transferencia" type="checkbox" id="checkbox2" name="pagament">
+                            
+                            <label for="checkbox3">Chec bancari</label>
+                            <input value="Chec bancari" type="checkbox" id="checkbox3" name="pagament">
+                            
+                            <label for="checkbox4">domiciliació</label>
+                            <input value="Domiciliacio" type="checkbox" id="checkbox4" name="pagament">
+                            
+                        
+                        </form>
+                        
+                        <script>
+                            // Función para manejar el cambio en el checkbox
+                            document.getElementById('checkbox').addEventListener('change', function() {
+                                var efDiv = document.querySelector('.ef');
+                                var cambioParagraph = document.querySelector('#cambio').parentNode; // Obtener el párrafo que contiene el texto "CAMBIO"
+                        
+                                // Si el checkbox está marcado, ocultar el div "ef" y el párrafo del cambio
+                                if (this.checked) {
+                                    efDiv.style.display = 'none';
+                                    cambioParagraph.style.display = 'none';
+                                } else { // Si no está marcado, mostrar el div "ef" y el párrafo del cambio
+                                    efDiv.style.display = 'block';
+                                    cambioParagraph.style.display = 'block';
+                                }
+                            });
+                        </script>
+                        <style>
+                            .botoTicketFactura{
+                                align-items: center;
+                                display:flex;
+                                justify-content:center;
+                                
+                            }                    </style>
+                        
+                        <p>CANVI: <span id="cambio"></span></p>
+                        <div class="botoTicketFactura">
+                        <button  id="botoFacturar" onclick="genFactura()">FACTURAR (Imprimir + Guardar + Buidar cistell)</button>
+        <button id="botoTicket" class="cart-button" onclick="genTicketYEnviar()"> TICKET DE VENTA (Imprimir + Guardar + Buidar cistell)</button>
+                    </div>
+                        <script>
+                            // Función para calcular el cambio
+                            function calcularCambio() {
+                                // Obtenemos el valor total y el efectivo introducido
+                            // Obtener el contenido del elemento 'total'
+                                var total = document.getElementById('total').textContent;
+
+    // Eliminar el símbolo de dólar del principio y luego convertir la cadena a un número de punto flotante
+
+                                var efectivo = parseFloat(document.getElementById('Efectivo').value);
+                                
+                                // Mensajes de depuración
+                                console.log("Total:", total);
+                                console.log("Efectivo:", efectivo);
+                                
+                                // Verificamos si los valores son números válidos
+                                if (isNaN(total) || isNaN(efectivo)) {
+                                    console.log("Al menos uno de los valores no es un número válido.");
+                                    document.getElementById('cambio').textContent = '';
+                                    return;
+                                }
+                                
+                                // Calculamos el cambio
+                                var cambio = total - efectivo;
+                                
+                                // Mostramos el resultado en el span con el id "cambio"
+                                document.getElementById('cambio').textContent = cambio.toFixed(2);
                             }
                             
-                            // Calculamos el cambio
-                            var cambio = total - efectivo;
-                            
-                            // Mostramos el resultado en el span con el id "cambio"
-                            document.getElementById('cambio').textContent = cambio.toFixed(2);
-                        }
+                            // Escuchamos el evento input del campo de efectivo
+                            document.getElementById('Efectivo').addEventListener('input', calcularCambio);
+                        </script>
                         
-                        // Escuchamos el evento input del campo de efectivo
-                        document.getElementById('Efectivo').addEventListener('input', calcularCambio);
-                    </script>
-                    
-                    
-                    
-                    </div>
-            </div>
-        <hr>
-        
-
-
-<!-- Overlay para el fondo gris -->
- <div class="overlay" id="overlay">
-    <!-- Popup con inputs -->
-    <div class="popup">
-        <div class="izq">
-        <h1>CLIENTES</h1>
-       <!-- <input type="text" id="searchpeople" placeholder="Joan Martí">  <button>IMPORTAR</button>  -->
-        <!--<p>dividir la popup en 2. izq -- crear; drch -- table + search input client amb boto per importar</p> -->
-        
-        <label for="username">Nom: </label>             
-    <input type="text" id="Nom" placeholder="Jonh">
-    
-     <label for="username">NIF/DNI</label>
-    <input type="text" id="DNI" placeholder="000 000 00A">
-    
-    
-     <label for="username">Direcció</label>
-    <input type="text" id="Direccio" placeholder="Carrer del Pi, 24, Mora d'Ebre, 43452">
-  
-     <label for="username">Localitat</label>
-    <input type="text" id="Localitat" placeholder="Carrer, Mora d'Ebre, 43452">
-   
-     <label for="username">E-mail</label>
-    <input type="text" id="E-mail" placeholder="example@gmail.com">
- 
-     <label for="username">Num tel</label>
-    <input type="text" id="telf" placeholder=" + 34 629 74 27 68">
-    
-    <label for="username">Compte Banc (Domiciliació)</label>
-    <input type="text" id="comp_banc" placeholder=" ES45 3423 6543 8646 3489 8654">
-    <button onclick="guardarInformacion()">Crear e importar</button>
-        <button class="close-popup" onclick="hideOverlay()">Salir</button>
-    </div>
-
-    <script>
-        function guardarInformacion(){
-            var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
-            
-            
-            
-            
-            var nom= document.getElementById("Nom").value;
-            var nif= document.getElementById("DNI").value;
-            var direccio= document.getElementById("Direccio").value;
-            var email= document.getElementById("E-mail").value;
-            var telefon= document.getElementById("telf").value;
-            var localitat= document.getElementById("Localitat").value;
-            var banc= document.getElementById("comp_banc").value;
-           
-        
-            console.log(direccio);
-        
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/guardar_cliente/", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken);
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Respuesta del servidor:", xhr.responseText);
-                } else {
-                    console.error("Error en la solicitud:", xhr.statusText);
-                }
-            };
-            xhr.onerror = function () {
-                console.error("Error de red al enviar la solicitud.");
-            };
-            xhr.send(JSON.stringify({nom:nom,nif:nif,direccio:direccio,localitat:localitat,banc:banc, email:email,telefon:telefon}));
-        }
-        
-    </script>
-
-    <div class="dret">
-        <button class="close-popup" onclick="hideOverlay()">X</button>
-    <div class="main-content">
-        <div class="products-section">
-            <input type="text" id="searchInput" placeholder="Buscar producto...">
-            <!--<button onclick="guardarInformacion()">Crear e importar</button>-->
-        
-            <table id="productTable">
-                <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>Nom</th>
-                        <th>Localitat</th>
-                        <th>Carrer</th>
-                        <th>NIF</th>
-                        <th>tlf</th>
-                        <th>E-mail</th>
-                        <th>Compte-Banc</th>
-                        <th>Importar</th>
                         
-                    </tr>
-                </thead>
-                <tbody id="clientes-container">
-                    {% for cliente in clientes %}
-                    <tr class="cliente-row" id="cliente-{{ cliente.id }}">
-                        <td>{{ cliente.id }}</td>
-                        <td>{{ cliente.nombre }}</td>
-                        <td>{{ cliente.localidad }}</td>
-                        <td>{{ cliente.calle }}</td>
-                        <td>{{ cliente.nif }}</td>
-                        <td>{{ cliente.telefono }}</td>
-                        <td>{{ cliente.email }}</td>
-                        <td>{{ cliente.comp_banc }}</td>
-                        <td><button onclick="importarCliente({{ cliente.id }})">✅</button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="9">
-                            <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
-                            <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
-                        </td>
-                    </tr>
-                </tfoot>
+                        
+                        </div>
+                </div>
+            <hr>
+            
+
+
+    <!-- Overlay para el fondo gris -->
+    <div class="overlay" id="overlay">
+        <!-- Popup con inputs -->
+        <div class="popup">
+            <div class="izq">
+            <h1>CLIENTES</h1>
+        <!-- <input type="text" id="searchpeople" placeholder="Joan Martí">  <button>IMPORTAR</button>  -->
+            <!--<p>dividir la popup en 2. izq -- crear; drch -- table + search input client amb boto per importar</p> -->
+            
+            <label for="username">Nom: </label>             
+        <input type="text" id="Nom" placeholder="Jonh">
+        
+        <label for="username">NIF/DNI</label>
+        <input type="text" id="DNI" placeholder="000 000 00A">
+        
+        
+        <label for="username">Direcció</label>
+        <input type="text" id="Direccio" placeholder="Carrer del Pi, 24, Mora d'Ebre, 43452">
+    
+        <label for="username">Localitat</label>
+        <input type="text" id="Localitat" placeholder="Carrer, Mora d'Ebre, 43452">
+    
+        <label for="username">E-mail</label>
+        <input type="text" id="E-mail" placeholder="example@gmail.com">
+    
+        <label for="username">Num tel</label>
+        <input type="text" id="telf" placeholder=" + 34 629 74 27 68">
+        
+        <label for="username">Compte Banc (Domiciliació)</label>
+        <input type="text" id="comp_banc" placeholder=" ES45 3423 6543 8646 3489 8654">
+        <button onclick="guardarInformacion()">Crear e importar</button>
+            <button class="close-popup" onclick="hideOverlay()">Salir</button>
+        </div>
+
+        <script>
+            function guardarInformacion(){
+                var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
                 
-            </table>
+                
+                
+                
+                var nom= document.getElementById("Nom").value;
+                var nif= document.getElementById("DNI").value;
+                var direccio= document.getElementById("Direccio").value;
+                var email= document.getElementById("E-mail").value;
+                var telefon= document.getElementById("telf").value;
+                var localitat= document.getElementById("Localitat").value;
+                var banc= document.getElementById("comp_banc").value;
+            
+            
+                console.log(direccio);
+            
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_cliente/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({nom:nom,nif:nif,direccio:direccio,localitat:localitat,banc:banc, email:email,telefon:telefon}));
+            }
+            
+        </script>
+
+        <div class="dret">
+            <button class="close-popup" onclick="hideOverlay()">X</button>
+        <div class="main-content">
+            <div class="products-section">
+                <input type="text" id="searchInput" placeholder="Buscar producto...">
+                <!--<button onclick="guardarInformacion()">Crear e importar</button>-->
+            
+                <table id="productTable">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>Nom</th>
+                            <th>Localitat</th>
+                            <th>Carrer</th>
+                            <th>NIF</th>
+                            <th>tlf</th>
+                            <th>E-mail</th>
+                            <th>Compte-Banc</th>
+                            <th>Importar</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody id="clientes-container">
+                        {% for cliente in clientes %}
+                        <tr class="cliente-row" id="cliente-{{ cliente.id }}">
+                            <td>{{ cliente.id }}</td>
+                            <td>{{ cliente.nombre }}</td>
+                            <td>{{ cliente.localidad }}</td>
+                            <td>{{ cliente.calle }}</td>
+                            <td>{{ cliente.nif }}</td>
+                            <td>{{ cliente.telefono }}</td>
+                            <td>{{ cliente.email }}</td>
+                            <td>{{ cliente.comp_banc }}</td>
+                            <td><button onclick="importarCliente({{ cliente.id }})">✅</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="9">
+                                <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
+                                <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                    
+                </table>
+            </div>
+            
         </div>
         
     </div>
-    
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', (event) => {
-        const rows = document.querySelectorAll('.cliente-row');
-        const rowsPerPage = 5;
-        let currentPage = 0;
-        const totalPages = Math.ceil(rows.length / rowsPerPage);
-    
-        function showPage(page) {
-            const start = page * rowsPerPage;
-            const end = start + rowsPerPage;
-    
-            rows.forEach((row, index) => {
-                if (index >= start && index < end) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-    
-            document.getElementById('prev-btn').disabled = currentPage === 0;
-            document.getElementById('next-btn').disabled = currentPage === totalPages - 1;
-        }
-    
-        window.changePage = function (direction) {
-            currentPage += direction;
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const rows = document.querySelectorAll('.cliente-row');
+            const rowsPerPage = 5;
+            let currentPage = 0;
+            const totalPages = Math.ceil(rows.length / rowsPerPage);
+        
+            function showPage(page) {
+                const start = page * rowsPerPage;
+                const end = start + rowsPerPage;
+        
+                rows.forEach((row, index) => {
+                    if (index >= start && index < end) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+        
+                document.getElementById('prev-btn').disabled = currentPage === 0;
+                document.getElementById('next-btn').disabled = currentPage === totalPages - 1;
+            }
+        
+            window.changePage = function (direction) {
+                currentPage += direction;
+                showPage(currentPage);
+            };
+        
             showPage(currentPage);
-        };
-    
-        showPage(currentPage);
-    });
+        });
 
-    
+        
 
-    function importarCliente(id) {
-        // Find the row in the table corresponding to the clicked button
-        var row = document.getElementById("cliente-" + id);
-        
-        // Get client information from the table cells
-        var nombre = row.cells[1].innerText;
-        var nif = row.cells[4].innerText;
-        var telefono = row.cells[5].innerText;
-        var localidad = row.cells[2].innerText;
-        var num_cli = row.cells[0].innerText;
-        hideOverlay();
-        // Update the paragraph with the client information
-        document.getElementById("nom").innerText = nombre;
-        document.getElementById("dni").innerText = nif;
-        document.getElementById("tlf").innerText = telefono;
-        document.getElementById("localitat").innerText = localidad;
-        document.getElementById("num_cli").innerText = num_cli;
-       
-    }
-    // Función para ocultar el overlay
-    function hideOverlay() {
-        var overlay = document.getElementById("overlay");
-        overlay.style.display = "none";
-    }
-
-    // Función para mostrar el overlay
-    function showOverlay() {
-        var overlay = document.getElementById("overlay");
-        overlay.style.display = "block";
-    }
-
-</script>
-<!--<script>
-    function hideOverlay() {
-        var overlay = document.getElementById("overlay");
-        overlay.classList.add("hidden");
-    }
-</script>-->
-    <style>
-        body{
-            color: #000000;
-            text-align:center;
-        }
-        
-       
-        
-        
-        .popup {
-            position: absolute;
-        top: 50%;
-        left: 53%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        width:80%;
-        display:flex;
-        }
-        
-        .izq {
-            flex: 1;
+        function importarCliente(id) {
+            // Find the row in the table corresponding to the clicked button
+            var row = document.getElementById("cliente-" + id);
             
-            max-width:20%;
-        }
+            // Get client information from the table cells
+            var nombre = row.cells[1].innerText;
+            var nif = row.cells[4].innerText;
+            var telefono = row.cells[5].innerText;
+            var localidad = row.cells[2].innerText;
+            var num_cli = row.cells[0].innerText;
+            hideOverlay();
+            // Update the paragraph with the client information
+            document.getElementById("nom").innerText = nombre;
+            document.getElementById("dni").innerText = nif;
+            document.getElementById("tlf").innerText = telefono;
+            document.getElementById("localitat").innerText = localidad;
+            document.getElementById("num_cli").innerText = num_cli;
         
-        .dret {
-            flex: 1;
-           
         }
-        
-        .popup h1 {
-            text-align: center;
+        // Función para ocultar el overlay
+        function hideOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "none";
         }
-        
-        .popup p {
-            margin-top: 0;
+
+        // Función para mostrar el overlay
+        function showOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "block";
         }
+
+    </script>
+    <!--<script>
+        function hideOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.classList.add("hidden");
+        }
+    </script>-->
+        <style>
+            body{
+                color: #000000;
+                text-align:center;
+            }
+            
         
-        .popup input[type="text"] {
+            
+            
+            .popup {
+                position: absolute;
+            top: 50%;
+            left: 53%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width:80%;
+            display:flex;
+            }
+            
+            .izq {
+                flex: 1;
+                
+                max-width:20%;
+            }
+            
+            .dret {
+                flex: 1;
+            
+            }
+            
+            .popup h1 {
+                text-align: center;
+            }
+            
+            .popup p {
+                margin-top: 0;
+            }
+            
+            .popup input[type="text"] {
+                width: 100%;
+                padding: 5px;
+                margin-bottom: 5px;
+            }
+            
+            .popup label {
+                display: block;
+            }
+            
+        
+            
+            #searchInput {
+                width: 85%;
+                padding: 10px;
+                margin-bottom: 10px;
+                align-items: center;
+                margin-left:30px;
+            }
+            
+            #productTable {
+                width: 100%;
+                border-collapse: collapse;
+                
+            }
+            
+            
+            #productTable th,
+            #productTable td {
+                border: 3px solid #ddd;
+                padding: 8px;
+                text-align: center;
+                
+            }
+            
+            #productTable th {
+                background-color: black;
+            }
+            
+            button{
+                display: inline-block;
+                border: none;
+                border-radius: 50px;
+                border: 1px solid black;
+                background:white;
+                padding:1%;
+                margin-top:5px;
+                
+            }
+            .cesta{
+                border:2px solid black;
+                border-radius:15px;
+                padding: 1%;
+                background:grey;
+                backdrop-filter:blur(50px);
+            }
+            .overlay{
+                display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 5px;
-            margin-bottom: 5px;
-        }
-        
-        .popup label {
-            display: block;
-        }
-        
-       
-        
-        #searchInput {
-            width: 85%;
-            padding: 10px;
-            margin-bottom: 10px;
-            align-items: center;
-            margin-left:30px;
-        }
-        
-        #productTable {
-            width: 100%;
-            border-collapse: collapse;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            }
+        </style>
             
-        }
-        
-        
-        #productTable th,
-        #productTable td {
-            border: 3px solid #ddd;
-            padding: 8px;
-            text-align: center;
-            
-        }
-        
-        #productTable th {
-            background-color: black;
-        }
-        
-        button{
-            display: inline-block;
-            border: none;
-            border-radius: 50px;
-            border: 1px solid black;
-            background:white;
-            padding:1%;
-            margin-top:5px;
-            
-        }
-        .cesta{
-            border:2px solid black;
-            border-radius:15px;
-            padding: 1%;
-            background:grey;
-            backdrop-filter:blur(50px);
-        }
-        .overlay{
-            display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        }
-    </style>
+        </div>
         
     </div>
-    
-</div>
-<script>
-    document.getElementById('searchInput').addEventListener('input', function() {
-        var filter, table, tr, td, i, txtValue;
-        filter = this.value.toUpperCase();
-        table = document.getElementById('productTable');
-        tr = table.getElementsByTagName('tr');
-    
-        var visibleProducts = 0;
-        var productName = '';
-    
-        for (i = 1; i < tr.length; i++) {
-            var found = false;
-            // Iterar sobre ambas columnas
-            for (var j = 1; j < 3; j++) { // Modificado para iterar sobre las dos primeras columnas
-                td = tr[i].getElementsByTagName('td')[j];
-                if (td) {
-                    txtValue = td.textContent || td.innerText;
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = '';
-                        visibleProducts++;
-                        productName = txtValue;
-                        found = true;
-                        break; // Salir del bucle interior si se encuentra el texto en alguna columna
+    <script>
+        document.getElementById('searchInput').addEventListener('input', function() {
+            var filter, table, tr, td, i, txtValue;
+            filter = this.value.toUpperCase();
+            table = document.getElementById('productTable');
+            tr = table.getElementsByTagName('tr');
+        
+            var visibleProducts = 0;
+            var productName = '';
+        
+            for (i = 1; i < tr.length; i++) {
+                var found = false;
+                // Iterar sobre ambas columnas
+                for (var j = 1; j < 3; j++) { // Modificado para iterar sobre las dos primeras columnas
+                    td = tr[i].getElementsByTagName('td')[j];
+                    if (td) {
+                        txtValue = td.textContent || td.innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = '';
+                            visibleProducts++;
+                            productName = txtValue;
+                            found = true;
+                            break; // Salir del bucle interior si se encuentra el texto en alguna columna
+                        }
                     }
                 }
-            }
-            if (!found) {
-                
-                tr[i].style.display = 'none';
-            }
-        }
-    
-        if (visibleProducts === 1) {
-            document.getElementById('searchInput').addEventListener('keypress', function(event) {
-                if (event.key === 'Enter') {
-                    var visibleProduct = table.querySelector('tr[style=""]');
-                    var visibleProductName = visibleProduct.querySelector('td:nth-child(2)').innerText; // Se mantiene para la segunda columna
-                    if (productName === visibleProductName) {
-                        addToCart(productName);
-                    }
+                if (!found) {
+                    
+                    tr[i].style.display = 'none';
                 }
+            }
+        
+            if (visibleProducts === 1) {
+                document.getElementById('searchInput').addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        var visibleProduct = table.querySelector('tr[style=""]');
+                        var visibleProductName = visibleProduct.querySelector('td:nth-child(2)').innerText; // Se mantiene para la segunda columna
+                        if (productName === visibleProductName) {
+                            addToCart(productName);
+                        }
+                    }
+                });
+            } else {
+                // Si hay más de un producto visible o ninguno, eliminamos el event listener
+                document.getElementById('searchInput').removeEventListener('keypress', function() {});
+            }
+        });
+        
+        
+        
+
+
+
+        /*
+        
+        function updateTotal() {
+            var cart = document.getElementById('cart');
+            var cartItems = cart.querySelectorAll('li');
+            var totalPrice = 0;
+
+            cartItems.forEach(function(cartItem) {
+                var quantity = parseInt(cartItem.querySelector('.quantity').innerText);
+                var price = parseFloat(cartItem.querySelector('.price').innerText);
+                var itemTotalPrice = price;
+                totalPrice += itemTotalPrice;
             });
-        } else {
-            // Si hay más de un producto visible o ninguno, eliminamos el event listener
-            document.getElementById('searchInput').removeEventListener('keypress', function() {});
+        
+            document.getElementById('total').innerText = '$' + totalPrice.toFixed(2);
         }
-    });
-    
-    
-    
+        
+        
+        
+        function updateCartQuantity(action, productName) {
+            var cart = document.getElementById('cart');
+            var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+            var quantityElement = cartItem.querySelector('.quantity');
+            var quantity = parseInt(quantityElement.innerText);
+            var priceElement = cartItem.querySelector('.price');
+            var price = parseFloat(priceElement.innerText);
+            var totalElement = document.getElementById('total');
+
+            if (action === 'increase') {
+                quantity++;
+                price += price / (quantity - 1); // Aumentar el precio por unidad
+            } else if (action === 'decrease') {
+                quantity--;
+                if (quantity === 0) {
+                    //cartItem.remove(); // Si la cantidad llega a cero, eliminar el elemento del carrito
+                } else {
+                    price -= price / (quantity + 1); // Disminuir el precio por unidad
+                }
+            }
+
+            if (quantity > 0) {
+                quantityElement.innerText = quantity;
+                priceElement.innerText = price.toFixed(2); // Redondear el precio a dos decimales
+                updateTotal();
+            }
+        }
+        
+        
+        function addToCart(productName, productPrice, PriceUnit) {
+            var cart = document.getElementById('cart');
+            var existingCartItem = cart.querySelector(`li[data-product="${productName}"]`);
+            if (existingCartItem) {
+                updateCartQuantity('increase', productName);
+            } else {
+                var li = document.createElement('li');
+                li.setAttribute('data-product', productName);
+                li.innerHTML = `${productName} - <span class="price">${productPrice}</span> <button class="decrease-btn">-</button> <span class="quantity">1</span> <button class="increase-btn">+</button><span class="priceunit">${PriceUnit}</span> <button class="remove-btn">Eliminar</button>`;
+                cart.appendChild(li);
+            }
+            updateTotal();
+
+            // Agregar el producto a la variable cestaProductos
+            cestaProductos.push({ nombre: productName, precio: productPrice });
+        }
+        
+        // Función para actualizar la cantidad de unidades en la cesta
+        function updateCartQuantity(action, productName) {
+            var cart = document.getElementById('cart');
+            var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+            var quantityElement = cartItem.querySelector('.quantity');
+            var quantity = parseInt(quantityElement.innerText);
+        
+            if (action === 'increase') {
+                quantity++;
+            } else if (action === 'decrease') {
+                quantity--;
+            }
+        
+            quantityElement.innerText = quantity;
+        
+        }
+        // Función para eliminar un producto de la cesta
+        function removeFromCart(productName) {
+            var cart = document.getElementById('cart');
+            var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
+            cartItem.remove();
+            updateTotal();
+        }
+        
+        // Event listeners para los botones en la cesta
+        document.getElementById('cart').addEventListener('click', function(event) {
+            if (event.target.classList.contains('increase-btn')) {
+                var productName = event.target.parentNode.getAttribute('data-product');
+                updateCartQuantity('increase', productName);
+            } else if (event.target.classList.contains('decrease-btn')) {
+                var productName = event.target.parentNode.getAttribute('data-product');
+                updateCartQuantity('decrease', productName);
+            } else if (event.target.classList.contains('remove-btn')) {
+                var productName = event.target.parentNode.getAttribute('data-product');
+                removeFromCart(productName);
+            }
+        });
+        
+        // Event listener para los botones "Añadir a la cesta" en la tabla de productos
+        document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                var productName = this.parentNode.parentNode.children[1].innerText;
+                var productPrice = parseFloat(this.parentNode.parentNode.children[5].innerText); // Convertir el precio a un número flotante
+                var productPriceUnit = parseFloat(this.parentNode.parentNode.children[5].innerText);
+                addToCart(productName, productPrice, productPriceUnit);
+            });
+        });
+        
+        
+    */
 
 
 
-    /*
-    
+        
     function updateTotal() {
         var cart = document.getElementById('cart');
-        var cartItems = cart.querySelectorAll('li');
+        var cartRows = cart.querySelectorAll('tbody tr');
         var totalPrice = 0;
 
-        cartItems.forEach(function(cartItem) {
-            var quantity = parseInt(cartItem.querySelector('.quantity').innerText);
-            var price = parseFloat(cartItem.querySelector('.price').innerText);
-            var itemTotalPrice = price;
+        cartRows.forEach(function(cartRow) {
+            var quantity = parseInt(cartRow.querySelector('.quantity').innerText);
+            var price = parseFloat(cartRow.querySelector('.price').innerText);
+            var itemTotalPrice = quantity * price;
             totalPrice += itemTotalPrice;
         });
-      
-        document.getElementById('total').innerText = '$' + totalPrice.toFixed(2);
+
+        document.getElementById('total').innerText = totalPrice.toFixed(2);
     }
-    
-    
-    
+
     function updateCartQuantity(action, productName) {
         var cart = document.getElementById('cart');
-        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
-        var quantityElement = cartItem.querySelector('.quantity');
+        var cartRow = cart.querySelector(`tbody tr[data-product="${productName}"]`);
+        var quantityElement = cartRow.querySelector('.quantity');
         var quantity = parseInt(quantityElement.innerText);
-        var priceElement = cartItem.querySelector('.price');
+        var priceElement = cartRow.querySelector('.price');
         var price = parseFloat(priceElement.innerText);
-        var totalElement = document.getElementById('total');
+        var subtotalElement = cartRow.querySelector('.subtotal');
 
         if (action === 'increase') {
             quantity++;
-            price += price / (quantity - 1); // Aumentar el precio por unidad
         } else if (action === 'decrease') {
             quantity--;
-            if (quantity === 0) {
-                //cartItem.remove(); // Si la cantidad llega a cero, eliminar el elemento del carrito
-            } else {
-                price -= price / (quantity + 1); // Disminuir el precio por unidad
-            }
+            /*if (quantity === 0) {
+                cartRow.remove();
+            }*/
         }
 
-        if (quantity > 0) {
+        //if (quantity > 0) {
             quantityElement.innerText = quantity;
-            priceElement.innerText = price.toFixed(2); // Redondear el precio a dos decimales
+            subtotalElement.innerText = (quantity * price).toFixed(2);
             updateTotal();
-        }
+            calcularCambio();
+    // }
     }
-    
-    
-    function addToCart(productName, productPrice, PriceUnit) {
+
+    function addToCart(productName, productPrice, productCode) {
         var cart = document.getElementById('cart');
-        var existingCartItem = cart.querySelector(`li[data-product="${productName}"]`);
+        var existingCartItem = cart.querySelector(`tbody tr[data-product="${productName}"]`);
         if (existingCartItem) {
             updateCartQuantity('increase', productName);
         } else {
-            var li = document.createElement('li');
-            li.setAttribute('data-product', productName);
-            li.innerHTML = `${productName} - <span class="price">${productPrice}</span> <button class="decrease-btn">-</button> <span class="quantity">1</span> <button class="increase-btn">+</button><span class="priceunit">${PriceUnit}</span> <button class="remove-btn">Eliminar</button>`;
-            cart.appendChild(li);
+            var newRow = document.createElement('tr');
+            newRow.setAttribute('data-product', productName);
+            newRow.innerHTML = `
+                <td>${productCode}</td>
+                <td>${productName}</td>
+                <td class="price">${productPrice.toFixed(2)}</td>
+                <td><button class="decrease-btn">-</button></td>
+                <td class="quantity">1</td>
+                <td><button class="increase-btn">+</button></td>
+
+                <td class="subtotal">${productPrice.toFixed(2)}</td>
+                <td>
+                    
+                    
+                    <button class="remove-btn">Eliminar</button>
+                </td>
+            `;
+            cart.querySelector('tbody').appendChild(newRow);
         }
         updateTotal();
+        calcularCambio();
+    }
 
-        // Agregar el producto a la variable cestaProductos
-        cestaProductos.push({ nombre: productName, precio: productPrice });
-    }
-    
-    // Función para actualizar la cantidad de unidades en la cesta
-    function updateCartQuantity(action, productName) {
-        var cart = document.getElementById('cart');
-        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
-        var quantityElement = cartItem.querySelector('.quantity');
-        var quantity = parseInt(quantityElement.innerText);
-    
-        if (action === 'increase') {
-            quantity++;
-        } else if (action === 'decrease') {
-            quantity--;
-        }
-    
-        quantityElement.innerText = quantity;
-       
-    }
-    // Función para eliminar un producto de la cesta
     function removeFromCart(productName) {
         var cart = document.getElementById('cart');
-        var cartItem = cart.querySelector(`li[data-product="${productName}"]`);
-        cartItem.remove();
+        var cartRow = cart.querySelector(`tbody tr[data-product="${productName}"]`);
+        cartRow.remove();
         updateTotal();
+        calcularCambio();
     }
-    
-    // Event listeners para los botones en la cesta
+
     document.getElementById('cart').addEventListener('click', function(event) {
-        if (event.target.classList.contains('increase-btn')) {
-            var productName = event.target.parentNode.getAttribute('data-product');
+        if (event.target.classList.contains('remove-btn')) {
+            var productName = event.target.parentNode.parentNode.getAttribute('data-product');
+            removeFromCart(productName);
+        } else if (event.target.classList.contains('increase-btn')) {
+            var productName = event.target.parentNode.parentNode.getAttribute('data-product');
             updateCartQuantity('increase', productName);
         } else if (event.target.classList.contains('decrease-btn')) {
-            var productName = event.target.parentNode.getAttribute('data-product');
+            var productName = event.target.parentNode.parentNode.getAttribute('data-product');
             updateCartQuantity('decrease', productName);
-        } else if (event.target.classList.contains('remove-btn')) {
-            var productName = event.target.parentNode.getAttribute('data-product');
-            removeFromCart(productName);
         }
     });
-    
-    // Event listener para los botones "Añadir a la cesta" en la tabla de productos
+
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', function() {
             var productName = this.parentNode.parentNode.children[1].innerText;
-            var productPrice = parseFloat(this.parentNode.parentNode.children[5].innerText); // Convertir el precio a un número flotante
-            var productPriceUnit = parseFloat(this.parentNode.parentNode.children[5].innerText);
-            addToCart(productName, productPrice, productPriceUnit);
+            var productPrice = parseFloat(this.parentNode.parentNode.children[5].innerText);
+            var productCode=this.parentNode.parentNode.children[2].innerText;
+            addToCart(productName, productPrice, productCode);
         });
     });
-    
-    
-*/
 
 
-
-    
-function updateTotal() {
-    var cart = document.getElementById('cart');
-    var cartRows = cart.querySelectorAll('tbody tr');
-    var totalPrice = 0;
-
-    cartRows.forEach(function(cartRow) {
-        var quantity = parseInt(cartRow.querySelector('.quantity').innerText);
-        var price = parseFloat(cartRow.querySelector('.price').innerText);
-        var itemTotalPrice = quantity * price;
-        totalPrice += itemTotalPrice;
-    });
-
-    document.getElementById('total').innerText = totalPrice.toFixed(2);
-}
-
-function updateCartQuantity(action, productName) {
-    var cart = document.getElementById('cart');
-    var cartRow = cart.querySelector(`tbody tr[data-product="${productName}"]`);
-    var quantityElement = cartRow.querySelector('.quantity');
-    var quantity = parseInt(quantityElement.innerText);
-    var priceElement = cartRow.querySelector('.price');
-    var price = parseFloat(priceElement.innerText);
-    var subtotalElement = cartRow.querySelector('.subtotal');
-
-    if (action === 'increase') {
-        quantity++;
-    } else if (action === 'decrease') {
-        quantity--;
-        /*if (quantity === 0) {
-            cartRow.remove();
-        }*/
-    }
-
-    //if (quantity > 0) {
-        quantityElement.innerText = quantity;
-        subtotalElement.innerText = (quantity * price).toFixed(2);
-        updateTotal();
-        calcularCambio();
-   // }
-}
-
-function addToCart(productName, productPrice, productCode) {
-    var cart = document.getElementById('cart');
-    var existingCartItem = cart.querySelector(`tbody tr[data-product="${productName}"]`);
-    if (existingCartItem) {
-        updateCartQuantity('increase', productName);
-    } else {
-        var newRow = document.createElement('tr');
-        newRow.setAttribute('data-product', productName);
-        newRow.innerHTML = `
-            <td>${productCode}</td>
-            <td>${productName}</td>
-            <td class="price">${productPrice.toFixed(2)}</td>
-            <td><button class="decrease-btn">-</button></td>
-            <td class="quantity">1</td>
-            <td><button class="increase-btn">+</button></td>
-
-            <td class="subtotal">${productPrice.toFixed(2)}</td>
-            <td>
-                
-                
-                <button class="remove-btn">Eliminar</button>
-            </td>
-        `;
-        cart.querySelector('tbody').appendChild(newRow);
-    }
-    updateTotal();
-    calcularCambio();
-}
-
-function removeFromCart(productName) {
-    var cart = document.getElementById('cart');
-    var cartRow = cart.querySelector(`tbody tr[data-product="${productName}"]`);
-    cartRow.remove();
-    updateTotal();
-    calcularCambio();
-}
-
-document.getElementById('cart').addEventListener('click', function(event) {
-    if (event.target.classList.contains('remove-btn')) {
-        var productName = event.target.parentNode.parentNode.getAttribute('data-product');
-        removeFromCart(productName);
-    } else if (event.target.classList.contains('increase-btn')) {
-        var productName = event.target.parentNode.parentNode.getAttribute('data-product');
-        updateCartQuantity('increase', productName);
-    } else if (event.target.classList.contains('decrease-btn')) {
-        var productName = event.target.parentNode.parentNode.getAttribute('data-product');
-        updateCartQuantity('decrease', productName);
-    }
-});
-
-document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        var productName = this.parentNode.parentNode.children[1].innerText;
-        var productPrice = parseFloat(this.parentNode.parentNode.children[5].innerText);
-        var productCode=this.parentNode.parentNode.children[2].innerText;
-        addToCart(productName, productPrice, productCode);
-    });
-});
+        
 
 
-    
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        const filterSelect = document.getElementById("filterSelect");
-        const codigoTable = document.getElementById("codigoTable");
-        const productoTable = document.getElementById("productoTable");
-    
-        filterSelect.addEventListener("change", function() {
-            if (filterSelect.value === "codigo") {
-                codigoTable.classList.remove("hidden");
-                productoTable.classList.add("hidden");
-            } else {
-                codigoTable.classList.add("hidden");
-                productoTable.classList.remove("hidden");
-            }
+        
+        
+        
+        
+        
+        
+        
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            const filterSelect = document.getElementById("filterSelect");
+            const codigoTable = document.getElementById("codigoTable");
+            const productoTable = document.getElementById("productoTable");
+        
+            filterSelect.addEventListener("change", function() {
+                if (filterSelect.value === "codigo") {
+                    codigoTable.classList.remove("hidden");
+                    productoTable.classList.add("hidden");
+                } else {
+                    codigoTable.classList.add("hidden");
+                    productoTable.classList.remove("hidden");
+                }
+            });
         });
-    });
-    
-    
-</script>
-<!--<script>
-    // Función para mostrar el popup
-    document.getElementById("mostrarPopup").addEventListener("click", function() {
-        document.getElementById("overlay").style.display = "flex"; // Mostrar el overlay
-    });
-
-    // Función para guardar la información ingresada en los inputs
-    function guardarInformacion() {
-        var info1 = document.getElementById("input1").value;
-        var info2 = document.getElementById("input2").value;
-        var info3 = document.getElementById("input3").value;
         
-        // Aquí podrías hacer algo con la información, por ejemplo, enviarla a un servidor
         
-        // Cerrar el popup
-        document.getElementById("overlay").style.display = "none";
-    }
-</script>-->
+    </script>
+    <!--<script>
+        // Función para mostrar el popup
+        document.getElementById("mostrarPopup").addEventListener("click", function() {
+            document.getElementById("overlay").style.display = "flex"; // Mostrar el overlay
+        });
+
+        // Función para guardar la información ingresada en los inputs
+        function guardarInformacion() {
+            var info1 = document.getElementById("input1").value;
+            var info2 = document.getElementById("input2").value;
+            var info3 = document.getElementById("input3").value;
+            
+            // Aquí podrías hacer algo con la información, por ejemplo, enviarla a un servidor
+            
+            // Cerrar el popup
+            document.getElementById("overlay").style.display = "none";
+        }
+    </script>-->
 
 
 
+        
+        
+    
+        
+        
     
     
-   
     
-    
-  
-  
-  
-  <br><br>
-    
-    <!--<button onclick="DownFactura()"><i class="fa-solid fa-download"></i> Descargar Factura</button>
-    <button onclick="DownTicket()"><i class="fa-solid fa-download"></i> Descargar Ticket </button>
-    <br>-->
-    
-    <br>
-     <!--<button onclick="DownTicket()">Vaciar cesta </button>-->
+    <br><br>
+        
+        <!--<button onclick="DownFactura()"><i class="fa-solid fa-download"></i> Descargar Factura</button>
+        <button onclick="DownTicket()"><i class="fa-solid fa-download"></i> Descargar Ticket </button>
+        <br>-->
+        
+        <br>
+        <!--<button onclick="DownTicket()">Vaciar cesta </button>-->
+                </div>
             </div>
         </div>
-    </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/vfs_fonts.js"></script>
-    <script>
-    document.getElementById('searchInput').addEventListener('focus', function() {
-  // Seleccionar todo el texto dentro del input
-    this.select();
-    });
-
-
-
-
-    function genFactura() {
-        var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
         
-        // Calcular el total de la cesta
-        var total = calcularTotal();
-    
-        // Datos de la empresa (modificar según tus datos)
-        var empresa = {
-            nombre: 'Empresa S.L.',
-            nif: 'B12345678',
-            telefono: '123456789',
-            direccion: 'Calle Ejemplo, 123'
-        };
-        
-        // Obtener datos del cliente desde el DOM
-        var cliente = {
-            nombre: document.getElementById('nom').innerHTML,
-            nif: document.getElementById('dni').innerHTML,
-            telefono: document.getElementById('tlf').innerHTML,
-            direccion: document.getElementById('localitat').innerHTML
-        };
-        
-        // Datos de la tabla
-        var tableBody = [];
-        var baseTotal = 0;
-        var ivaTotal = 0;
-        
-        cartRows.forEach(function(cartRow) {
-            var productCode = cartRow.cells[0].innerText;
-            var productName = cartRow.cells[1].innerText;
-            var productPrice = parseFloat(cartRow.cells[2].innerText.replace('€', ''));
-            var productQuantity = parseInt(cartRow.cells[4].innerText);
-            var productTotal = parseFloat(cartRow.cells[6].innerText.replace('€', ''));
-            
-            // Calcular la base sin IVA y el IVA
-            var baseSinIVA = (productTotal / 1.21).toFixed(2);
-            var iva = (baseSinIVA * 0.21).toFixed(2);
-            var totalLinea = (parseFloat(baseSinIVA) + parseFloat(iva)).toFixed(2);
-    
-            // Sumar al total base e IVA
-            baseTotal += parseFloat(baseSinIVA) * productQuantity;
-            ivaTotal += parseFloat(iva) * productQuantity;
-    
-            // Añadir a la tabla
-            tableBody.push([
-                { text: productCode, alignment: 'left' },
-                { text: productName, alignment: 'left' },
-                { text: `${productQuantity}`, alignment: 'center' },
-                { text: `${baseSinIVA} €`, alignment: 'right' },
-                { text: `${iva} €`, alignment: 'right' },
-                { text: `${totalLinea} €`, alignment: 'right' }
-            ]);
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/pdfmake.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/vfs_fonts.js"></script>
+        <script>
+        document.getElementById('searchInput').addEventListener('focus', function() {
+    // Seleccionar todo el texto dentro del input
+        this.select();
         });
-    
-        // Calcular el IVA total y el total con IVA
-        var totalConIVA = (baseTotal + ivaTotal).toFixed(2);
-        
-        var docDefinition = {
-            pageSize: 'A4',
-            content: [
-                {
-                    columns: [
-                        {
-                            width: '50%',
-                            stack: [
-                                { text: empresa.nombre, style: 'header' },
-                                `NIF: ${empresa.nif}`,
-                                `Teléfono: ${empresa.telefono}`,
-                                `Dirección: ${empresa.direccion}`
-                            ],
-                            margin: [0, 20, 0, 0]
-                        },
-                        {
-                            width: '50%',
-                            stack: [
-                                { text: 'Cliente:', style: 'header' },
-                                `Nombre: ${cliente.nombre}`,
-                                `NIF: ${cliente.nif}`,
-                                `Teléfono: ${cliente.telefono}`,
-                                `Dirección: ${cliente.direccion}`
-                            ],
-                            alignment: 'right',
-                            margin: [0, 20, 0, 0]
-                        }
-                    ],
-                    columnGap: 20,
-                    margin: [0, 0, 0, 20]
-                },
-                {
-                    table: {
-                        headerRows: 1,
-                        widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto'],
-                        body: [
-                            [
-                                { text: 'Código', bold: true },
-                                { text: 'Descripción', bold: true },
-                                { text: 'Cantidad', bold: true },
-                                { text: 'Base sin IVA', bold: true },
-                                { text: 'IVA (21%)', bold: true },
-                                { text: 'Total', bold: true }
-                            ],
-                            ...tableBody
-                        ]
-                    },
-                    layout: 'lightHorizontalLines',
-                    margin: [0, 30, 0, 20] // Margen inferior para dar espacio antes de la tabla de totales
-                },
-                {
-                    table: {
-                        widths: ['*', 'auto', 'auto'],
-                        body: [
-                            [
-                                { text: 'Total Base sin IVA:', bold: true },
-                                { text: `${baseTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
-                                { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                            ],
-                            [
-                                { text: 'Total IVA (21%):', bold: true },
-                                { text: `${ivaTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
-                                { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                            ],
-                            [
-                                { text: 'Total:', bold: true, fontSize: 16 },
-                                { text: `${totalConIVA} €`, bold: true, fontSize: 16, alignment: 'right' },
-                                { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                            ]
-                        ]
-                    },
-                    layout: 'lightHorizontalLines',
-                    margin: [0, 70, 0, 20] // Margen superior de 20 para separar de la tabla de productos, margen inferior de 60 para estar justo por encima del pie de página
-                }
-            ],
-            styles: {
-                header: { fontSize: 18, bold: true },
-                subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] },
-                footer: { fontSize: 10, italics: true, margin: [0, 0, 0, 0] }
-            },
-            // Posicionar el pie de página al final de la página
-            footer: function(currentPage, pageCount, pageSize) {
-                return {
-                    text: 'Este documento es una representación de la transacción y puede ser requerido por las autoridades fiscales. Por favor, conserve este documento como comprobante de la compra.',
-                    style: 'footer',
-                    alignment: 'center',
-                    margin: [0, 0, 0, 0] // Asegura que el pie de página esté al final
-                };
-            }
-        };
-        
-        pdfMake.createPdf(docDefinition).print();
-        enviarDatosFactura(totalConIVA);
-        vaciarCesta();
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        
-        
-        
-    function getFormattedDateTime() {
-        var today = new Date();
-        var dd = String(today.getDate()).padStart(2, '0');
-        var mm = String(today.getMonth() + 1).padStart(2, '0');
-        var yyyy = today.getFullYear();
-        var hh = String(today.getHours()).padStart(2, '0');
-        var min = String(today.getMinutes()).padStart(2, '0');
-        var ss = String(today.getSeconds()).padStart(2, '0');
-
-        return dd + '/' + mm + '/' + yyyy + ' -- ' + hh + 'h ' + min + 'min ' + ss+"s";
-    }
 
 
 
-        
-    function DownFactura(){
-        var dateTime = getFormattedDateTime();
-        var fileName = "Factura " + document.getElementById('Name').value + " - "  +  getFormattedDateTime()   + ".pdf";
 
-        var docDefinition = {
-            pageSize: 'A4',
-            content: [
-                { text: 'Empresa XYZ', style: 'header' },
-                { text: 'Nº de Factura: 12345', style: 'subheader' },
-                { text: 'Información del cliente:', style: 'subheader' },
-            //{ text: document.getElementById('esc').value },
-                { text: 'Detalle de la factura:', style: 'subheader' },
-                { text: 'Producto 1 - Precio: $10' },
-                { text: 'Producto 2 - Precio: $15' },
-                { text: 'Producto 3 - Precio: $20' },
-                { text: 'Producto 4 - Precio: $25' },
-                { text: 'Producto 5 - Precio: $30' },
-                { text: 'Producto 6 - Precio: $35' },
-                { text: 'Producto 7 - Precio: $40' },
-                { text: 'Producto 8 - Precio: $45' },
-                { text: 'Producto 9 - Precio: $50' },
-                { text: 'Producto 10 - Precio: $55' }
-            ],
-            styles: {
-                header: { fontSize: 18, bold: true },
-                subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] }
-            }
-        };
-
-        pdfMake.createPdf(docDefinition).download(fileName);
-    }
-
-
-
-        
-        
-
-        function DownTicket(){
-            // Obtener productos del ticket
-            var productos = [
-                { nombre: "Producto 1", precio: "$10" },
-                { nombre: "Producto 2", precio: "$15" },
-                { nombre: "Producto 3", precio: "$20" },
-                { nombre: "Producto 4", precio: "$25" },
-                { nombre: "Producto 5", precio: "$30" },
-                { nombre: "Producto 6", precio: "$35" },
-                { nombre: "Producto 7", precio: "$40" },
-                { nombre: "Producto 8", precio: "$45" },
-                { nombre: "Producto 9", precio: "$50" },
-                { nombre: "Producto 10", precio: "$55" }
-            ];
-
-            // Calcular altura de la página del ticket
-            var height = 100 + (productos.length * 20); // 100 para el contenido fijo, 20 para cada línea de producto
-
-            var docDefinition = {
-                pageSize: { width: 5 * 72, height: height }, // Definir tamaño de página en función de la cantidad de productos
-                content: [
-                    { text: 'Ticket de Venta', style: 'header' },
-                ],
-                styles: {
-                    header: { fontSize: 18, bold: true }
-                }
-            };
-
-            // Agregar cada producto al contenido del ticket
-            productos.forEach(function(producto) {
-                docDefinition.content.push({ text: producto.nombre + " - Precio: " + producto.precio });
-            });
-
+        function genFactura() {
+            var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
             
-            pdfMake.createPdf(docDefinition).download("ticket_venta.pdf"); // Descargar ticket de venta como PDF
-        }
-       /*function genTicket() {
             // Calcular el total de la cesta
             var total = calcularTotal();
-    
+        
+            // Datos de la empresa (modificar según tus datos)
+            var empresa = {
+                nombre: 'Empresa S.L.',
+                nif: 'B12345678',
+                telefono: '123456789',
+                direccion: 'Calle Ejemplo, 123'
+            };
+            
+            // Obtener datos del cliente desde el DOM
+            var cliente = {
+                nombre: document.getElementById('nom').innerHTML,
+                nif: document.getElementById('dni').innerHTML,
+                telefono: document.getElementById('tlf').innerHTML,
+                direccion: document.getElementById('localitat').innerHTML
+            };
+            
+            // Datos de la tabla
+            var tableBody = [];
+            var baseTotal = 0;
+            var ivaTotal = 0;
+            
+            cartRows.forEach(function(cartRow) {
+                var productCode = cartRow.cells[0].innerText;
+                var productName = cartRow.cells[1].innerText;
+                var productPrice = parseFloat(cartRow.cells[2].innerText.replace('€', ''));
+                var productQuantity = parseInt(cartRow.cells[4].innerText);
+                var productTotal = parseFloat(cartRow.cells[6].innerText.replace('€', ''));
+                
+                // Calcular la base sin IVA y el IVA
+                var baseSinIVA = (productTotal / 1.21).toFixed(2);
+                var iva = (baseSinIVA * 0.21).toFixed(2);
+                var totalLinea = (parseFloat(baseSinIVA) + parseFloat(iva)).toFixed(2);
+        
+                // Sumar al total base e IVA
+                baseTotal += parseFloat(baseSinIVA) * productQuantity;
+                ivaTotal += parseFloat(iva) * productQuantity;
+        
+                // Añadir a la tabla
+                tableBody.push([
+                    { text: productCode, alignment: 'left' },
+                    { text: productName, alignment: 'left' },
+                    { text: `${productQuantity}`, alignment: 'center' },
+                    { text: `${baseSinIVA} €`, alignment: 'right' },
+                    { text: `${iva} €`, alignment: 'right' },
+                    { text: `${totalLinea} €`, alignment: 'right' }
+                ]);
+            });
+        
+            // Calcular el IVA total y el total con IVA
+            var totalConIVA = (baseTotal + ivaTotal).toFixed(2);
+            
             var docDefinition = {
                 pageSize: 'A4',
                 content: [
-                    { text: 'Ticket de Venta ' + {{ ultimo_ticket.numero }}, style: 'header' },
-                   
-                    { text: 'Productos:', style: 'subheader' }
+                    {
+                        columns: [
+                            {
+                                width: '50%',
+                                stack: [
+                                    { text: empresa.nombre, style: 'header' },
+                                    `NIF: ${empresa.nif}`,
+                                    `Teléfono: ${empresa.telefono}`,
+                                    `Dirección: ${empresa.direccion}`
+                                ],
+                                margin: [0, 20, 0, 0]
+                            },
+                            {
+                                width: '50%',
+                                stack: [
+                                    { text: 'Cliente:', style: 'header' },
+                                    `Nombre: ${cliente.nombre}`,
+                                    `NIF: ${cliente.nif}`,
+                                    `Teléfono: ${cliente.telefono}`,
+                                    `Dirección: ${cliente.direccion}`
+                                ],
+                                alignment: 'right',
+                                margin: [0, 20, 0, 0]
+                            }
+                        ],
+                        columnGap: 20,
+                        margin: [0, 0, 0, 20]
+                    },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto'],
+                            body: [
+                                [
+                                    { text: 'Código', bold: true },
+                                    { text: 'Descripción', bold: true },
+                                    { text: 'Cantidad', bold: true },
+                                    { text: 'Base sin IVA', bold: true },
+                                    { text: 'IVA (21%)', bold: true },
+                                    { text: 'Total', bold: true }
+                                ],
+                                ...tableBody
+                            ]
+                        },
+                        layout: 'lightHorizontalLines',
+                        margin: [0, 30, 0, 20] // Margen inferior para dar espacio antes de la tabla de totales
+                    },
+                    {
+                        table: {
+                            widths: ['*', 'auto', 'auto'],
+                            body: [
+                                [
+                                    { text: 'Total Base sin IVA:', bold: true },
+                                    { text: `${baseTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
+                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
+                                ],
+                                [
+                                    { text: 'Total IVA (21%):', bold: true },
+                                    { text: `${ivaTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
+                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
+                                ],
+                                [
+                                    { text: 'Total:', bold: true, fontSize: 16 },
+                                    { text: `${totalConIVA} €`, bold: true, fontSize: 16, alignment: 'right' },
+                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
+                                ]
+                            ]
+                        },
+                        layout: 'lightHorizontalLines',
+                        margin: [0, 70, 0, 20] // Margen superior de 20 para separar de la tabla de productos, margen inferior de 60 para estar justo por encima del pie de página
+                    }
+                ],
+                styles: {
+                    header: { fontSize: 18, bold: true },
+                    subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] },
+                    footer: { fontSize: 10, italics: true, margin: [0, 0, 0, 0] }
+                },
+                // Posicionar el pie de página al final de la página
+                footer: function(currentPage, pageCount, pageSize) {
+                    return {
+                        text: 'Este documento es una representación de la transacción y puede ser requerido por las autoridades fiscales. Por favor, conserve este documento como comprobante de la compra.',
+                        style: 'footer',
+                        alignment: 'center',
+                        margin: [0, 0, 0, 0] // Asegura que el pie de página esté al final
+                    };
+                }
+            };
+            
+            pdfMake.createPdf(docDefinition).print();
+            enviarDatosFactura(totalConIVA);
+            vaciarCesta();
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+            
+            
+            
+        function getFormattedDateTime() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            var hh = String(today.getHours()).padStart(2, '0');
+            var min = String(today.getMinutes()).padStart(2, '0');
+            var ss = String(today.getSeconds()).padStart(2, '0');
+
+            return dd + '/' + mm + '/' + yyyy + ' -- ' + hh + 'h ' + min + 'min ' + ss+"s";
+        }
+
+
+
+            
+        function DownFactura(){
+            var dateTime = getFormattedDateTime();
+            var fileName = "Factura " + document.getElementById('Name').value + " - "  +  getFormattedDateTime()   + ".pdf";
+
+            var docDefinition = {
+                pageSize: 'A4',
+                content: [
+                    { text: 'Empresa XYZ', style: 'header' },
+                    { text: 'Nº de Factura: 12345', style: 'subheader' },
+                    { text: 'Información del cliente:', style: 'subheader' },
+                //{ text: document.getElementById('esc').value },
+                    { text: 'Detalle de la factura:', style: 'subheader' },
+                    { text: 'Producto 1 - Precio: $10' },
+                    { text: 'Producto 2 - Precio: $15' },
+                    { text: 'Producto 3 - Precio: $20' },
+                    { text: 'Producto 4 - Precio: $25' },
+                    { text: 'Producto 5 - Precio: $30' },
+                    { text: 'Producto 6 - Precio: $35' },
+                    { text: 'Producto 7 - Precio: $40' },
+                    { text: 'Producto 8 - Precio: $45' },
+                    { text: 'Producto 9 - Precio: $50' },
+                    { text: 'Producto 10 - Precio: $55' }
                 ],
                 styles: {
                     header: { fontSize: 18, bold: true },
                     subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] }
                 }
             };
-    
-            // Agregar cada producto de la cesta al contenido del ticket
-            cestaProductos.forEach(function(producto) {
-                docDefinition.content.push({ text: `${producto.nombre} - Precio: ${producto.precio}` });
-            });
-    
-            // Agregar el total al contenido del ticket
-            docDefinition.content.push({ text: `Total: ${total}` });
-    
-            pdfMake.createPdf(docDefinition).print();
-        }*/
-        function genTicket() {
-            // Obtener elementos de la tabla de la cesta
-            var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
 
-            // Calcular el total de la cesta
-            var total = calcularTotal();
-
-            // Encabezado visual del ticket
-            var docDefinition = {
-                pageSize: { width: 220, height: 'auto' }, // Ticket pequeño
-                pageMargins: [10, 10, 10, 10],
-                content: [
-                    { text: 'TICKET DE VENTA', style: 'ticketHeader', alignment: 'center', margin: [0, 0, 0, 8] },
-                    { text: getFormattedDateTime(), style: 'ticketDate', alignment: 'center', margin: [0, 0, 0, 8] },
-                    {
-                        table: {
-                            headerRows: 1,
-                            widths: [30, '*', 20, 20, 30],
-                            body: [
-                                [
-                                    { text: 'Cód.', style: 'ticketTableHeader', alignment: 'left' },
-                                    { text: 'Producte', style: 'ticketTableHeader', alignment: 'left' },
-                                    { text: 'Uds', style: 'ticketTableHeader', alignment: 'center' },
-                                    { text: 'Preu', style: 'ticketTableHeader', alignment: 'right' },
-                                    { text: 'Total', style: 'ticketTableHeader', alignment: 'right' }
-                                ]
-                            ]
-                        },
-                        layout: 'lightHorizontalLines',
-                        margin: [0, 0, 0, 8]
-                    }
-                ],
-                styles: {
-                    ticketHeader: { fontSize: 14, bold: true },
-                    ticketDate: { fontSize: 8, italics: true },
-                    ticketTableHeader: { fontSize: 8, bold: true },
-                    ticketTableCell: { fontSize: 8 },
-                    ticketTotal: { fontSize: 10, bold: true, alignment: 'right' }
-                }
-            };
-
-            // Agregar cada producto de la cesta a la tabla
-            var tableBody = docDefinition.content[2].table.body;
-            cartRows.forEach(function(cartRow) {
-                var productCode = cartRow.cells[0].innerText;
-                var productName = cartRow.cells[1].innerText;
-                var productPrice = cartRow.cells[2].innerText;
-                var productQuantity = cartRow.cells[4].innerText;
-                var productTotal = cartRow.cells[6].innerText;
-                tableBody.push([
-                    { text: productCode, style: 'ticketTableCell', alignment: 'left' },
-                    { text: productName, style: 'ticketTableCell', alignment: 'left' },
-                    { text: productQuantity, style: 'ticketTableCell', alignment: 'center' },
-                    { text: productPrice, style: 'ticketTableCell', alignment: 'right' },
-                    { text: productTotal, style: 'ticketTableCell', alignment: 'right' }
-                ]);
-            });
-
-            // Línea separadora y total
-            docDefinition.content.push(
-                { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 } ], margin: [0, 8, 0, 8] },
-                { text: `TOTAL: ${total} €`, style: 'ticketTotal', margin: [0, 0, 0, 8] },
-                { text: 'Gràcies per la seva compra!', alignment: 'center', fontSize: 9, margin: [0, 10, 0, 0] }
-            );
-
-            pdfMake.createPdf(docDefinition).print();
-
-            enviarDatosTicket(total);
-            vaciarCesta();
-        }      
-        /*function guardarTotalBase() {
-            const total = document.getElementById('total').innerText;
-            const data = { total: total };
-        
-            // Obtener el token CSRF de la cookie
-            const csrftoken = getCookie('csrftoken');
-        
-            // Envía el total al backend, incluyendo el token CSRF
-            fetch('/guardar-ticket/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken, // Incluye el token CSRF en los encabezados
-                },
-                body: JSON.stringify(data),
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Manejar la respuesta exitosa
-                } else {
-                    // Manejar errores de respuesta
-                }
-            })
-            .catch(error => {
-                console.error('Error al enviar el total:', error);
-            });
+            pdfMake.createPdf(docDefinition).download(fileName);
         }
-        
-        // Función para obtener el valor de una cookie por su nombre
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    // Si la cookie comienza con el nombre buscado, obtenemos su valor
-                    if (cookie.startsWith(name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+
+
+
+            
+            
+
+            function DownTicket(){
+                // Obtener productos del ticket
+                var productos = [
+                    { nombre: "Producto 1", precio: "$10" },
+                    { nombre: "Producto 2", precio: "$15" },
+                    { nombre: "Producto 3", precio: "$20" },
+                    { nombre: "Producto 4", precio: "$25" },
+                    { nombre: "Producto 5", precio: "$30" },
+                    { nombre: "Producto 6", precio: "$35" },
+                    { nombre: "Producto 7", precio: "$40" },
+                    { nombre: "Producto 8", precio: "$45" },
+                    { nombre: "Producto 9", precio: "$50" },
+                    { nombre: "Producto 10", precio: "$55" }
+                ];
+
+                // Calcular altura de la página del ticket
+                var height = 100 + (productos.length * 20); // 100 para el contenido fijo, 20 para cada línea de producto
+
+                var docDefinition = {
+                    pageSize: { width: 5 * 72, height: height }, // Definir tamaño de página en función de la cantidad de productos
+                    content: [
+                        { text: 'Ticket de Venta', style: 'header' },
+                    ],
+                    styles: {
+                        header: { fontSize: 18, bold: true }
                     }
-                }
+                };
+
+                // Agregar cada producto al contenido del ticket
+                productos.forEach(function(producto) {
+                    docDefinition.content.push({ text: producto.nombre + " - Precio: " + producto.precio });
+                });
+
+                
+                pdfMake.createPdf(docDefinition).download("ticket_venta.pdf"); // Descargar ticket de venta como PDF
             }
-            return cookieValue;
-        }*/
+        /*function genTicket() {
+                // Calcular el total de la cesta
+                var total = calcularTotal();
+        
+                var docDefinition = {
+                    pageSize: 'A4',
+                    content: [
+                        { text: 'Ticket de Venta ' + {{ ultimo_ticket.numero }}, style: 'header' },
+                    
+                        { text: 'Productos:', style: 'subheader' }
+                    ],
+                    styles: {
+                        header: { fontSize: 18, bold: true },
+                        subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] }
+                    }
+                };
+        
+                // Agregar cada producto de la cesta al contenido del ticket
+                cestaProductos.forEach(function(producto) {
+                    docDefinition.content.push({ text: `${producto.nombre} - Precio: ${producto.precio}` });
+                });
+        
+                // Agregar el total al contenido del ticket
+                docDefinition.content.push({ text: `Total: ${total}` });
+        
+                pdfMake.createPdf(docDefinition).print();
+            }*/
+            function genTicket() {
+                // Obtener elementos de la tabla de la cesta
+                var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
 
-       /* function baseDatos() {
-            console.log('Función baseDatos() ejecutada');
-            var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
-            var productos = [];
-            var total = parseFloat(calcularTotal());
+                // Calcular el total de la cesta
+                var total = calcularTotal();
 
-            cartRows.forEach(function(cartRow) {
-                var productCode = cartRow.cells[0].innerText;
-                productos.push(productCode);
-            });
+                // Encabezado visual del ticket
+                var docDefinition = {
+                    pageSize: { width: 220, height: 'auto' }, // Ticket pequeño
+                    pageMargins: [10, 10, 10, 10],
+                    content: [
+                        { text: 'TICKET DE VENTA', style: 'ticketHeader', alignment: 'center', margin: [0, 0, 0, 8] },
+                        { text: getFormattedDateTime(), style: 'ticketDate', alignment: 'center', margin: [0, 0, 0, 8] },
+                        {
+                            table: {
+                                headerRows: 1,
+                                widths: [30, '*', 20, 20, 30],
+                                body: [
+                                    [
+                                        { text: 'Cód.', style: 'ticketTableHeader', alignment: 'left' },
+                                        { text: 'Producte', style: 'ticketTableHeader', alignment: 'left' },
+                                        { text: 'Uds', style: 'ticketTableHeader', alignment: 'center' },
+                                        { text: 'Preu', style: 'ticketTableHeader', alignment: 'right' },
+                                        { text: 'Total', style: 'ticketTableHeader', alignment: 'right' }
+                                    ]
+                                ]
+                            },
+                            layout: 'lightHorizontalLines',
+                            margin: [0, 0, 0, 8]
+                        }
+                    ],
+                    styles: {
+                        ticketHeader: { fontSize: 14, bold: true },
+                        ticketDate: { fontSize: 8, italics: true },
+                        ticketTableHeader: { fontSize: 8, bold: true },
+                        ticketTableCell: { fontSize: 8 },
+                        ticketTotal: { fontSize: 10, bold: true, alignment: 'right' }
+                    }
+                };
 
-            // Hacer una solicitud AJAX a la vista Django
-            fetch('/agregar-productos/', {
+                // Agregar cada producto de la cesta a la tabla
+                var tableBody = docDefinition.content[2].table.body;
+                cartRows.forEach(function(cartRow) {
+                    var productCode = cartRow.cells[0].innerText;
+                    var productName = cartRow.cells[1].innerText;
+                    var productPrice = cartRow.cells[2].innerText;
+                    var productQuantity = cartRow.cells[4].innerText;
+                    var productTotal = cartRow.cells[6].innerText;
+                    tableBody.push([
+                        { text: productCode, style: 'ticketTableCell', alignment: 'left' },
+                        { text: productName, style: 'ticketTableCell', alignment: 'left' },
+                        { text: productQuantity, style: 'ticketTableCell', alignment: 'center' },
+                        { text: productPrice, style: 'ticketTableCell', alignment: 'right' },
+                        { text: productTotal, style: 'ticketTableCell', alignment: 'right' }
+                    ]);
+                });
+
+                // Línea separadora y total
+                docDefinition.content.push(
+                    { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 } ], margin: [0, 8, 0, 8] },
+                    { text: `TOTAL: ${total} €`, style: 'ticketTotal', margin: [0, 0, 0, 8] },
+                    { text: 'Gràcies per la seva compra!', alignment: 'center', fontSize: 9, margin: [0, 10, 0, 0] }
+                );
+
+                pdfMake.createPdf(docDefinition).print();
+
+                enviarDatosTicket(total);
+                vaciarCesta();
+            }      
+            /*function guardarTotalBase() {
+                const total = document.getElementById('total').innerText;
+                const data = { total: total };
+            
+                // Obtener el token CSRF de la cookie
+                const csrftoken = getCookie('csrftoken');
+            
+                // Envía el total al backend, incluyendo el token CSRF
+                fetch('/guardar-ticket/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken') // Obtener el token CSRF
+                        'X-CSRFToken': csrftoken, // Incluye el token CSRF en los encabezados
                     },
-                    body: JSON.stringify({ productos: productos, total: total }) // Enviar productos y total al backend
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
+                    body: JSON.stringify(data),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Manejar la respuesta exitosa
+                    } else {
+                        // Manejar errores de respuesta
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el total:', error);
+                });
+            }
+            
+            // Función para obtener el valor de una cookie por su nombre
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        // Si la cookie comienza con el nombre buscado, obtenemos su valor
+                        if (cookie.startsWith(name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
                 }
-                throw new Error('Error al agregar productos al ticket.');
-            })
-            .then(data => {
-                console.log(data);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                return cookieValue;
+            }*/
 
-            // Función para obtener el token CSRF
+        /* function baseDatos() {
+                console.log('Función baseDatos() ejecutada');
+                var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
+                var productos = [];
+                var total = parseFloat(calcularTotal());
+
+                cartRows.forEach(function(cartRow) {
+                    var productCode = cartRow.cells[0].innerText;
+                    productos.push(productCode);
+                });
+
+                // Hacer una solicitud AJAX a la vista Django
+                fetch('/agregar-productos/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken') // Obtener el token CSRF
+                        },
+                        body: JSON.stringify({ productos: productos, total: total }) // Enviar productos y total al backend
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Error al agregar productos al ticket.');
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+                // Función para obtener el token CSRF
+                function getCookie(name) {
+                    var cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        var cookies = document.cookie.split(';');
+                        for (var i = 0; i < cookies.length; i++) {
+                            var cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+
+            }*/
+            
+            function removeFromCartAndTicket(productName) {
+                removeFromCart(productName); // Eliminar el producto de la cesta
+            
+                // Eliminar el producto de la variable cestaProductos
+                cestaProductos = cestaProductos.filter(function(producto) {
+                    return producto.nombre !== productName;
+                });
+            }
+            
+            function calcularTotal() {
+                var total = 0;
+                var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
+            
+                cartRows.forEach(function(cartRow) {
+                    // price está en la celda 2, quantity en la celda 4
+                    var price = parseFloat(cartRow.cells[2].innerText);
+                    var quantity = parseInt(cartRow.cells[4].innerText);
+                    total += price * quantity;
+                });
+            
+                return total.toFixed(2); // Redondear el total a dos decimales
+            }
+
+
+
+
+
+
+
+            function vaciarCesta() {
+                // Obtener el tbody de la tabla
+                var tbody = document.querySelector('#cart tbody');
+                // Vaciar el contenido del tbody
+                tbody.innerHTML = '';
+                document.getElementById('total').textContent = '0.00';
+                //location.reload();
+            }
+
+            function genTicketYEnviar() {
+                genTicket();
+            
+            }
+            
+            function enviarDatosFactura(totalText) {
+            
+                console.log("Total:", totalText); // Log the total value
+                var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
+                var numCliElement = document.getElementById("num_cli");
+
+            // Obtenemos el contenido de texto del <span> y lo convertimos a número
+                var num_Cli = parseInt(numCliElement.textContent, 10);
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_factura/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({num_Cli: num_Cli,totalText:totalText }));
+            enviarDatosProductosFactura();
+                
+                
+            }
+            function enviarDatosTicket(totalText) {
+                var checkboxs = document.querySelectorAll('input[name="pagament"]');
+
+                // Recorre los checkboxes para encontrar el que está marcado
+                        var pagament = null;
+                        checkboxs.forEach(function(element) {
+                            if (element.checked) {
+                                pagament = element.value;
+                            }
+                        });
+
+                        
+                console.log("Total:", totalText); // Log the total value
+                var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
+                
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_ticket/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({ total: totalText,pagament:pagament }));
+                
+                enviarDatosProductosTicket();
+                
+            }
+            
+            // Function to retrieve the CSRF token from cookies
             function getCookie(name) {
                 var cookieValue = null;
                 if (document.cookie && document.cookie !== '') {
                     var cookies = document.cookie.split(';');
                     for (var i = 0; i < cookies.length; i++) {
                         var cookie = cookies[i].trim();
+                        // Does this cookie string begin with the name we want?
                         if (cookie.substring(0, name.length + 1) === (name + '=')) {
                             cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                             break;
@@ -1513,198 +1567,74 @@ document.querySelectorAll('.add-to-cart-btn').forEach(button => {
                 }
                 return cookieValue;
             }
+            
+            
+        </script>
+        <script>
+            function enviarDatosProductosTicket() {
 
-        }*/
+                
+
+
+                var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
         
-        function removeFromCartAndTicket(productName) {
-            removeFromCart(productName); // Eliminar el producto de la cesta
-        
-            // Eliminar el producto de la variable cestaProductos
-            cestaProductos = cestaProductos.filter(function(producto) {
-                return producto.nombre !== productName;
-            });
-        }
-        
-        function calcularTotal() {
-            var total = 0;
-            var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
-        
-            cartRows.forEach(function(cartRow) {
-                // price está en la celda 2, quantity en la celda 4
-                var price = parseFloat(cartRow.cells[2].innerText);
-                var quantity = parseInt(cartRow.cells[4].innerText);
-                total += price * quantity;
-            });
-        
-            return total.toFixed(2); // Redondear el total a dos decimales
-        }
-
-
-
-
-
-
-
-        function vaciarCesta() {
-            // Obtener el tbody de la tabla
-            var tbody = document.querySelector('#cart tbody');
-            // Vaciar el contenido del tbody
-            tbody.innerHTML = '';
-            document.getElementById('total').textContent = '0.00';
-            //location.reload();
-        }
-
-        function genTicketYEnviar() {
-            genTicket();
-           
-        }
-        
-        function enviarDatosFactura(totalText) {
-           
-            console.log("Total:", totalText); // Log the total value
-            var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
-            var numCliElement = document.getElementById("num_cli");
-
-        // Obtenemos el contenido de texto del <span> y lo convertimos a número
-            var num_Cli = parseInt(numCliElement.textContent, 10);
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/guardar_factura/", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Respuesta del servidor:", xhr.responseText);
-                } else {
-                    console.error("Error en la solicitud:", xhr.statusText);
+                var productos = [];
+                var rows = document.getElementById('cart').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var codigo = rows[i].getElementsByTagName('td')[0].innerText;
+                    var cantidad = rows[i].getElementsByTagName('td')[4].innerText;
+                    productos.push({codigo: codigo, cantidad: cantidad});
                 }
-            };
-            xhr.onerror = function () {
-                console.error("Error de red al enviar la solicitud.");
-            };
-            xhr.send(JSON.stringify({num_Cli: num_Cli,totalText:totalText }));
-           enviarDatosProductosFactura();
-            
-            
-        }
-        function enviarDatosTicket(totalText) {
-            var checkboxs = document.querySelectorAll('input[name="pagament"]');
+                console.log(productos);
 
-            // Recorre los checkboxes para encontrar el que está marcado
-                    var pagament = null;
-                    checkboxs.forEach(function(element) {
-                        if (element.checked) {
-                            pagament = element.value;
-                        }
-                     });
-
-                     
-            console.log("Total:", totalText); // Log the total value
-            var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
-            
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/guardar_ticket/", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Respuesta del servidor:", xhr.responseText);
-                } else {
-                    console.error("Error en la solicitud:", xhr.statusText);
-                }
-            };
-            xhr.onerror = function () {
-                console.error("Error de red al enviar la solicitud.");
-            };
-            xhr.send(JSON.stringify({ total: totalText,pagament:pagament }));
-            
-            enviarDatosProductosTicket();
-            
-        }
-        
-        // Function to retrieve the CSRF token from cookies
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = cookies[i].trim();
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_productos_ticket/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
                     }
-                }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({ productos: productos }));
             }
-            return cookieValue;
-        }
+            function enviarDatosProductosFactura() {
+                var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
         
-        
-    </script>
-    <script>
-        function enviarDatosProductosTicket() {
+                var productos = [];
+                var rows = document.getElementById('cart').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                for (var i = 0; i < rows.length; i++) {
+                    var codigo = rows[i].getElementsByTagName('td')[0].innerText;
+                    var cantidad = rows[i].getElementsByTagName('td')[4].innerText;
+                    productos.push({codigo: codigo, cantidad: cantidad});
+                }
+                console.log(productos);
 
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_productos_factura/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({ productos: productos }));
+            }
+    // La función para obtener la cookie CSRF sigue siendo la misma
+        
             
-
-
-            var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
-    
-            var productos = [];
-            var rows = document.getElementById('cart').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            for (var i = 0; i < rows.length; i++) {
-                var codigo = rows[i].getElementsByTagName('td')[0].innerText;
-                var cantidad = rows[i].getElementsByTagName('td')[4].innerText;
-                productos.push({codigo: codigo, cantidad: cantidad});
-            }
-            console.log(productos);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/guardar_productos_ticket/", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken);
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Respuesta del servidor:", xhr.responseText);
-                } else {
-                    console.error("Error en la solicitud:", xhr.statusText);
-                }
-            };
-            xhr.onerror = function () {
-                console.error("Error de red al enviar la solicitud.");
-            };
-            xhr.send(JSON.stringify({ productos: productos }));
-        }
-        function enviarDatosProductosFactura() {
-            var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
-    
-            var productos = [];
-            var rows = document.getElementById('cart').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            for (var i = 0; i < rows.length; i++) {
-                var codigo = rows[i].getElementsByTagName('td')[0].innerText;
-                var cantidad = rows[i].getElementsByTagName('td')[4].innerText;
-                productos.push({codigo: codigo, cantidad: cantidad});
-            }
-            console.log(productos);
-
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/guardar_productos_factura/", true);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-CSRFToken', csrftoken);
-            xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    console.log("Respuesta del servidor:", xhr.responseText);
-                } else {
-                    console.error("Error en la solicitud:", xhr.statusText);
-                }
-            };
-            xhr.onerror = function () {
-                console.error("Error de red al enviar la solicitud.");
-            };
-            xhr.send(JSON.stringify({ productos: productos }));
-        }
-// La función para obtener la cookie CSRF sigue siendo la misma
-      
-        
-    </script>
-</body>
-</html>
-{% endblock %}
+        </script>
+    </body>
+    </html>
+    {% endblock %}
