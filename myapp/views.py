@@ -188,6 +188,33 @@ def facturas(request):
     })
 
 
+@csrf_exempt  # solo si vas a usar fetch sin form; si no, quita esto y usa el token
+def buscar_producto(request):
+    if request.method == 'POST':
+        texto = request.POST.get('texto', '').strip()
+
+        # 1️⃣ Filtramos como antes (sin Q)
+        qs = (
+            Producto.objects.filter(nombre__icontains=texto)
+            | Producto.objects.filter(codigo__icontains=texto)
+            | Producto.objects.filter(descripcion__icontains=texto)
+        ).distinct()
+
+        # 2️⃣ Sacamos sólo los campos que necesitamos
+        productos = list(qs.values(
+            'id',
+            'nombre',
+            'codigo',
+            'precio',
+            'descripcion'
+        ))
+
+        # 3️⃣ Devolvemos un JSON al front
+        return JsonResponse({'productos': productos}, status=200)
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
 @login_required
 def tickets(request):
     tickets = Ticket.objects.all()
@@ -778,7 +805,8 @@ def obtenir_pressupost(request, pressupostId):
         'productos': productes_i_quantitats,
         "persona_id":pressupost.persona_id,
         "persona_nom":dades_persona.nombre,
-        "facturat":pressupost.facturat
+        "facturat":pressupost.facturat,
+        "metodo_pago":pressupost.metodo_pago
         
     }
     print(data)
