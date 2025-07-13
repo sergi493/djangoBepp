@@ -69,6 +69,8 @@ urlpatterns = [
     path('tancar_caixa/', views.tancar_caixa, name='tancar_caixa'),
     path('enviar_factura_email/', views.enviar_factura_email, name='enviar_factura_email'),
     path('buscar_producto/', views.buscar_producto, name='buscar_producto'),
+    path('buscar_persona/', views.buscar_persona, name='buscar_persona'),
+    
 
     
     

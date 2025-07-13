@@ -1,0 +1,16 @@
+{# templates/includes/buscar_producto.html #}
+<div class="buscar-producto-component">
+  <p><strong>BUSCAR PRODUCTE</strong></p>
+  <input type="text" id="{{ input_id }}" class="buscar-producto-input" placeholder="Buscar producte...">
+  <table id="{{ table_id }}">
+    <thead>
+      <tr>
+        <th>ID</th><th>NOM</th><th>CODI</th><th>QUANTITAT</th>
+        <th>DESCRIPCIÓ</th><th>PREU</th><th>ACCIONS</th>
+      </tr>
+    </thead>
+    <tbody id="{{ tbody_id }}">
+      <tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>
+    </tbody>
+  </table>
+</div>

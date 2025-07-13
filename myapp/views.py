@@ -5,7 +5,7 @@ from django.http import HttpResponse,JsonResponse
 from django.core.mail import EmailMessage
 from django.core.paginator import Paginator
 from django.shortcuts import render
-
+from django.db.models import Q
 from .models import Producto,Pressupost,ProducteEnPressupost,Pedidos,FacturaCompra,Reparacio, ProducteEnReparacio,Avui
 from .models import Persona
 from django.shortcuts import get_object_or_404, render, redirect
@@ -170,7 +170,7 @@ def facturas(request):
 
     # Paginación
     page_number = request.GET.get('page', 1)
-    paginator = Paginator(factures_queryset, 15)
+    paginator = Paginator(factures_queryset, 8)
     page = paginator.get_page(page_number)
 
     # Reemplazar persona_id por nombre
@@ -193,24 +193,46 @@ def buscar_producto(request):
     if request.method == 'POST':
         texto = request.POST.get('texto', '').strip()
 
-        # 1️⃣ Filtramos como antes (sin Q)
-        qs = (
-            Producto.objects.filter(nombre__icontains=texto)
-            | Producto.objects.filter(codigo__icontains=texto)
-            | Producto.objects.filter(descripcion__icontains=texto)
-        ).distinct()
+        # Filtrar per código o descripcion (case-insensitive)
+        qs = Producto.objects.filter(
+            Q(codigo__icontains=texto) | Q(descripcion__icontains=texto)
+        )
 
-        # 2️⃣ Sacamos sólo los campos que necesitamos
         productos = list(qs.values(
             'id',
             'nombre',
             'codigo',
             'precio',
-            'descripcion'
+            'descripcion',
+            'cantidad'  # afegim perquè l'uses en JS
         ))
 
-        # 3️⃣ Devolvemos un JSON al front
         return JsonResponse({'productos': productos}, status=200)
+
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+def buscar_persona(request):
+    if request.method == 'POST':
+        texto = request.POST.get('texto', '').strip()
+
+        # Filtrar per código o descripcion (case-insensitive)
+        qs = Persona.objects.filter(
+            Q(nombre__icontains=texto) | Q(telefono__icontains=texto)
+        )
+
+        personas = list(qs.values(
+            'id',
+            'nombre',
+            'localidad',
+            'calle',
+            'nif',
+            'telefono',
+            'email',  
+            'direccion'
+        ))
+
+        return JsonResponse({'personas': personas}, status=200)
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
@@ -246,7 +268,7 @@ def tickets(request):
 
     # Paginación
     page_number = request.GET.get('page', 1)
-    paginator = Paginator(ticket_queryset, 15)
+    paginator = Paginator(ticket_queryset, 8)
     page = paginator.get_page(page_number)
 
    
@@ -526,6 +548,7 @@ def aplicar_pressupost(request):
     persona_id_nou   = data.get("persona_id")
     metodo_pago_nou  = data.get("metodo_pago")
     productes_i_quant = data.get("productes", [])
+    totalGeneral    = data.get("totalGeneral")
 
     total_preu = 0
     for unitat in productes_i_quant:
@@ -547,7 +570,7 @@ def aplicar_pressupost(request):
 
     # Actualitzar Pressupost global
     pressupost = Pressupost.objects.get(id=id_pressupost)
-    pressupost.total       = total_preu
+    pressupost.total       = totalGeneral
     pressupost.persona_id  = persona_id_nou    # ← **Actualització** persona
     pressupost.metodo_pago = metodo_pago_nou    # ← **Actualització** mètode pagament
     pressupost.save()
@@ -805,12 +828,16 @@ def obtenir_pressupost(request, pressupostId):
         'productos': productes_i_quantitats,
         "persona_id":pressupost.persona_id,
         "persona_nom":dades_persona.nombre,
+        "persona_nif":dades_persona.nif,
+        "persona_tel":dades_persona.telefono,
+        "persona_email":dades_persona.email if dades_persona.email else "sin mail",
         "facturat":pressupost.facturat,
         "metodo_pago":pressupost.metodo_pago
-        
     }
     print(data)
     return JsonResponse(data)
+
+
 
 def obtenir_reparacio(request, reparacioId):
     reparacio = Reparacio.objects.get(id=reparacioId)
@@ -1313,20 +1340,53 @@ def hoy(request):
     # Renderiza la plantilla pasando las facturas como contexto
     return render(request, "hoy.html", {'factures': factures,'tickets':tickets,'total':total,'marge':marge,'marge_benefici':marge_benefici,'preu_efectiu':preu_efectiu,'preu_targeta':preu_targeta})
 
-@login_required
-def presupostos(request):
-    
-    personas=Persona.objects.all()
-    producte=Producto.objects.all()
-    pressupostos=Pressupost.objects.all()
-    
-    for pres in pressupostos:
 
-        nom_cli=Persona.objects.get(id=pres.persona_id).nombre
-       
-        pres.persona_id=nom_cli
+def presupostos(request):
+    data_inici = request.GET.get('data_inicio')
+    data_fi = request.GET.get('data_fi')
+    search = request.GET.get('search')
+
+    pressupostos= Pressupost.objects.all().order_by('-date')
+
+    # Filtrar por búsqueda: buscar todas las personas que coinciden
+    if search:
+        personas_nom = Persona.objects.filter(nombre__icontains=search)
+        personas_tel = Persona.objects.filter(telefono__icontains=search)
+        personas = personas_nom | personas_tel
+        pressupostos = pressupostos.filter(persona_id__in=personas.values_list('id', flat=True))
+
+    # Filtrar por fechas
+    if data_inici and data_fi:
+        try:
+            data_inici_obj = datetime.strptime(data_inici, "%Y-%m-%d")
+            data_fi_obj = datetime.strptime(data_fi, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            pressupostos = pressupostos.filter(date__range=(data_inici_obj, data_fi_obj))
+        except ValueError:
+            pass
+
+    # Paginación
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(pressupostos, 8)
+    page = paginator.get_page(page_number)
+
+    # Reemplazar persona_id por nombre
+    for pressupost in page:
+        try:
+            pressupost.persona_id = Persona.objects.get(id=pressupost.persona_id).nombre
+        except Persona.DoesNotExist:
+            pressupost.persona_id = "Desconegut"
+
+    personas=Persona.objects.all()
     
-    return render(request, "presupostos.html",{"persona":personas,"producte":producte,"pressupostos":pressupostos})
+    return render(request, "presupostos.html", {
+        "pressupostos": page,
+        "data_inicio": data_inici or '',
+        "data_fi": data_fi or '',
+        "search": search or '',
+        "persona":personas
+    })
+
+
 
 @login_required
 def reparacions(request):
@@ -1751,6 +1811,7 @@ def signin(request):
 def enviar_factura_email(request):
     if request.method == 'POST':
         import json
+
         data = json.loads(request.body)
 
         pdf_base64 = data.get('pdf')

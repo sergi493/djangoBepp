@@ -19,8 +19,26 @@
     <div class="products-section">
         <h1>PRESUPOSTOS</h1>
 <p>(es pot eliminar, descarregar, reembolsar, veure datos, enviar per mail?)</p>
-<input type="text" id="searchInput" placeholder="Buscar producte...">
+
+
+             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+  <form method="get" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <label for="data-inicio">De:</label>
+    <input type="date" id="data-inicio" name="data_inicio" value="{{ data_inicio }}">
+    <label for="data-fin">A:</label>
+    <input type="date" id="data-fin" name="data_fi" value="{{ data_fi }}">
+    <input type="text" name="search" value="{{ search }}" placeholder="Buscar persona...">
+    <button type="submit" class="blue-button">🔍</button>
+  </form>
+
+  <form method="get" style="margin: 0; margin-left: 10px;">
+    <button type="submit" class="blue-button">🔄</button>
+  </form>
+</div>
+
+
 <button id="afegir-reparacio-btn">Afegir Presupost</button>
+
 
     </div>
     <form method="post">
@@ -52,6 +70,19 @@
             {% endfor %}
             </tbody>
         </table>
+        <div style="text-align: center; margin-top: 2rem;">
+  {% if pressupostos.has_previous %}
+    <a href="?page={{ pressupostos.previous_page_number }}" class="blue-button">⬅️ Anteriors</a>
+  {% endif %}
+
+  <span style="margin: 0 1rem; font-weight: bold;">
+    Pàgina {{ pressupostos.number }} de {{ pressupostos.paginator.num_pages }}
+  </span>
+
+  {% if pressupostos.has_next %}
+    <a href="?page={{ pressupostos.next_page_number }}" class="blue-button">➡️ Següents</a>
+  {% endif %}
+</div>
     
     </form>
 <div id="modal-overlay" class="hidden">
@@ -98,14 +129,11 @@
         </tfoot>
         </table>
         <button id="close-modal-btn">Cerrar</button>
-        <button onclick="CrearNouPresupost()">Aplicar</button>
-        <button >Descargar</button>
-        <button >Imprimir</button>
-        <button >Facturar</button>
-        <button >Enviar per correu</button>
-        <button >Eliminar</button>
+        <button onclick="CrearNouPresupost()">Crearr</button>
+
     </div>
 </div>
+
 <style>
     .clientPressupost{
         margin-bottom:25px;
@@ -254,40 +282,139 @@
         </div>
         <button class="boto-tancar-facturar" onclick="hideOverlay4()">Cancelar</button>
         <div class="der">
-            <p>BUSCAR PRODUCTE</p>
-            <input type="text">
-            <table id="taula_prod_presupost">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>NOM</th>
-                        <th>tlf</th>
-                        <th>NIF</th>
-                    </tr>
-                </thead>
-                <tbody >
-                    {% for prod in producte %}
-                    <tr class="cliente-row0">
-                        <td>{{ prod.id }}</td>
-                        <td> {{ prod.nombre }} </td>  
-                        <td>{{ prod.codigo }}</td>
-                        <td>{{ prod.cantidad }}</td>
-                        <td>{{ prod.descripcion }}</td>
-                        <td>{{ prod.precio }}</td>
-                        <td><button onclick="ImportarProducteExistentPressupost('{{ prod.id }}', '{{ prod.nombre }}', '{{ prod.codigo }}', '{{ prod.cantidad }}', '{{ prod.descripcion }}','{{ prod.precio }}'  )" ><i class="fa-regular fa-pen-to-square"></i></button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                
-                <tfoot>
-                    <tr>
-                        <td colspan="3">
-                            <button id="prev-btn0" onclick="changePage(-1)" disabled>&larr; Anterior</button>
-                            <button id="next-btn0" onclick="changePage(1)">Siguiente &rarr;</button>
+           <p><strong>BUSCAR PRODUCTE</strong></p>
+
+<input type="text" id="inputBuscarProducte" placeholder="Buscar producte...">
+
+<table id="taula_prod_presupost">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>NOM</th>
+            <th>CODI</th>
+            <th>QUANTITAT</th>
+            <th>DESCRIPCIÓ</th>
+            <th>PREU</th>
+            <th>ACCIONS</th>
+        </tr>
+    </thead>
+    <tbody id="tbody_prod_presupost">
+        <!-- Les files es generaran dinàmicament -->
+    </tbody>
+</table>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("inputBuscarProducte");
+    const tbody = document.getElementById("tbody_prod_presupost");
+
+    input.addEventListener("input", function () {
+        const texto = input.value.trim();
+        if (texto === "") {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
+            return;
+        }
+
+        fetch("{% url 'buscar_producto' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ texto: texto })
+        })
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = "";
+
+            if (data.productos && data.productos.length > 0) {
+                data.productos.forEach(prod => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                        <td>${prod.id}</td>
+                        <td>${prod.nombre}</td>
+                        <td>${prod.codigo}</td>
+                        <td>${prod.cantidad ?? '-'}</td>
+                        <td>${prod.descripcion}</td>
+                        <td>${prod.precio}</td>
+                        <td>
+                            <button onclick="ImportarProducteExistentPressupost(
+                                '${prod.id}', '${prod.nombre}', '${prod.codigo}',
+                                '${prod.cantidad ?? ''}', '${prod.descripcion}', '${prod.precio}'
+                            )">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
                         </td>
-                    </tr>
-                </tfoot>
-            </table>
+                    `;
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error("Error al buscar productes:", error);
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input0 = document.getElementById("inputBuscarProducte0");
+    const tbody0 = document.getElementById("tbody_prod_presupost0");
+
+    input0.addEventListener("input", function () {
+        const texto0 = input0.value.trim();
+        if (texto0 === "") {
+            tbody0.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
+            return;
+        }
+
+        fetch("{% url 'buscar_producto' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ texto: texto0 })
+        })
+        .then(response => response.json())
+        .then(data => {
+            tbody0.innerHTML = "";
+
+            if (data.productos && data.productos.length > 0) {
+                data.productos.forEach(prod => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                        <td>${prod.id}</td>
+                        <td>${prod.nombre}</td>
+                        <td>${prod.codigo}</td>
+                        <td>${prod.cantidad ?? '-'}</td>
+                        <td>${prod.descripcion}</td>
+                        <td>${prod.precio}</td>
+                        <td>
+                            <button onclick="ImportarProducteExistent(
+                                '${prod.codigo}', '${prod.descripcion}',
+                                '${prod.precio}'
+                            )">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody0.appendChild(fila);
+                });
+            } else {
+                tbody0.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error("Error al buscar productes:", error);
+        });
+    });
+});
+</script>
+
         </div>
     </div>
 </div>
@@ -487,40 +614,95 @@
         </div>
         <button class="boto-tancar-facturar" onclick="hideOverlay()">Cancelar</button>
         <div class="der">
-            <p>BUSCAR CLIENT</p>
-            <input type="text">
-            <table id="taula_client_presupost">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>NOM</th>
-                        <th>tlf</th>
-                        <th>NIF</th>
-                        <th>Importar</th>
-                    </tr>
-                </thead>
-                <tbody >
-                    {% for pers in persona %}
-                    <tr class="cliente-row">
-                        <td> {{ pers.id }} </td>  
-                        <td>{{ pers.nombre }}</td>
-                        <td>{{ pers.telefono }}</td>
-                        <td>{{ pers.nif }}</td>
-                       
-                        <td><button onclick="ImportarClientPressupost ('{{ pers.id }}' ,'{{ pers.nombre }}','{{ pers.telefono }}','{{ pers.nif }}')" ><i class="fa-regular fa-pen-to-square"></i></button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3">
-                            <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
-                            <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+  <p><strong>BUSCAR CLIENTE</strong></p>
+  <input type="text" id="inputBuscarCliente" placeholder="Buscar cliente..." />
+
+  <table id="taula_client_presupost">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>NOM</th>
+        <th>tlf</th>
+        <th>NIF</th>
+        <th>Importar</th>
+      </tr>
+    </thead>
+    <tbody id="tbody_clientes_presupost">
+      <!-- Aquí inicias con un mensaje por defecto -->
+      <tr>
+        <td colspan="5" style="text-align:center">Escriu per cercar...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("inputBuscarCliente");
+  const tbody = document.getElementById("tbody_clientes_presupost");
+
+  input.addEventListener("input", () => {
+    const texto = input.value.trim();
+
+    if (!texto) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center">Escriu per cercar...</td>
+        </tr>`;
+      return;
+    }
+
+    fetch("{% url 'buscar_persona' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+      body: new URLSearchParams({ texto })
+    })
+    .then(res => res.json())
+    .then(data => {
+      tbody.innerHTML = "";
+
+      if (data.personas && data.personas.length > 0) {
+        data.personas.forEach(pers => {
+          const fila = document.createElement("tr");
+          fila.innerHTML = `
+            <td>${pers.id}</td>
+            <td>${pers.nombre}</td>
+            <td>${pers.telefono}</td>
+            <td>${pers.nif}</td>
+            <td>
+              <button onclick="ImportarClientPressupost(
+                '${pers.id}',
+                '${pers.nombre}',
+                '${pers.telefono}',
+                '${pers.nif}'
+              )">
+                <i class="fa-regular fa-pen-to-square"></i>
+              </button>
+            </td>`;
+          tbody.appendChild(fila);
+        });
+      } else {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center">Cap client trobat</td>
+          </tr>`;
+      }
+    })
+    .catch(err => {
+      console.error("Error al buscar clients:", err);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; color:red">
+            Error de cerca 😬
+          </td>
+        </tr>`;
+    });
+  });
+});
+</script>
+
     
 </div>
 </div>
@@ -537,6 +719,7 @@
                 fetch(`/obtenir_pressupost/${pressupostId}/`)
                     .then(response => response.json())
                     .then(data => {
+                        localStorage.setItem(`pressupost-${data.id}`, JSON.stringify(data));
                         const dateObj = new Date(data.date);
                         const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
                         const hours = String(dateObj.getUTCHours()).padStart(2, '0');
@@ -550,9 +733,10 @@
                                         <h2>PRESSUPOST número:<span id="pressupost_id_obtenir"> ${data.id}</span><br>  <br> </h2>
                                         <button onclick="showOverlay()">Cambiar client</button>
                                          <span id="clientIdPressupostEdit" >${data.persona_id}</span>
-        <span id="clientNomPressupostEdit">${data.persona_nom}</span>
-        <span id="clientNifPressupostEdit"></span>
-        <span id="clientTelPressupostEdit"></span>
+        <span id="clientNomPressupostEdit">|${data.persona_nom}</span>
+        <span id="clientNifPressupostEdit">|${data.persona_nif}</span>
+        <span id="clientTelPressupostEdit">|${data.persona_tel}</span>
+        <span id="clientEmailPressupostEdit">${data.persona_email}</span>
                                         <p>Facturat ${data.facturat === '' ? 'qq' : data.facturat}</p>
                                         <div class="payment-container">
                                             <label for="paymentMethod">Metode de Pagament:</label>
@@ -613,7 +797,7 @@
                                         <button class="red-button">ELIMINAR</button>
                                         <button onclick="facturarPressupost(${data.id})" class="yellow-button">FACTURAR</button>
                                         <button onclick="aplicarPressupost(${data.id})" class="green-button">Aplicar</button>
-                                        <button>Enviar per mail</button>
+                                        <button onclick="mostrarEditorEmail(${data.id})">Enviar per mail</button>
                                         <button id="close-popup" class="close-popup">Cancelar</button>
                                     </div>
                                 </div>
@@ -718,8 +902,10 @@ console.log("Productes recollits:", productes);
     // 2️⃣ Recollir nova persona i mètode de pagament
     const novaPersonaId = document.getElementById('clientIdPressupostEdit').innerText.trim();
     const metodePagament = document.getElementById('paymentMethod').value;
+    // 3️⃣ Actualizar el total general en el popup
+    const totalGeneral = document.getElementById('total-general').textContent.replace('€', '').trim();
 
-    console.log("Enviant:", { productes, id_pressupost, novaPersonaId, metodePagament });
+    console.log("Enviant:", { productes, id_pressupost, novaPersonaId, metodePagament,totalGeneral });
 
     // 3️⃣ Enviar al backend
     const xhr = new XMLHttpRequest();
@@ -739,7 +925,8 @@ console.log("Productes recollits:", productes);
         productes: productes,
         id_pressupost: id_pressupost,
         persona_id: novaPersonaId,
-        metodo_pago: metodePagament
+        metodo_pago: metodePagament,
+        totalGeneral:totalGeneral
     }));
 }
 
@@ -1040,8 +1227,9 @@ function genPressupost() {
         <button class="boto-tancar-facturar" onclick="hideOverlay2()">Cancelar</button>
         <div class="der">
             <p>BUSCAR PRODUCTE</p>
-            <input type="text">
-            <table id="taula_prod_presupost">
+            <input type="text" id="inputBuscarProducte0" placeholder="Buscar producte...">
+
+            <table id="taula_prod_presupost0">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -1050,19 +1238,9 @@ function genPressupost() {
                         <th>NIF</th>
                     </tr>
                 </thead>
-                <tbody >
-                    {% for prod in producte %}
-                    <tr class="cliente-row2">
-                        <td>{{ prod.id }}</td>
-                        <td> {{ prod.nombre }} </td>  
-                        <td>{{ prod.codigo }}</td>
-                        <td>{{ prod.cantidad }}</td>
-                        <td>{{ prod.descripcion }}</td>
-                        <td>{{ prod.precio }}</td>
-                        <td><button onclick="ImportarProducteExistent('{{ prod.codigo }}', '{{ prod.descripcion }}','{{ prod.precio }}'   )" ><i class="fa-regular fa-pen-to-square"></i></button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                 <tbody id="tbody_prod_presupost0">
+        <!-- Les files es generaran dinàmicament -->
+    </tbody>
                 
                 <tfoot>
                     <tr>
@@ -1078,6 +1256,101 @@ function genPressupost() {
 </div>
 </div>
 <script>
+
+function mostrarEditorEmail(pressupostId) {
+  const pressupostData = JSON.parse(localStorage.getItem(`pressupost-${pressupostId}`));
+  if (!pressupostData) return alert("Pressupost no trobada");
+
+  const popup = document.getElementById('popup');
+  const container = popup.querySelector('.popup-content');
+
+  const textarea = document.createElement('textarea');
+  textarea.id = 'email-message';
+  textarea.placeholder = 'Missatge que s’enviarà per correu...';
+  textarea.style.width = '100%';
+  textarea.style.minHeight = '100px';
+  textarea.style.marginTop = '1rem';
+  textarea.value = `Hola ${pressupostData.persona_nom},\n\nEt fem arribar adjunta la factura núm. ${pressupostData.id}.\n\nSalutacions.`;
+
+  const btn = document.createElement('button');
+  btn.textContent = '✉️ Enviar correu';
+  btn.className = 'blue-button';
+  btn.style.marginTop = '1rem';
+
+  btn.onclick = () => {
+    const missatge = textarea.value;
+
+    // 🔁 Generar el mateix PDF que a `genFactura()`
+    const dateObj = new Date(pressupostData.date);
+    const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+    const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+
+    const docDefinition = {
+      content: [
+        { text: `Pressupost núm. ${pressupostData.id}`, style: 'header' },
+        { text: `Data: ${formattedDate} - Hora: ${time}`, style: 'subheader' },
+        { text: `Client: ${pressupostData.persona_nombre} (ID: ${pressupostData.persona_id})`, style: 'subheader' },
+        { text: `Telèfon: ${pressupostData.telefon}`, style: 'subheader' },
+        { text: `Procedència: ${pressupostData.procedencia} (ID: ${pressupostData.taula_id_procedencia})`, style: 'subheader' },
+        { text: `Mètode de pagament: ${pressupostData.metodo_pago}`, style: 'subheader' },
+        { text: '\n' },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '*', 'auto', 'auto', 'auto'],
+            body: [
+              ['ID', 'Nom', 'Quantitat', 'Preu', 'Total'],
+              ...pressupostData.productos.map(p => [
+                p.producto_id,
+                p.nombre,
+                p.cantidad,
+                `${p.preu} €`,
+                `${(p.preu * p.cantidad).toFixed(2)} €`
+              ])
+            ]
+          }
+        },
+        { text: '\n' },
+        { text: `Total pressupost: ${pressupostData.total} €`, style: 'total' }
+      ],
+      styles: {
+        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
+        subheader: { fontSize: 12, margin: [0, 2, 0, 2] },
+        total: { fontSize: 14, bold: true, alignment: 'right', margin: [0, 10, 0, 0] }
+      }
+    };
+
+    pdfMake.createPdf(docDefinition).getDataUrl(pdfBase64 => {
+      fetch('/enviar_factura_email/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({
+          pressupost: pressupostData,
+          missatge: missatge,
+          pdf: pdfBase64
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert('Correu enviat correctament!');
+        popup.style.display = 'none';
+      })
+      .catch(err => {
+        console.error('Error al enviar:', err);
+        alert('Error enviant el correu.');
+      });
+    });
+  };
+
+  container.appendChild(textarea);
+  container.appendChild(btn);
+}
+
+
+
 
     document.addEventListener('DOMContentLoaded', (event) => {
         function initializePagination(rowClass, prevBtnId, nextBtnId) {
@@ -1449,6 +1722,7 @@ function CrearNouPresupost(){
     xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300) {
             console.log("Respuesta del servidor:", xhr.responseText);
+            window.location.reload();
             
         } else {
             console.error("Error en la solicitud:", xhr.statusText);
