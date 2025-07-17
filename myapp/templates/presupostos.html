@@ -1264,9 +1264,11 @@ function mostrarEditorEmail(pressupostId) {
   const popup = document.getElementById('popup');
   const container = popup.querySelector('.popup-content');
 
+  // Limpiar contenido previo
+  
   const textarea = document.createElement('textarea');
   textarea.id = 'email-message';
-  textarea.placeholder = 'Missatge que s’enviarà per correu...';
+  textarea.placeholder = 'Missatge que s\'enviarà per correu...';
   textarea.style.width = '100%';
   textarea.style.minHeight = '100px';
   textarea.style.marginTop = '1rem';
@@ -1280,7 +1282,7 @@ function mostrarEditorEmail(pressupostId) {
   btn.onclick = () => {
     const missatge = textarea.value;
 
-    // 🔁 Generar el mateix PDF que a `genFactura()`
+    // Generar PDF
     const dateObj = new Date(pressupostData.date);
     const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
     const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
@@ -1289,10 +1291,9 @@ function mostrarEditorEmail(pressupostId) {
       content: [
         { text: `Pressupost núm. ${pressupostData.id}`, style: 'header' },
         { text: `Data: ${formattedDate} - Hora: ${time}`, style: 'subheader' },
-        { text: `Client: ${pressupostData.persona_nombre} (ID: ${pressupostData.persona_id})`, style: 'subheader' },
-        { text: `Telèfon: ${pressupostData.telefon}`, style: 'subheader' },
-        { text: `Procedència: ${pressupostData.procedencia} (ID: ${pressupostData.taula_id_procedencia})`, style: 'subheader' },
-        { text: `Mètode de pagament: ${pressupostData.metodo_pago}`, style: 'subheader' },
+        { text: `Client: ${pressupostData.persona_nom} (ID: ${pressupostData.persona_id})`, style: 'subheader' },
+        { text: `Telèfon: ${pressupostData.persona_tel}`, style: 'subheader' },
+        { text: `Email: ${pressupostData.persona_email}`, style: 'subheader' },
         { text: '\n' },
         {
           table: {
@@ -1321,6 +1322,14 @@ function mostrarEditorEmail(pressupostId) {
     };
 
     pdfMake.createPdf(docDefinition).getDataUrl(pdfBase64 => {
+      // Preparar datos para enviar
+      const facturaData = {
+        id: pressupostData.id,
+        email: pressupostData.persona_email,
+        persona_nom: pressupostData.persona_nom,
+        total: pressupostData.total
+      };
+
       fetch('/enviar_factura_email/', {
         method: 'POST',
         headers: {
@@ -1328,19 +1337,22 @@ function mostrarEditorEmail(pressupostId) {
           'X-CSRFToken': getCookie('csrftoken'),
         },
         body: JSON.stringify({
-          pressupost: pressupostData,
-          missatge: missatge,
-          pdf: pdfBase64
+          pdf: pdfBase64,
+          factura: facturaData,
+          missatge: missatge
         })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         alert('Correu enviat correctament!');
         popup.style.display = 'none';
       })
       .catch(err => {
         console.error('Error al enviar:', err);
-        alert('Error enviant el correu.');
+        alert('Error enviant el correu: ' + err.message);
       });
     });
   };
@@ -1348,7 +1360,6 @@ function mostrarEditorEmail(pressupostId) {
   container.appendChild(textarea);
   container.appendChild(btn);
 }
-
 
 
 

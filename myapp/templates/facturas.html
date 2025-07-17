@@ -129,7 +129,7 @@
       popup.innerHTML = `
         <div class="popup-content">
           <h2>Factura núm. ${data.id}</h2>
-          <p><strong>Procedència:</strong> ${data.procedencia} (ID: ${data.taula_id_procedencia})</p>
+          <p><strong>Procedència:</strong> ${data.procedencia}/ (ID: ${data.taula_id_procedencia})</p>
           <p><strong>Data:</strong> ${formattedDate} - <strong>Hora:</strong> ${time}</p>
           <p><strong>Client:</strong> ${data.persona_nombre} (ID: ${data.persona_id}) - ${data.telefon} - ${data.email}</p>
 
@@ -153,7 +153,11 @@
             <tbody>${rows}</tbody>
           </table>
 
-          <h3>Total factura: ${data.total} €</h3>
+          <h3>Total factura: <span id="total-valor">${data.total} €</h3>
+          <h3>IVA (21%): <span id="iva-valor"></span> €</h3>
+         
+          
+          <h3>Base<span id="base-valor"></span></h3>
 
           <div class="popup-buttons">
             <button id="descarregarFactura" class="blue-button">Descarregar</button>
@@ -165,6 +169,20 @@
           </div>
         </div>
       `;
+
+       // Calcular i mostrar l'IVA (21%) a partir del total
+  const totalElem = popup.querySelector('#total-valor');
+  const ivaElem = popup.querySelector('#iva-valor');
+  const baseElem = popup.querySelector('#base-valor');
+  if (totalElem && ivaElem && baseElem) {
+    const total = parseFloat(totalElem.textContent.replace(',', '.'));
+    if (!isNaN(total)) {
+    const iva = (total * 0.21).toFixed(2);
+    ivaElem.textContent = iva;
+    const base = (total - iva).toFixed(2);
+    baseElem.textContent = base;
+    }
+  }
        
       popup.style.display = 'flex';
         popup.querySelector('#descarregarFactura').onclick = () => genFactura(data);

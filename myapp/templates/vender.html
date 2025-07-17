@@ -1504,6 +1504,8 @@
                 xhr.onload = function () {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         console.log("Respuesta del servidor:", xhr.responseText);
+                        // Recargar la ventana después de guardar la factura
+                        window.location.reload();
                     } else {
                         console.error("Error en la solicitud:", xhr.statusText);
                     }

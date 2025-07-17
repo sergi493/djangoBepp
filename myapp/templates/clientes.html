@@ -80,7 +80,15 @@
     <div class="main-content">
         <h1>CLIENTEEEEES</h1>
         <p>(es pot eliminar, descarregar,afegir, veure i editar datos)</p>
-        <input type="text" id="searchInput" placeholder="Buscar producte...">
+       <form method="get" style="margin-bottom: 1rem;">
+  <input 
+    type="text" 
+    name="search" 
+    placeholder="Buscar por nombre o teléfono..." 
+    value="{{ search }}"
+  >
+ 
+</form>
         <button id="afegir-reparacio-btn">Nuevo</button>
         <table id="productTable">
             <thead>
@@ -109,6 +117,20 @@
                 {% endfor %}
             </tbody>
         </table>
+    <!-- Controles de paginación -->
+<div style="text-align: center; margin-top: 1rem;">
+  {% if persona.has_previous %}
+    <a href="?page={{ persona.previous_page_number }}&search={{ search }}">⬅️ Anterior</a>
+  {% endif %}
+
+  <span style="margin: 0 1rem;">
+    Página <strong>{{ persona.number }}</strong> de <strong>{{ persona.paginator.num_pages }}</strong>
+  </span>
+
+  {% if persona.has_next %}
+    <a href="?page={{ persona.next_page_number }}&search={{ search }}">➡️ Siguiente</a>
+  {% endif %}
+</div>    
         <div id="modal-overlay" class="hidden">
             <div id="modal-panel">
                 <h2>NOU CLIENT</h2>

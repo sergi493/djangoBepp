@@ -105,7 +105,11 @@ class Reparacio(models.Model):
     
     facturat=models.CharField(max_length=100, default="no")
     total= models.DecimalField(max_digits=9999999, decimal_places=2)
-   
+    metodo_pago     = models.CharField(
+                          max_length=20,
+                          choices=[('Targeta','Targeta'),('Efectivo','Efectiu')],
+                          default='Targeta'
+                      )
 class ProducteEnReparacio(models.Model):
     reparacio = models.ForeignKey(Reparacio, on_delete=models.CASCADE)
     producte = models.ForeignKey(Producto, on_delete=models.CASCADE)

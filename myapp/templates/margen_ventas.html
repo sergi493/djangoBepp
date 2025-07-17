@@ -1,0 +1,150 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <h2>Reporte de Márgenes por Fecha</h2>
+
+    <form method="get">
+        <label>Fecha inicio:</label>
+        <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}">
+        <label>Fecha fin:</label>
+        <input type="date" name="fecha_fin" value="{{ fecha_fin }}">
+        <button type="submit">Filtrar</button>
+    </form>
+
+    {% if ventas %}
+        <h3>Ventas del {{ fecha_inicio }} al {{ fecha_fin }}</h3>
+
+        <div class="report-container">
+            <!-- Tabla de ventas (izquierda, con scroll y encabezado fijo) -->
+            <div class="table-wrapper left">
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Referencia</th>
+                            <th>Origen</th>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Cantidad</th>
+                            <th>Precio Venta</th>
+                            <th>Precio Distribuidor</th>
+                            <th>Margen Bruto</th>
+                            <th>Margen %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in ventas %}
+                            <tr>
+                                <td>{{ v.fecha_origen }}</td>
+                                <td>{{ v.referencia }}</td>
+                                <td>{{ v.producto }}</td>
+                                <td>{{ v.origen_id }}</td>
+                                <td>{{ v.cliente }}</td>
+                                <td>{{ v.cantidad }}</td>
+                                <td>{{ v.precio_venta|floatformat:2 }} €</td>
+                                <td>{{ v.precio_distribuidor|floatformat:2 }} €</td>
+                                <td>{{ v.marge_total|floatformat:2 }} €</td>
+                                 <td>{{ v.margen_porcentaje|floatformat:1 }} %</td>
+                                
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tabla de resumen (derecha, sin scroll) -->
+            <div class="table-wrapper right">
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>Concepto</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Bruto</td>
+                            <td>{{ bruto|floatformat:2 }} €</td>
+                        </tr>
+                        <tr>
+                            <td>Margen Total</td>
+                            <td>{{ margen_total|floatformat:2 }} €</td>
+                        </tr>
+                        <tr>
+                            <td>Margen % Total</td>
+                            <td>{{ margen_porcentaje_total|floatformat:2 }} %</td>
+                        </tr>
+                        <tr>
+
+                            <td>IVA (21%)</td>
+                            <td>{{ iva|floatformat:2 }} €</td>
+                        </tr>
+                        <tr>
+                            <td>Neto</td>
+                            <td>{{ neto|floatformat:2 }} €</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        {% if fecha_inicio and fecha_fin %}
+            <p>No se encontraron ventas en ese rango.</p>
+        {% else %}
+            <p>Selecciona un rango de fechas.</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+<style>
+.report-container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.table-wrapper.left {
+    flex: 1 1 auto;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+.table-wrapper.right {
+    flex: 0 0 300px;
+    border: 1px solid #ccc;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+/* NUEVO: Encabezado fijo para la tabla izquierda */
+.table-wrapper.left table {
+    position: relative;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-wrapper.left thead {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 1;
+}
+
+.table-wrapper.left th {
+    position: sticky;
+    top: 0;
+    background-color:rgb(0, 0, 0);
+    border-bottom: 1px solid #ccc;
+}
+</style>
+{% endblock %}

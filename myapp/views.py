@@ -579,35 +579,40 @@ def aplicar_pressupost(request):
     
 
 def aplicar_reparacio(request):
-    data=json.loads(request.body)
-    id_reparacio=data.get("id_reparacio")
-    productes_i_quant=data.get("productes",[])
-    print(productes_i_quant,"qqq",id_reparacio)
-    total_preu_reparacio=0
+    data = json.loads(request.body)
+    id_reparacio    = data.get("id_reparacio")
+    persona_id_nou   = data.get("persona_id")
+    metodo_pago_nou  = data.get("metodo_pago")
+    productes_i_quant = data.get("productes", [])
+    totalGeneral    = data.get("totalGeneral")
+
+    total_preu = 0
     for unitat in productes_i_quant:
-            print("qq")
-            producte_id = unitat.get('producte_id')
-            quantitat = unitat.get('quantitat')
-            print("ww",producte_id,quantitat)
-            producte_id=Producto.objects.get(codigo=producte_id).id
-            
-            producte_preu=Producto.objects.get(id=producte_id).precio
-            total_linea=quantitat*producte_preu
-            total_preu_reparacio+=total_linea
-            
-            # Filtrar todas las filas que correspondan al pressupost y producte_id actual
-            files = ProducteEnReparacio.objects.filter(reparacio_id=id_reparacio, producte_id=producte_id)
-            for fila in files:
-                print(f"Actualizando Producte ID: {fila.producte_id}, Cantidad antigua: {fila.quantitat}, Nueva cantidad: {quantitat}")
-                fila.quantitat = quantitat  # Actualizar la cantidad
-                fila.save()  # Guardar los cambios
-    reparacio=Reparacio.objects.get(id=id_reparacio)
-    reparacio.total=total_preu_reparacio
+        prod_code = unitat.get('producte_id')
+        quantitat = unitat.get('quantitat', 0)
+        # Obtenir instància i preu
+        prod_obj = Producto.objects.get(codigo=prod_code)
+        preu_unit = prod_obj.precio
+        total_preu += preu_unit * quantitat
+
+        # Actualitzar cada línia
+        files = ProducteEnReparacio.objects.filter(
+            reparacio_id=id_reparacio,
+            producte_id=prod_obj.id
+        )
+        for fila in files:
+            fila.quantitat = quantitat
+            fila.save()
+
+    # Actualitzar Reparació global
+    reparacio = Reparacio.objects.get(id=id_reparacio)
+    reparacio.total       = totalGeneral
+    reparacio.persona_id  = persona_id_nou    # ← **Actualització** persona
+    reparacio.metodo_pago = metodo_pago_nou    # ← **Actualització** mètode pagament
     reparacio.save()
-    return HttpResponse("aa")
-        
-    
-    
+
+    return HttpResponse("Reparació actualitzada correctament" + metodo_pago_nou)
+
 def afegir_producte_pressupost(request):
     data=json.loads(request.body)
     id_pressupost=data.get("idPressupost")
@@ -716,7 +721,8 @@ def guardar_factura(request):
                     date=datetime.now(),
                     total=total,
                     persona_id=num_Cli,
-                    numero=0
+                    numero=0,
+                    procedencia="Venta",
                 )
                 factura.save()
                 return JsonResponse({'message': 'Fac guardado correctamente.'})
@@ -787,7 +793,8 @@ def reembolsar_factura(request):
             date=datetime.now(),
             total=factura.total*(-1),
             metodo_pago=factura.metodo_pago,
-            abono=factura.id
+            abono=factura.id,
+            
             
         )
         reembolso.save()
@@ -803,7 +810,9 @@ def reembolsar_factura(request):
             Productoenfactura= ProductoEnFactura.objects.create(
                     factura_id_id=reembolso.id,
                     producto_id=item.producto_id,
-                    cantidad=cantidad
+                    cantidad=cantidad,
+                    preu_venut=item.preu_venut*(-1),
+                    preu_distribuidor=item.preu_distribuidor*(-1)
             )
             Productoenfactura.save()
             
@@ -852,8 +861,12 @@ def obtenir_reparacio(request, reparacioId):
         'total': reparacio.total,
         'productos': productes_i_quantitats,
         "persona_id":reparacio.persona_id,
+        "persona_nif":dades_persona.nif,
+        "persona_tel":dades_persona.telefono,
+        "persona_email":dades_persona.email if dades_persona.email else "sin mail",
         "persona_nom":dades_persona.nombre,
-        "facturat":reparacio.facturat
+        "facturat":reparacio.facturat,
+        "metodo_pago":reparacio.metodo_pago
         
     }
     print(data)
@@ -1174,9 +1187,27 @@ def stock(request):
 
 @login_required
 def clientes(request):
-    persona = Persona.objects.all()
-   
-    return render(request, "clientes.html", {'persona': persona})
+     # 1️⃣ Recogemos el término de búsqueda
+    search = request.GET.get('search', '')
+
+    # 2️⃣ Filtramos por nombre o teléfono si hay búsqueda
+    clientes_qs = Persona.objects.all()
+    if search:
+        clientes_qs = clientes_qs.filter(
+            Q(nombre__icontains=search) |
+            Q(telefono__icontains=search)
+        )
+
+    # 3️⃣ Creamos el Paginador: 50 clientes por página (ajústalo a tu gusto)
+    paginator = Paginator(clientes_qs, 8)
+    page_number = request.GET.get('page')
+    clientes_page = paginator.get_page(page_number)
+
+    # 4️⃣ Enviamos al template tanto la página como el término de búsqueda
+    return render(request, 'clientes.html', {
+        'persona': clientes_page,
+        'search': search
+    })
  
 
 def ficar_factura_pedido(request):
@@ -1387,21 +1418,161 @@ def presupostos(request):
     })
 
 
-
 @login_required
 def reparacions(request):
-    
-    personas=Persona.objects.all()
-    producte=Producto.objects.all()
-    reparacions=Reparacio.objects.all()
-    
-    for repara in reparacions:
+    data_inici = request.GET.get('data_inicio')
+    data_fi = request.GET.get('data_fi')
+    search = request.GET.get('search')
 
-        nom_cli=Persona.objects.get(id=repara.persona_id).nombre
-       
-        repara.persona_id=nom_cli
+    reparacions = Reparacio.objects.all().order_by('-date')
+
+    # Filtrar por búsqueda: buscar todas las personas que coinciden
+    if search:
+        personas_nom = Persona.objects.filter(nombre__icontains=search)
+        personas_tel = Persona.objects.filter(telefono__icontains=search)
+        personas = personas_nom | personas_tel
+        reparacions = reparacions.filter(persona_id__in=personas.values_list('id', flat=True))
+
+    # Filtrar por fechas
+    if data_inici and data_fi:
+        try:
+            data_inici_obj = datetime.strptime(data_inici, "%Y-%m-%d")
+            data_fi_obj = datetime.strptime(data_fi, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            reparacions = reparacions.filter(date__range=(data_inici_obj, data_fi_obj))
+        except ValueError:
+            pass
+
+    # Paginación
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(reparacions, 8)
+    page = paginator.get_page(page_number)
+
+    # Reemplazar persona_id por nombre
+    for repara in page:
+        try:
+            repara.persona_id = Persona.objects.get(id=repara.persona_id).nombre
+        except Persona.DoesNotExist:
+            repara.persona_id = "Desconegut"
+
+    personas = Persona.objects.all()
+    producte = Producto.objects.all()
+
+    return render(request, "reparacions.html", {
+        "reparacions": page,
+        "data_inicio": data_inici or '',
+        "data_fi": data_fi or '',
+        "search": search or '',
+        "persona": personas,
+        "producte": producte
+    })
     
-    return render(request, "reparacions.html",{"persona":personas,"producte":producte,"reparacions":reparacions})
+@login_required
+def margen_ventas(request):
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+
+    # Si no hay fechas, usar hoy para ambas
+    if not fecha_fin and not fecha_inicio:
+        fecha_fin = datetime.now().strftime('%Y-%m-%d')
+        fecha_inicio = datetime.now().strftime('%Y-%m-%d')
+
+    ventas = []
+    bruto = 0
+    margen_total = 0
+
+    if fecha_inicio and fecha_fin:
+        fi = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+        ff = datetime.strptime(fecha_fin, '%Y-%m-%d')
+
+        facturas = Facturas.objects.filter(date__date__range=[fi, ff])
+        tickets = Ticket.objects.filter(date__date__range=[fi, ff])
+
+        # Facturas
+        for factura in facturas:
+            try:
+                cliente = Persona.objects.get(id=factura.persona_id)
+                cliente_nombre = cliente.nombre
+            except Persona.DoesNotExist:
+                cliente_nombre = "Desconocido"
+
+            for pf in ProductoEnFactura.objects.filter(factura_id=factura):
+                cantidad = int(pf.cantidad or 1)
+                precio_venta = float(pf.preu_venut or 0)
+                precio_distribuidor = float(pf.preu_distribuidor or 0)
+                marge_unit = precio_venta - precio_distribuidor
+                marge_total_unit = marge_unit * cantidad
+                
+                # Calcular margen porcentual por producto
+                margen_porcentaje = 0
+                if precio_venta != 0:
+                    margen_porcentaje = (marge_unit / precio_venta) * 100
+                
+                ventas.append({
+                    'producto': pf.producto.nombre,
+                    'referencia': pf.producto.codigo,
+                    'origen': 'Factura',
+                    'origen_id': f"F-{factura.id}",
+                    'fecha_origen': factura.date.strftime('%Y-%m-%d'),
+                    'cliente': cliente_nombre,
+                    'precio_venta': precio_venta,
+                    'precio_distribuidor': precio_distribuidor,
+                    'cantidad': cantidad,
+                    'marge_total': marge_total_unit,
+                    'margen_porcentaje': margen_porcentaje,
+                })
+                bruto += precio_venta * cantidad
+                margen_total += marge_total_unit
+
+        # Tickets
+        for ticket in tickets:
+            for pt in ProductoEnTicket.objects.filter(ticket_id=ticket):
+                cantidad = int(pt.cantidad or 1)
+                precio_venta = float(pt.preu_venut or 0)
+                precio_distribuidor = float(pt.preu_distribuidor or 0)
+                marge_unit = precio_venta - precio_distribuidor
+                marge_total_unit = marge_unit * cantidad
+                
+                # Calcular margen porcentual por producto
+                margen_porcentaje = 0
+                if precio_venta != 0:
+                    margen_porcentaje = (marge_unit / precio_venta) * 100
+                
+                ventas.append({
+                    'producto': pt.producto.nombre,
+                    'referencia': pt.producto.codigo,
+                    'origen': 'Ticket',
+                    'origen_id': f"T-{ticket.id}",
+                    'fecha_origen': ticket.date.strftime('%Y-%m-%d'),
+                    'cliente': '-',
+                    'precio_venta': precio_venta,
+                    'precio_distribuidor': precio_distribuidor,
+                    'cantidad': cantidad,
+                    'marge_total': marge_total_unit,
+                    'margen_porcentaje': margen_porcentaje,
+                })
+                bruto += precio_venta * cantidad
+                margen_total += marge_total_unit
+
+    iva = bruto * 0.21
+    neto = bruto - iva
+    
+    # Calcular margen porcentual total
+    margen_porcentaje_total = 0
+    if bruto > 0:
+        margen_porcentaje_total = (margen_total / bruto) * 100
+
+    context = {
+        'ventas': ventas,
+        'bruto': bruto,
+        'margen_total': margen_total,
+        'margen_porcentaje_total': margen_porcentaje_total,
+        'iva': iva,
+        'neto': neto,
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+    }
+
+    return render(request, "margen_ventas.html", context)
 
 @login_required
 def filtrar_tickets(request):
