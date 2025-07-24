@@ -33,7 +33,7 @@
             <div class="products-section">
                 <h1>PUNT DE VENDA</h1>
                 
-                <input type="text" id="searchInput" placeholder="Buscar producte...">
+                <input type="text" id="searchProducto" placeholder="Buscar producte...">
                 
                 <script>
                     var cestaProductos = [];
@@ -53,24 +53,9 @@
                             <th>Acció</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbody_prod">
 
 
-                        {% for producto in productos %}
-                        <tr>
-                            {% if producto.imagen %}
-                                <td><img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"></td>
-                            {% else %}
-                                <td><img src="/imagenes/configure.png" alt="Imatge"></td>
-                            {% endif %}
-                            <td>{{ producto.nombre }}</td> 
-                            <td>{{ producto.codigo }}</td>
-                            <td>{{ producto.cantidad }}</td>
-                            <td>{{ producto.descripcion|truncatechars:10 }}</td>
-                            <td>{{ producto.precio }} € </td>
-                            <td><button class="add-to-cart-btn"><i class="fa-solid fa-cart-shopping"></i></button></td>
-                        </tr>
-                        {% endfor %}
                     
                     
                     <!-- <tr>
@@ -160,6 +145,67 @@
     <p class="datos-client"  id="datos-client">Nom: <span id="nom"> </span> DNI: <span id="dni"> </span> TLF: <span id="tlf"> </span> LOC: <span id="localitat"> </span>  Client num: <span id="num_cli"> </span></p>
 
         <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("searchProducto");
+    const tbody = document.getElementById("tbody_prod");
+
+    input.addEventListener("input", function () {
+        const texto = input.value.trim();
+        if (texto === "") {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
+            return;
+        }
+
+        fetch("{% url 'buscar_producto' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ texto: texto })
+        })
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = "";
+
+            if (data.productos && data.productos.length > 0) {
+                data.productos.forEach(prod => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                      
+                        <td><img src="${prod.imagen}" alt="${prod.nombre}" /></td>
+                        <td>${prod.nombre}</td>
+                        <td>${prod.codigo}</td>
+                        <td>
+                            ${ prod.cantidad }
+                            
+                        </td>   
+                        <td>${ prod.descripcion }</td>
+                    <td>${ prod.precio } €</td>
+                       <td><button type="button" onclick="botonAñadirCarta(event)" class="add-to-cart-btn" ><i
+                        class="fa-regular fa-pen-to-square"></i></button></td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
+            }
+        })
+        .then(data => {
+  console.log('🔍 data:', data);
+
+})
+
+        .catch(error => {
+            console.error("Error al buscar productes:", error);
+        });
+    });
+});
+
+
+
+
+
             document.addEventListener('DOMContentLoaded', function() {
                 var switchElement = document.getElementById('switch');
                 var datosClient = document.getElementById('datos-client');
@@ -417,7 +463,7 @@
             <button class="close-popup" onclick="hideOverlay()">X</button>
         <div class="main-content">
             <div class="products-section">
-                <input type="text" id="searchInput" placeholder="Buscar producto...">
+                <input type="text" id="searchCliente" placeholder="Buscar producto...">
                 <!--<button onclick="guardarInformacion()">Crear e importar</button>-->
             
                 <table id="productTable">
@@ -435,65 +481,109 @@
                             
                         </tr>
                     </thead>
-                    <tbody id="clientes-container">
-                        {% for cliente in clientes %}
-                        <tr class="cliente-row" id="cliente-{{ cliente.id }}">
-                            <td>{{ cliente.id }}</td>
-                            <td>{{ cliente.nombre }}</td>
-                            <td>{{ cliente.localidad }}</td>
-                            <td>{{ cliente.calle }}</td>
-                            <td>{{ cliente.nif }}</td>
-                            <td>{{ cliente.telefono }}</td>
-                            <td>{{ cliente.email }}</td>
-                            <td>{{ cliente.comp_banc }}</td>
-                            <td><button onclick="importarCliente({{ cliente.id }})">✅</button></td>
-                        </tr>
-                        {% endfor %}
+                    <tbody id="tbody_clientes">
+                       
                     </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="9">
-                                <button id="prev-btn" onclick="changePage(-1)" disabled>&larr; Anterior</button>
-                                <button id="next-btn" onclick="changePage(1)">Siguiente &rarr;</button>
-                            </td>
-                        </tr>
-                    </tfoot>
+                   
                     
                 </table>
+                  <div id="pagination"></div>
             </div>
             
         </div>
         
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const rows = document.querySelectorAll('.cliente-row');
-            const rowsPerPage = 5;
-            let currentPage = 0;
-            const totalPages = Math.ceil(rows.length / rowsPerPage);
-        
-            function showPage(page) {
-                const start = page * rowsPerPage;
-                const end = start + rowsPerPage;
-        
-                rows.forEach((row, index) => {
-                    if (index >= start && index < end) {
-                        row.style.display = '';
+ document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("searchCliente");
+            const tbody = document.getElementById("tbody_clientes");
+            const pagination = document.getElementById("pagination");
+            let currentPage = 1;
+
+            function fetchPersonas(page = 1) {
+                const texto = input.value.trim();
+                currentPage = page;
+
+                fetch("{% url 'buscar_persona' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: new URLSearchParams({ texto, page })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+
+                    if (data.personas && data.personas.length > 0) {
+                        data.personas.forEach(persona => {
+                        const fila = document.createElement("tr");
+                        fila.id = `cliente-${persona.id}`;           // Para tu importarCliente(id)
+                        fila.innerHTML = `
+                            <td>${persona.id}</td>
+                            <td>${persona.nombre}</td>
+                            <td>${persona.localidad}</td>
+                            <td>${persona.calle}</td>
+                            <td>${persona.nif}</td>
+                            <td>${persona.telefono}</td>
+                            <td>${persona.email}</td>
+                            <td>${persona.compte_banc}</td>
+                            <td>
+                            <button onclick="importarCliente('${persona.id}')">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            </td>`;
+                        tbody.appendChild(fila);
+                        });
+
                     } else {
-                        row.style.display = 'none';
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align:center; font-style:italic;">
+                                    No se encontraron clientes
+                                </td>
+                            </tr>`;
                     }
+
+                    renderPagination(data.page_info);
+                })
+                .catch(err => {
+                    console.error("Error al buscar clientes:", err);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align:center; color:red;">
+                                Error al buscar clientes
+                            </td>
+                        </tr>`;
+                    pagination.innerHTML = "";
                 });
-        
-                document.getElementById('prev-btn').disabled = currentPage === 0;
-                document.getElementById('next-btn').disabled = currentPage === totalPages - 1;
             }
-        
-            window.changePage = function (direction) {
-                currentPage += direction;
-                showPage(currentPage);
-            };
-        
-            showPage(currentPage);
+
+            function renderPagination({ current, total, has_prev, has_next }) {
+                pagination.innerHTML = "";
+
+                if (has_prev) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.textContent = "« Anterior";
+                    prevBtn.onclick = () => fetchPersonas(current - 1);
+                    pagination.appendChild(prevBtn);
+                }
+
+                const info = document.createElement("span");
+                info.textContent = ` Página ${current} de ${total} `;
+                pagination.appendChild(info);
+
+                if (has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.textContent = "Siguiente »";
+                    nextBtn.onclick = () => fetchPersonas(current + 1);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            fetchPersonas();
+            input.addEventListener("input", () => fetchPersonas(1));
         });
 
         
@@ -509,6 +599,7 @@
             var localidad = row.cells[2].innerText;
             var num_cli = row.cells[0].innerText;
             hideOverlay();
+            
             // Update the paragraph with the client information
             document.getElementById("nom").innerText = nombre;
             document.getElementById("dni").innerText = nif;
@@ -910,27 +1001,17 @@
         }
     });
 
+    function botonAñadirCarta(boton) {
+        var row = boton.currentTarget.parentNode.parentNode;
+        var productName = row.children[1].innerText;
+        var productPrice = parseFloat(row.children[5].innerText);
+        var productCode = row.children[2].innerText;
+        addToCart(productName, productPrice, productCode);
+    }
+
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            var productName = this.parentNode.parentNode.children[1].innerText;
-            var productPrice = parseFloat(this.parentNode.parentNode.children[5].innerText);
-            var productCode=this.parentNode.parentNode.children[2].innerText;
-            addToCart(productName, productPrice, productCode);
-        });
+        button.addEventListener('click', handleAddToCartClick);
     });
-
-
-        
-
-
-        
-        
-        
-        
-        
-        
-        
-        
         document.addEventListener("DOMContentLoaded", function() {
             const filterSelect = document.getElementById("filterSelect");
             const codigoTable = document.getElementById("codigoTable");

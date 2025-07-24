@@ -90,23 +90,12 @@ def index(request):
 
 @login_required
 def vender(request):
-    productos = Producto.objects.all()
-    clientes=Persona.objects.all()
 
-    try:
-        ultima_factura = Facturas.objects.latest('id')
-    except Facturas.DoesNotExist:
-       
-        ultima_factura = Facturas(numero=1)
-
-    try:
+   
+    
+    
         
-        ultimo_ticket = Ticket.objects.latest('id')
-    except Ticket.DoesNotExist:
-     
-        ultimo_ticket = Ticket(numero=1)
-        
-    return render(request, "vender.html", {'productos': productos, "clientes": clientes})
+    return render(request, "vender.html")
 
 @login_required 
 def borrar_de_pressupost(request):
@@ -192,49 +181,68 @@ def facturas(request):
 def buscar_producto(request):
     if request.method == 'POST':
         texto = request.POST.get('texto', '').strip()
+        
+        if texto:
+            # Filtrar por código o descripcion (case-insensitive)
+            qs = Producto.objects.filter(
+                Q(codigo__icontains=texto) | Q(descripcion__icontains=texto)
+            )
+        else:
+            # Si texto está vacío, devolver todos los productos
+            qs = Producto.objects.all()
 
-        # Filtrar per código o descripcion (case-insensitive)
-        qs = Producto.objects.filter(
-            Q(codigo__icontains=texto) | Q(descripcion__icontains=texto)
-        )
-
-        productos = list(qs.values(
-            'id',
-            'nombre',
-            'codigo',
-            'precio',
-            'descripcion',
-            'cantidad'  # afegim perquè l'uses en JS
-        ))
+        productos = []
+        for p in qs:
+            productos.append({
+                'id':                 p.id,
+                'imagen':            p.imagen.url if p.imagen else '',
+                'nombre':             p.nombre,
+                'codigo':             p.codigo,
+                'cantidad':           p.cantidad,
+                'descripcion':        p.descripcion,
+                'precio':             float(p.precio),
+                'preu_distribuidor':  float(p.preu_distribuidor),
+            })
 
         return JsonResponse({'productos': productos}, status=200)
 
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
+
+    
+    
 def buscar_persona(request):
-    if request.method == 'POST':
-        texto = request.POST.get('texto', '').strip()
+    # 1. Obtenemos el término de búsqueda desde POST
+    texto = request.POST.get('texto', '').strip()
+    # 2. Filtramos queryset
+    clientes_qs =Persona.objects.filter(nombre__icontains=texto)
 
-        # Filtrar per código o descripcion (case-insensitive)
-        qs = Persona.objects.filter(
-            Q(nombre__icontains=texto) | Q(telefono__icontains=texto)
+    # 3. __Paginator__ para 8 items por página
+    paginator = Paginator(clientes_qs, 3)
+    # 4. Página actual (por POST, ¡ojo con GET!)
+    page_num = request.POST.get('page', 1)
+    # 5. Usamos get_page para manejar out‑of‑range automáticamente
+    page_obj = paginator.get_page(page_num)
+
+    # 6. Convertimos a lista JSON‑serializable
+    personas = list(
+        page_obj.object_list.values(
+            'id','nombre','localidad','calle','nif','telefono','email'
         )
+    )
 
-        personas = list(qs.values(
-            'id',
-            'nombre',
-            'localidad',
-            'calle',
-            'nif',
-            'telefono',
-            'email',  
-            'direccion'
-        ))
-
-        return JsonResponse({'personas': personas}, status=200)
-
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    # 7. Devolvemos data + info de paginación
+    return JsonResponse({
+        'personas': personas,
+        'page_info': {
+            'current': page_obj.number,
+            'total': paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous(),
+        }
+    }, status=200)
+    
 
 
 @login_required
@@ -1187,27 +1195,17 @@ def stock(request):
 
 @login_required
 def clientes(request):
-     # 1️⃣ Recogemos el término de búsqueda
-    search = request.GET.get('search', '')
-
+    
     # 2️⃣ Filtramos por nombre o teléfono si hay búsqueda
-    clientes_qs = Persona.objects.all()
-    if search:
-        clientes_qs = clientes_qs.filter(
-            Q(nombre__icontains=search) |
-            Q(telefono__icontains=search)
-        )
-
+    #clientes_qs = Persona.objects.all()
+  
     # 3️⃣ Creamos el Paginador: 50 clientes por página (ajústalo a tu gusto)
-    paginator = Paginator(clientes_qs, 8)
-    page_number = request.GET.get('page')
-    clientes_page = paginator.get_page(page_number)
-
+    #paginator = Paginator(clientes_qs, 8)
+    #page_number = request.GET.get('page')
+    #clientes_page = paginator.get_page(page_number)
+    #personas=buscar_persona(request)
     # 4️⃣ Enviamos al template tanto la página como el término de búsqueda
-    return render(request, 'clientes.html', {
-        'persona': clientes_page,
-        'search': search
-    })
+    return render(request, 'clientes.html')
  
 
 def ficar_factura_pedido(request):
@@ -1689,7 +1687,7 @@ def client_datos(request, clientId):
         return JsonResponse({'error': 'Client no trobat'}, status=404)
 @login_required
 def producte_datos(request, producteId):
-   
+    
     try:
         
         producte = Producto.objects.get(codigo=producteId)

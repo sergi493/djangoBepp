@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
 </style>
 <div>
-        <input type="text" id="searchInput" placeholder="Buscar producte...">
+        <input type="text" id="inputBuscarProducte" placeholder="Buscar producte...">
 </div>
 
         <table id="productTable">
@@ -349,30 +349,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <th>Acció</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for producto in productos %}
-                <form method="POST">
-                <tr>
-                    <td>{{ producto.nombre }}</td>
-                    <td>{{ producto.codigo }}</td>
-                    
-                    <td>{{ producto.cantidad }}
-
-                        
-                            {% csrf_token %}
-                            <input type="number" name="cantidad_real_{{ producto.id }}" value="{{ producto.cantidad }}" onkeypress="actualitzarStock(event)">
-                        
-                        
-                        
-                    </td>
-                    <td>{{ producto.descripcion|truncatechars:25 }}</td>
-                    <td>{{ producto.precio }} €</td>
-                </form>  
-                    <td><button type="button" class="popup-trigger" data-producte-id="{{ producto.codigo }}"><i
-                        class="fa-regular fa-pen-to-square"></i></button></td>
-                </tr>
-                
-                {% endfor %}
+            <tbody id="tbody_prod">
+               
                 
                 
             
@@ -384,90 +362,160 @@ document.addEventListener('DOMContentLoaded', function () {
     
     </div> <!-- Moví el cierre de este div al final -->
     <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("inputBuscarProducte");
+    const tbody = document.getElementById("tbody_prod");
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const triggerButtons = document.querySelectorAll('.popup-trigger');
-            const popup = document.getElementById('popup');
-    
-            triggerButtons.forEach(function (button) {
-                button.addEventListener('click', function () {
-                    const producteId = button.getAttribute('data-producte-id');
-                    fetch(`/producte_datos/${producteId}/`)
-                        .then(response => response.json())
-                        .then(producte_dades => {
+    input.addEventListener("input", function () {
+        const texto = input.value.trim();
+        if (texto === "") {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
+            return;
+        }
 
-                            let popupContent = `
-                            <div style="text-align:center;" class="popup-content">
-                               
-                                
-                                  <div>
-                                    <p >PRODUCTE: <span id="referencia">${producte_dades.producto_id}</span></p>
-                                  <img id="imatge_producte" src="${producte_dades.imatge}">                                   
-                                  </div>
-                                  <div><label>REFERENCIA:</label>
-                                    <input id="referencia-modificat" value="${producte_dades.producto_id}"> 
-                                  </div>
-                                  <div>
-                                  <label>NOM:</label>
-                                    <input id="nom-modificat" value="${producte_dades.nombre}">
-                                  </div>
-                                  <div>
-                                  <label>QUANTITAT:</label>
-                                    <input id="quantitat-modificat" type="number" value="${producte_dades.cantidad}"> 
-                                  </div>
-                                  <div>
-                                  <label>PREU VENDA:</label>
-                                    <input id="preu-modificat" oninput="calcularMargen()" type="number" value="${producte_dades.preu}"> 
-                                  </div>
-                                  <div>
-                                  <label>PREU COMPRA:</label>
-                                    <input id="preu-compra-modificat" oninput="calcularMargen()" type="number" value="${producte_dades.preu_distribuidor}"> 
-                                  </div>
-                                  <!--<div>
-                                    <label>BUSCAR IMATGE:</label>
-                                    <input id="fileInput" type="image">
-                                    <p id="filePath"></p>
-                                  </div>-->
-                                  <p>Marge:<span id="marge-diferencia"></span></p>
+        fetch("{% url 'buscar_producto' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: new URLSearchParams({ texto: texto })
+        })
+        .then(response => response.json())
+        .then(data => {
+            tbody.innerHTML = "";
 
-
-                               
-                               
-                                   
-`;
-                        // Agregar productos y cantidades a la ventana emergente
-                       
-                        popupContent += `  
-                                        <div class="popup-buttons">
-                                            <div>
-                                               
-                                              
-                                               
-                                            
-                                            
-                                                <button onclick="aplicarModificacio()" class="green-button">Aplicar</button>
-                                                
-                                                
-                                                
-                                                <button id="close-popup" class="close-popup">Cancelar</button>
-                                                
-                                          
-                                        </div>
-                                    </div>`;
-                                    
-                        popup.innerHTML = popupContent;
-                        popup.style.display = 'block';
-                        calcularMargen();
-                        // Adjuntar event listener al botón de cerrar
-                        const closeButton = popup.querySelector('.close-popup');
-                        closeButton.addEventListener('click', function () {
-                            popup.style.display = 'none';
-                        });
-                        })
-                        .catch(error => console.error('Error al obtener datos del ticket:', error));
+            if (data.productos && data.productos.length > 0) {
+                data.productos.forEach(prod => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                      
+                        <td>${prod.nombre}</td>
+                        <td>${prod.codigo}</td>
+                        <td>
+                            ${ prod.cantidad }
+                            <input type="number" name="cantidad_real_${ prod.codigo }" value="${ prod.cantidad }" onkeypress="actualitzarStock(event)">
+                        </td>   
+                        <td>${ prod.descripcion }</td>
+                    <td>${ prod.precio } €</td>
+                       <td><button type="button" class="popup-trigger" onclick="mostrarPopup('${prod.codigo}')"><i
+                        class="fa-regular fa-pen-to-square"></i></button></td>
+                    `;
+                    tbody.appendChild(fila);
                 });
-            });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
+            }
+        })
+        .then(data => {
+  console.log('🔍 data:', data);
+
+})
+
+        .catch(error => {
+            console.error("Error al buscar productes:", error);
         });
+    });
+});
+
+
+
+
+
+
+                    function mostrarPopup(producteId) {
+    // 🔑 Subrayamos el popup container
+    console.log(producteId);
+    const popup = document.getElementById('popup');
+
+    // 🚀 Fetch dinámico de datos
+    fetch(`/producte_datos/${producteId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // ✨ Desestructuramos para un acceso más limpio
+            const {
+                producto_id,
+                nombre,
+                cantidad,
+                preu,
+                preu_distribuidor,
+                imatge
+            } = data;
+
+            // 📦 Construcción del contenido del popup
+            popup.innerHTML = `
+                <div style="text-align:center;" class="popup-content">
+                    <p><strong>PRODUCTE:</strong> <span id="referencia">${producto_id}</span></p>
+                    <img id="imatge_producte" src="${imatge}" alt="Imatge Producte" />
+
+                    <div>
+                        <label><strong>REFERÈNCIA:</strong></label>
+                        <input id="referencia-modificat" value="${producto_id}" />
+                    </div>
+
+                    <div>
+                        <label><strong>NOM:</strong></label>
+                        <input id="nom-modificat" value="${nombre}" />
+                    </div>
+
+                    <div>
+                        <label><strong>QUANTITAT:</strong></label>
+                        <input id="quantitat-modificat" type="number" value="${cantidad}" />
+                    </div>
+
+                    <div>
+                        <label><strong>PREU VENDA:</strong></label>
+                        <input id="preu-modificat" oninput="calcularMargen()" type="number" value="${preu}" />
+                    </div>
+
+                    <div>
+                        <label><strong>PREU COMPRA:</strong></label>
+                        <input id="preu-compra-modificat" oninput="calcularMargen()" type="number" value="${preu_distribuidor}" />
+                    </div>
+
+                    <div>
+                        <label><strong>IMATGE:</strong></label>
+                        <input id="fileInput" type="file" accept="image/*" />
+                        <p id="filePath"></p>
+                    </div>
+
+                    <p><strong>Marge:</strong> <span id="marge-diferencia"></span>%</p>
+
+                    <div class="popup-buttons">
+                        <button id="apply-btn" class="green-button"><u>Aplicar</u></button>
+                        <button id="close-popup" class="close-popup">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            popup.style.display = 'block';
+
+            // 📈 Recalcular margen al abrir
+            calcularMargen();
+
+            // 👀 Preview de la imagen seleccionada
+            document.getElementById('fileInput').addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('filePath').textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        document.getElementById('imatge_producte').src = ev.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // ❌ Cerrar popup
+            document.getElementById('close-popup')
+                .addEventListener('click', () => popup.style.display = 'none');
+
+            // ✔️ Aplicar cambios, pasando el ID original
+            document.getElementById('apply-btn')
+                .addEventListener('click', () => aplicarModificacio(producto_id));
+        })
+        .catch(error => console.error('**Error** al obtener datos del producte:', error));
+}
+
         function calcularMargen() {
             // Obtener los valores de los inputs
             const preuVenda = parseFloat(document.getElementById('preu-modificat').value);

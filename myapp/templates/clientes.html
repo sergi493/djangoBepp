@@ -1,6 +1,4 @@
-
 {% extends "layouts/base.html" %}
-
 
 {% block content %}
 <!DOCTYPE html>
@@ -8,308 +6,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda</title>
-    
+    <title>Clientes</title>
     <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    
-<style>
-    #modal-panel input{
-        border:1px black solid;
-        border-radius:5px;
-        height:25px;
-    }
-    .error {
-        color: red;
-        display: none;
-    }
-    .popup-container {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-      }
-      
-      .popup-content {
-        position: absolute;
-        top: 50%;
-        left: 53%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        width:80%;
-      }
-
-      .close-popup {
-        
-        padding: 5px 10px;
-        background-color: #ddd;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-left:20%;
-      }
-      
-      .close-popup:hover {
-        background-color: #ccc;
-
-      }
-
-      .input_nou_client{
-        margin-top: 5px;
-        margin-bottom:5px;
-    }
-    .taula_client_nou{
-        margin-bottom:10px;
-    }
-
-    .green-button, .red-button{
-        
-        font-weight:40px;
-        border:none;
-        border-radius:10px;
-        font-size:15px;
-    }
-</style>
-    <div class="main-content">
-        <h1>CLIENTEEEEES</h1>
-        <p>(es pot eliminar, descarregar,afegir, veure i editar datos)</p>
-       <form method="get" style="margin-bottom: 1rem;">
-  <input 
-    type="text" 
-    name="search" 
-    placeholder="Buscar por nombre o teléfono..." 
-    value="{{ search }}"
-  >
- 
-</form>
-        <button id="afegir-reparacio-btn">Nuevo</button>
-        <table id="productTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Localitat</th>
-                    <th>Carrer</th>
-                    <th>NIF</th>
-                    <th>Telefon</th>
-                    <th>Email</th>
-                    <th>Acció</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pers in persona %}
-                <tr>
-                    <td> {{ pers.id }} </td>                    <td>{{ pers.nombre }}</td>
-                    <td>{{ pers.localidad }}</td>
-                    <td>{{ pers.calle }}</td>
-                    <td>{{ pers.nif }}</td>
-                    <td>{{ pers.telefono }}</td>
-                    <td>{{ pers.email }}</td>
-                    <td><button class="popup-trigger" data-client-id="{{ pers.id }}"><i class="fa-regular fa-pen-to-square"></i></button></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    <!-- Controles de paginación -->
-<div style="text-align: center; margin-top: 1rem;">
-  {% if persona.has_previous %}
-    <a href="?page={{ persona.previous_page_number }}&search={{ search }}">⬅️ Anterior</a>
-  {% endif %}
-
-  <span style="margin: 0 1rem;">
-    Página <strong>{{ persona.number }}</strong> de <strong>{{ persona.paginator.num_pages }}</strong>
-  </span>
-
-  {% if persona.has_next %}
-    <a href="?page={{ persona.next_page_number }}&search={{ search }}">➡️ Siguiente</a>
-  {% endif %}
-</div>    
-        <div id="modal-overlay" class="hidden">
-            <div id="modal-panel">
-                <h2>NOU CLIENT</h2>
-                <table class="taula_client_nou">
-                    <thead>
-                        <tr>
-                            <th>LABELS</th>
-                            <th>INPUTS</th>
-                        </tr>
-
-                            <tr>
-                                <td><label>NOM:</label></td>
-                                <td><input class="text"  id="nom-client-nou" placeholder="Josep Maria"></input></td>
-                            </tr>
-                            <tr>
-                                <td><label>NIF</label></td>
-                                <td><input class="text" id="nif-client-nou" placeholder="21161138b"></input></td>
-                            </tr>
-                            <tr>
-                                <td><label>LOCALITAT</label></td>
-                                <td><input  id="localitat-client-nou" placeholder="Masroig"></input></td>
-                            </tr >
-                            <tr>
-                                <td><label>DIRECCIO</label></td>
-                                <td><input  id="direccio-client-nou" placeholder="Pinyeres, 38" ></input></td>
-                            </tr>
-                            <tr>
-                                <td><label>EMAIL</label></td>
-                                <td><input  id="email-client-nou" placeholder="exemple@exemple.com" ></input></td>
-                            </tr>
-                            <tr>
-                                <td><label>COMPTE BANCARI (IBAN)</label></td>
-                                <td><input  id="banc-client-nou" placeholder="es12 8465 8167 9435" ></input></td>
-                            </tr>
-                            
-                            <tr>
-                                <td><label>NUM.TELEFON</label></td>
-                                <td><input placeholder="635 25 36 91" id="telefon-client-nou" type="number" ></td>
-                            </tr>
-                        </table>
-                                <button class="green-button"onclick="crearClient()" id="crear-producte">Crear client</button>
-                
-                                    
-                                <button class="red-button" id="close-modal-btn">Cerrar</button>
-                    
-                      
-                        <p class="error" id="errorMessageFloat">Si us plau, introdueix un número float per preu</p>
-                        <p class="error" id="errorMessageInt">Si us plau, introdueix un número int per quantitat</p>
-                        <p class="error" id="errorMessageText">Si us plau, omple totes les caselles</p>
-                
-            </div>
-        </div>
-<script>
-    function crearClient(){
-        
-    
-           
-        
-            var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
-            var nom = document.getElementById("nom-client-nou").value;
-            var nif= document.getElementById("nif-client-nou").value;
-            var localitat= document.getElementById("localitat-client-nou").value;
-            var banc= document.getElementById("banc-client-nou").value;
-            var direccio= document.getElementById("direccio-client-nou").value;
-            var email= document.getElementById("email-client-nou").value;
-            var telefon= document.getElementById("telefon-client-nou").value;
-            
-            if (!nif,!localitat,!nom){
-                errorMessageText.style.display = 'block';
-            }
-            else{
-                errorMessageText.style.display = 'none';
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/crear_client/", true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
-                xhr.onload = function () {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        console.log("Respuesta del servidor:", xhr.responseText);
-                        
-                    } else {
-                        console.error("Error en la solicitud:", xhr.statusText);
-                    }
-                };
-                xhr.onerror = function () {
-                    console.error("Error de red al enviar la solicitud.");
-                };
-                console.log(nom);
-    
-                xhr.send(JSON.stringify({nom: nom,nif:nif, localitat:localitat, banc:banc, direccio:direccio, email:email, telefon:telefon}));
-            }
-            
-            
-            
-    
-    }
-        document.addEventListener('DOMContentLoaded', function () {
-            const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
-            const modalOverlay = document.getElementById('modal-overlay');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-        
-            afegirReparacioBtn.addEventListener('click', function () {
-                modalOverlay.style.display = 'flex'; // Mostrar el overlay
-            });
-        
-            closeModalBtn.addEventListener('click', function () {
-                modalOverlay.style.display = 'none'; // Ocultar el overlay
-            });
-        
-            // Opcional: cerrar el modal al hacer clic fuera del panel
-            modalOverlay.addEventListener('click', function (event) {
-                if (event.target === modalOverlay) {
-                    modalOverlay.style.display = 'none'; // Ocultar el overlay
-                }
-            });
-        });
-    </script>
-        <div id="modal-overlay" class="hidden">
-            <div id="modal-panel">
-                <h2>MODIFICAR CLIENT</h2>
-                <div>
-                    <label>NOM</label>
-                    <input placeholder="Joan"></input>
-                </div>
-                <div>
-                    <label>Localitat</label>
-                    <input placeholder="Maleta, PC..."></input>
-                </div>
-                <div>
-                    <label>Mail</label>
-                    <input placeholder="Maleta, PC..."></input>
-                </div>
-                <div>
-                    <label>Telf</label>
-                    <input placeholder="Maleta, PC..."></input>
-                </div>
-                <button id="close-modal-btn">Cerrar</button>
-            </div>
-        </div>-->
-        <div class="popup-container" id="popup">
-    
-        </div> <!-- Moví el cierre de este div al final -->
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-            }
-            
-            #modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
-                display: none; /* Oculta el overlay al cargar la página */
-                justify-content: center;
-                align-items: center;
-                z-index: 1000; /* Asegura que esté encima de todo */
-            }
-            
-            #modal-panel {
-                width: 50%;
-                max-width: 600px;
-                background: white;
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                text-align: center;
-            }
-            
-            .hidden {
-                display: none;
-            }
-           #imatge_producte{
-                width:100px;
-                height:auto;
-           }
-           #modal-panel input{
-            border:1px black solid;
+    <style>
+        #modal-panel input {
+            border: 1px black solid;
+            border-radius: 5px;
+            height: 25px;
         }
         .error {
             color: red;
@@ -324,256 +27,53 @@
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 9999;
-          }
-          
-          .popup-content {
+        }
+        .popup-content {
             position: absolute;
             top: 50%;
-            left: 53%;
+            left: 50%;
             transform: translate(-50%, -50%);
             background-color: white;
             padding: 20px;
             border-radius: 10px;
-            width:80%;
-          }
-    
-          .close-popup {
-            
+            width: 80%;
+            max-width: 600px;
+        }
+        .close-popup {
             padding: 5px 10px;
-            background-color: red;
+            background-color: #ddd;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-left:20%;
-            color:white;
-          }
-          
-          .close-popup:hover {
+        }
+        .close-popup:hover {
             background-color: #ccc;
-          }
-        </style>
-
-
-        <script>
-        // script.js
-    
-        document.addEventListener('DOMContentLoaded', function () {
-            const modalOverlay = document.getElementById('modal-overlay');
-            const closeModalBtn = document.getElementById('close-modal-btn');
-            const clientBtns = document.querySelectorAll('.client-btn');
-    
-            clientBtns.forEach(function(btn) {
-                btn.addEventListener('click', function () {
-                    modalOverlay.style.display = 'flex'; // Mostrar el overlay
-                });
-            });
-    
-            closeModalBtn.addEventListener('click', function () {
-                modalOverlay.style.display = 'none'; // Ocultar el overlay
-            });
-    
-            // Opcional: cerrar el modal al hacer clic fuera del panel
-            modalOverlay.addEventListener('click', function (event) {
-                if (event.target === modalOverlay) {
-                    modalOverlay.style.display = 'none'; // Ocultar el overlay
-                }
-            });
-        });
-        document.addEventListener('DOMContentLoaded', function () {
-            const triggerButtons = document.querySelectorAll('.popup-trigger');
-            const popup = document.getElementById('popup');
-    
-            triggerButtons.forEach(function (button) {
-                button.addEventListener('click', function () {
-                    const clientId = button.getAttribute('data-client-id');
-                    console.log(clientId)
-                    fetch(`/client_datos/${clientId}/`)
-                    
-                        .then(response => response.json())
-                        .then(client_dades => {
-
-                            let popupContent = `
-                            <div class="popup-content">
-                               
-                                <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
-                                    
-                                    
-                                  </div>
-                                  <div>
-                                  <h1>MODIFICAR CLIENT: </h1>
-                                    <p id="referencia"> ${client_dades.client_id}</p>
-                                    
-                                   
-                                  </div>
-                                 <table>
-                                 <th></th>
-                                 <tbody>
-                                 <tr>
-                                    <td>
-                                    <p>NIF:</p>
-                                    </td>
-                                    <td>
-                                    <input style="padding:7px;" id="nif-modificat" value="${client_dades.client_nif}"> 
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    <p>NOM:</p>
-                                    </td>
-                                    <td>
-                                    <input style="padding:7px;" id="nom-modificat" value="${client_dades.client_nom}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    <p>LOCALITAT:</p>
-                                    </td>
-                                    <td>
-                                    <input style="padding:7px;" id="localitat-modificat"  value="${client_dades.client_localitat}"> 
-                                    </td>
-                                </tr>
-                                  <tr>
-                                    <td>
-                                    <p>CARRER:</p>
-                                    </td>
-                                    <td>
-                                    <input style="padding:7px;" id="carrer-modificat"  value="${client_dades.client_carrer}"> 
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    <p>TELEFON:</p>
-                                    </td>
-                                    <td>
-                                    <input style="padding:7px;" id="tel-modificat" type="number" value="${client_dades.client_telefon}"> 
-                                    </td>
-                                </tr>
-                                 <tr>
-                                    <td>
-                                    <p>EMAIL:</p>
-                                    </td>
-                                    <td>
-                                     <input style="padding:7px;" id="email-modificat"  value="${client_dades.client_email}"> 
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                    <p>BANC:</p>
-                                    </td>
-                                    <td>
-                                      <input style="padding:7px;" id="banc-modificat"  value="${client_dades.client_comp_banc}"> 
-                                    </td>
-                                </tr>
-                               
-                               
-                              
-                                 </tbody>
-                                    
-                                 </TABLE>
-
-                               
-                               
-                                   
-`;
-                        // Agregar productos y cantidades a la ventana emergente
-                       
-                        popupContent += `  
-                                        <div class="popup-buttons">
-                                            <div>
-                                                
-                                                
-                                                
-                                            
-                                            
-                                                <button style="margin-left:15%; margin-right:30%;" onclick="aplicarModificacio()" class="green-button">Aplicar</button>
-                                            
-                                                
-                                                
-                                                <button id="close-popup" class="close-popup ">Cancelar</button>
-                                                
-                                          
-                                        </div>
-                                    </div>`;
-                                    
-                        popup.innerHTML = popupContent;
-                        popup.style.display = 'block';
-                        // Adjuntar event listener al botón de cerrar
-                        const closeButton = popup.querySelector('.close-popup');
-                        closeButton.addEventListener('click', function () {
-                            popup.style.display = 'none';
-                        });
-                        })
-                        .catch(error => console.error('Error al obtener datos del ticket:', error));
-                });
-            });
-        });
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = cookies[i].trim();
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
         }
-        function aplicarModificacio(){
-            var referencia=document.getElementById("referencia").innerText;
-            var nif=document.getElementById("nif-modificat").value;
-            var nom=document.getElementById("nom-modificat").value;
-            var carrer=document.getElementById("carrer-modificat").value;
-            var tel=document.getElementById("tel-modificat").value;
-            var email=document.getElementById("email-modificat").value;
-            var localitat=document.getElementById("localitat-modificat").value;
-
-            var banc=document.getElementById("banc-modificat").value; 
-                      console.log(referencia)
-            // Obtenemos el contenido de texto del <span> y lo convertimos a número
-                var csrftoken = getCookie('csrftoken'); 
-                var xhr = new XMLHttpRequest();
-                xhr.open("POST", "/modificar_client/", true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
-                xhr.onload = function () {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        console.log("Respuesta del servidor:", xhr.responseText);
-                        location.reload()
-                    } else {
-                        console.error("Error en la solicitud:", xhr.statusText);
-                    }
-                };
-                xhr.onerror = function () {
-                    console.error("Error de red al enviar la solicitud.");
-                };
-                xhr.send(JSON.stringify({referencia:referencia, carrer:carrer, localitat:localitat, tel:tel, banc:banc, email:email, nif:nif, nom:nom})); 
-
+        .input_nou_client {
+            margin-top: 5px;
+            margin-bottom: 5px;
         }
-        </script>
-        <style>
-        /* styles.css */
-    
-        body {
-            font-family: Arial, sans-serif;
+        .taula_client_nou {
+            margin-bottom: 10px;
         }
-        
+        .green-button, .red-button {
+            font-weight: 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+        }
         #modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
-            display: none; /* Oculta el overlay al cargar la página */
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 1000; /* Asegura que esté encima de todo */
+            z-index: 1000;
         }
-        
         #modal-panel {
             width: 50%;
             max-width: 600px;
@@ -583,14 +83,401 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             text-align: center;
         }
-        
         .hidden {
             display: none;
         }
+        #pagination {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        #pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>CLIENTES</h1>
+        <p>(es pot eliminar, descarregar, afegir, veure i editar datos)</p>
+        <input type="text" id="searchCliente" placeholder="Buscar cliente...">
+        <button id="afegir-reparacio-btn">Nuevo</button>
         
-        </style>
-</div>
+        <table id="productTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Localitat</th>
+                    <th>Carrer</th>
+                    <th>NIF</th>
+                    <th>Telefon</th>
+                    <th>Email</th>
+                    <th>Acció</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-clientes">
+                {% for pers in persona %}
+                <tr>
+                    <td>{{ pers.id }}</td>
+                    <td>{{ pers.nombre }}</td>
+                    <td>{{ pers.localidad }}</td>
+                    <td>{{ pers.calle }}</td>
+                    <td>{{ pers.nif }}</td>
+                    <td>{{ pers.telefono }}</td>
+                    <td>{{ pers.email }}</td>
+                    <td>
+                        <button class="popup-trigger" data-client-id="{{ pers.id }}">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div id="pagination"></div>
+
+        <!-- Modal para nuevo cliente -->
+        <div id="modal-overlay" class="hidden">
+            <div id="modal-panel">
+                <h2>NOU CLIENT</h2>
+                <table class="taula_client_nou">
+                    <thead>
+                        <tr>
+                            <th>LABELS</th>
+                            <th>INPUTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><label>NOM:</label></td>
+                            <td><input class="text" id="nom-client-nou" placeholder="Josep Maria"></td>
+                        </tr>
+                        <tr>
+                            <td><label>NIF</label></td>
+                            <td><input class="text" id="nif-client-nou" placeholder="21161138b"></td>
+                        </tr>
+                        <tr>
+                            <td><label>LOCALITAT</label></td>
+                            <td><input id="localitat-client-nou" placeholder="Masroig"></td>
+                        </tr>
+                        <tr>
+                            <td><label>DIRECCIO</label></td>
+                            <td><input id="direccio-client-nou" placeholder="Pinyeres, 38"></td>
+                        </tr>
+                        <tr>
+                            <td><label>EMAIL</label></td>
+                            <td><input id="email-client-nou" placeholder="exemple@exemple.com"></td>
+                        </tr>
+                        <tr>
+                            <td><label>COMPTE BANCARI (IBAN)</label></td>
+                            <td><input id="banc-client-nou" placeholder="es12 8465 8167 9435"></td>
+                        </tr>
+                        <tr>
+                            <td><label>NUM.TELEFON</label></td>
+                            <td><input placeholder="635 25 36 91" id="telefon-client-nou" type="number"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="green-button" onclick="crearClient()" id="crear-producte">Crear client</button>
+                <button class="red-button" id="close-modal-btn">Cerrar</button>
+                
+                <p class="error" id="errorMessageFloat">Si us plau, introdueix un número float per preu</p>
+                <p class="error" id="errorMessageInt">Si us plau, introdueix un número int per quantitat</p>
+                <p class="error" id="errorMessageText">Si us plau, omple totes les caselles</p>
+            </div>
+        </div>
+
+        <!-- Popup para modificar cliente -->
+        <div class="popup-container" id="popup"></div>
+    </div>
+
+    <script>
+        // Función para obtener el token CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Configuración de eventos para el modal de nuevo cliente
+        document.addEventListener('DOMContentLoaded', function () {
+            const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            
+            afegirReparacioBtn.addEventListener('click', function () {
+                modalOverlay.style.display = 'flex';
+            });
+            
+            closeModalBtn.addEventListener('click', function () {
+                modalOverlay.style.display = 'none';
+            });
+            
+            modalOverlay.addEventListener('click', function (event) {
+                if (event.target === modalOverlay) {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+            
+            // Delegación de eventos para los botones de edición
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.popup-trigger')) {
+                    const button = event.target.closest('.popup-trigger');
+                    const clientId = button.getAttribute('data-client-id');
+                    mostrarPopupEdicion(clientId);
+                }
+            });
+        });
+
+        // Función para mostrar el popup de edición
+        function mostrarPopupEdicion(clientId) {
+            fetch(`/client_datos/${clientId}/`)
+                .then(response => response.json())
+                .then(client_dades => {
+                    const popup = document.getElementById('popup');
+                    
+                    let popupContent = `
+                        <div class="popup-content">
+                            <h1>MODIFICAR CLIENTE</h1>
+                            <p id="referencia">${client_dades.client_id}</p>
+                            
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td><p>NIF:</p></td>
+                                        <td><input style="padding:7px;" id="nif-modificat" value="${client_dades.client_nif}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>NOM:</p></td>
+                                        <td><input style="padding:7px;" id="nom-modificat" value="${client_dades.client_nom}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>LOCALITAT:</p></td>
+                                        <td><input style="padding:7px;" id="localitat-modificat" value="${client_dades.client_localitat}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>CARRER:</p></td>
+                                        <td><input style="padding:7px;" id="carrer-modificat" value="${client_dades.client_carrer}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>TELEFON:</p></td>
+                                        <td><input style="padding:7px;" id="tel-modificat" type="number" value="${client_dades.client_telefon}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>EMAIL:</p></td>
+                                        <td><input style="padding:7px;" id="email-modificat" value="${client_dades.client_email}"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><p>BANC:</p></td>
+                                        <td><input style="padding:7px;" id="banc-modificat" value="${client_dades.client_comp_banc}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="popup-buttons" style="margin-top: 20px;">
+                                <button style="margin-right: 10px;" onclick="aplicarModificacio()" class="green-button">Aplicar</button>
+                                <button id="close-popup" class="close-popup">Cancelar</button>
+                            </div>
+                        </div>`;
+                    
+                    popup.innerHTML = popupContent;
+                    popup.style.display = 'block';
+                    
+                    // Event listener para cerrar el popup
+                    const closeButton = popup.querySelector('#close-popup');
+                    closeButton.addEventListener('click', function() {
+                        popup.style.display = 'none';
+                    });
+                })
+                .catch(error => console.error('Error al obtener datos del cliente:', error));
+        }
+
+        // Función para crear un nuevo cliente
+        function crearClient() {
+            const csrftoken = getCookie('csrftoken');
+            const nom = document.getElementById("nom-client-nou").value;
+            const nif = document.getElementById("nif-client-nou").value;
+            const localitat = document.getElementById("localitat-client-nou").value;
+            const banc = document.getElementById("banc-client-nou").value;
+            const direccio = document.getElementById("direccio-client-nou").value;
+            const email = document.getElementById("email-client-nou").value;
+            const telefon = document.getElementById("telefon-client-nou").value;
+            
+            if (!nif || !localitat || !nom) {
+                document.getElementById("errorMessageText").style.display = 'block';
+                return;
+            }
+            
+            document.getElementById("errorMessageText").style.display = 'none';
+            
+            fetch("/crear_client/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken
+                },
+                body: JSON.stringify({
+                    nom: nom,
+                    nif: nif,
+                    localitat: localitat,
+                    banc: banc,
+                    direccio: direccio,
+                    email: email,
+                    telefon: telefon
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    console.error("Error en la solicitud:", response.statusText);
+                }
+            })
+            .catch(error => console.error("Error de red al enviar la solicitud:", error));
+        }
+
+        // Función para aplicar modificaciones a un cliente
+        function aplicarModificacio() {
+            const referencia = document.getElementById("referencia").innerText;
+            const nif = document.getElementById("nif-modificat").value;
+            const nom = document.getElementById("nom-modificat").value;
+            const carrer = document.getElementById("carrer-modificat").value;
+            const tel = document.getElementById("tel-modificat").value;
+            const email = document.getElementById("email-modificat").value;
+            const localitat = document.getElementById("localitat-modificat").value;
+            const banc = document.getElementById("banc-modificat").value;
+            
+            const csrftoken = getCookie('csrftoken');
+            
+            fetch("/modificar_client/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken
+                },
+                body: JSON.stringify({
+                    referencia: referencia,
+                    carrer: carrer,
+                    localitat: localitat,
+                    tel: tel,
+                    banc: banc,
+                    email: email,
+                    nif: nif,
+                    nom: nom
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    console.error("Error en la solicitud:", response.statusText);
+                }
+            })
+            .catch(error => console.error("Error de red al enviar la solicitud:", error));
+        }
+
+        // Búsqueda y paginación de clientes
+        document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("searchCliente");
+            const tbody = document.getElementById("tbody-clientes");
+            const pagination = document.getElementById("pagination");
+            let currentPage = 1;
+
+            function fetchPersonas(page = 1) {
+                const texto = input.value.trim();
+                currentPage = page;
+
+                fetch("{% url 'buscar_persona' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: new URLSearchParams({ texto, page })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+
+                    if (data.personas && data.personas.length > 0) {
+                        data.personas.forEach(p => {
+                            const tr = document.createElement("tr");
+                            tr.innerHTML = `
+                                <td>${p.id}</td>
+                                <td>${p.nombre}</td>
+                                <td>${p.localidad}</td>
+                                <td>${p.calle}</td>
+                                <td>${p.nif}</td>
+                                <td>${p.telefono}</td>
+                                <td>${p.email}</td>
+                                <td>
+                                    <button class="popup-trigger" data-client-id="${p.id}">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                </td>`;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align:center; font-style:italic;">
+                                    No se encontraron clientes
+                                </td>
+                            </tr>`;
+                    }
+
+                    renderPagination(data.page_info);
+                })
+                .catch(err => {
+                    console.error("Error al buscar clientes:", err);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align:center; color:red;">
+                                Error al buscar clientes
+                            </td>
+                        </tr>`;
+                    pagination.innerHTML = "";
+                });
+            }
+
+            function renderPagination({ current, total, has_prev, has_next }) {
+                pagination.innerHTML = "";
+
+                if (has_prev) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.textContent = "« Anterior";
+                    prevBtn.onclick = () => fetchPersonas(current - 1);
+                    pagination.appendChild(prevBtn);
+                }
+
+                const info = document.createElement("span");
+                info.textContent = ` Página ${current} de ${total} `;
+                pagination.appendChild(info);
+
+                if (has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.textContent = "Siguiente »";
+                    nextBtn.onclick = () => fetchPersonas(current + 1);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            fetchPersonas();
+            input.addEventListener("input", () => fetchPersonas(1));
+        });
+    </script>
 </body>
 </html>
-
 {% endblock %}
