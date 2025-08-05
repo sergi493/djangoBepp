@@ -3,6 +3,7 @@
 
 
 {% block content %}
+    {% include "buscar_cliente.html" %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -570,137 +571,7 @@ document.addEventListener("DOMContentLoaded", function () {
 };
    
 </script>
-<div class="overlay" id="overlay">
-  
-    <div class="popup2">
 
-        <div class="izq">
-            <p>CREAR CLIENT:</p>
-            <table>
-                <tbody>
-                    <tr>
-                        <td><label>NOM:</label></td>
-                        <td><input id="nom-input" type="text"></td>
-                        </tr>
-                        <tr>
-                            <td><label>TELEFON:</label></td>
-                            <td><input id="telefon-input" type="number"></td>
-                            </tr>
-                            <tr>
-                         <td><label>LOCALITAT:</label></td>
-                                <td><input id="localitat-input" type="text"></td>
-                                </tr>
-                                <tr>
-                                    <td><label>DIRECCIO:</label></td>
-                                    <td><input id="direccio-input" type="text"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><label>NIF:</label></td>
-                                        <td><input id="nif-input" type="text"></td>
-                                        </tr>
-                                        <tr>
-                                            <td><label>EMAIL:</label></td>
-                                            <td><input id="email-input" type="text"></td>
-                                            </tr>
-                                            <tr>
-                                                <td><label></label>COMPTE BANC:</td>
-                                                <td><input id="banc-input" type="text"></td>
-                                                </tr>
-                </tbody>
-            </table>
-            <button class="clientNou" onclick="ReparacioClientNou()">Afegir i crear client</button>
-
-
-        </div>
-        <button class="boto-tancar-facturar" onclick="hideOverlay()">Cancelar</button>
-        <div class="der">
-  <p><strong>BUSCAR CLIENTE</strong></p>
-  <input type="text" id="inputBuscarCliente" placeholder="Buscar cliente..." />
-
-  <table id="taula_client_reparacio">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>NOM</th>
-        <th>tlf</th>
-        <th>NIF</th>
-        <th>Importar</th>
-      </tr>
-    </thead>
-    <tbody id="tbody_clientes_reparacio">
-      <!-- Aquí inicias con un mensaje por defecto -->
-      <tr>
-        <td colspan="5" style="text-align:center">Escriu per cercar...</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("inputBuscarCliente");
-  const tbody = document.getElementById("tbody_clientes_reparacio");
-
-  input.addEventListener("input", () => {
-    const texto = input.value.trim();
-
-    if (!texto) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align:center">Escriu per cercar...</td>
-        </tr>`;
-      return;
-    }
-
-    fetch("{% url 'buscar_persona' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRFToken": "{{ csrf_token }}"
-      },
-      body: new URLSearchParams({ texto })
-    })
-    .then(res => res.json())
-    .then(data => {
-      tbody.innerHTML = "";
-
-      if (data.personas && data.personas.length > 0) {
-        data.personas.forEach(pers => {
-          const fila = document.createElement("tr");
-          fila.innerHTML = `
-            <td>${pers.id}</td>
-            <td>${pers.nombre}</td>
-            <td>${pers.telefono}</td>
-            <td>${pers.nif}</td>
-            <td>
-              <button onclick="ImportarClientReparacio(
-                '${pers.id}',
-                '${pers.nombre}',
-                '${pers.telefono}',
-                '${pers.nif}'
-              )">
-                <i class="fa-regular fa-pen-to-square"></i>
-              </button>
-            </td>`;
-          tbody.appendChild(fila);
-        });
-      } else {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align:center">Cap client trobat</td>
-          </tr>`;
-      }
-    })
-    .catch(err => {
-      console.error("Error al buscar clients:", err);
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align:center; color:red">
-            Error de cerca 😬
-          </td>
-        </tr>`;
-    });
-  });
-});
 </script>
 
     

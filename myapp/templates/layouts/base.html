@@ -5,53 +5,219 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiTienda</title>
- 
+    <link rel="icon" href="{% static 'media/imagenes/esaip.png' %}">
     <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{% static 'styles/main.css' %}">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/vfs_fonts.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/vfs_fonts.js"></script>
+    <style>
+        /* Estilos generales para la navbar */
+        .menu-toggle {
+            display: none;
+            cursor: pointer;
+            padding: 15px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 1000;
+            background: #333;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        nav {
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            z-index: 999;
+            background: #000;
+        }
+        
+        nav ul {
+            display: flex;
+            flex-wrap: nowrap; /* Evita el salto de línea */
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            overflow-x: auto; /* Permite scroll horizontal si es necesario */
+            white-space: nowrap; /* Evita saltos de línea */
+            padding-left:8%;
+        }
+        
+        nav ul li {
+            text-align: center;
+            list-style: none;
+            min-width: 100px; /* Ancho mínimo para cada elemento */
+            flex-shrink: 0; /* Evita que se encojan los elementos */
+        }
+        
+        nav ul li a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 5px;
+            color: white;
+            text-decoration: none;
+            margin:10px; 
+        }
+        
+        /* Tamaños aumentados para iconos y texto */
+        nav ul li i {
+            font-size: 1.8rem; /* Iconos más grandes */
+            margin-bottom: 5px;
+        }
+        
+        nav ul li p {
+            margin: 0;
+            font-size: 1rem; /* Texto más grande */
+            white-space: nowrap;
+        }
+        
+        /* Estilos para el estado activo/seleccionado */
+        .nav-seleccion {
+            background-color: rgb(212, 197, 133);
+            border-radius: 5px 5px 0 0;
+        }
+        
+        nav ul li:hover {
+            background-color: rgb(36, 36, 36);
+            border-radius: 5px;
+        }
+        
+        /* Estilos para móviles */
+        @media (max-width: 1024px) {
+            .menu-toggle {
+                display: block;
+            }
+            
+            nav {
+                left: -280px;
+                width: 280px;
+                height: 100vh;
+                overflow-y: auto;
+                padding-top: 50px;
+            }
+            
+            nav.active {
+                left: 0;
+            }
+            
+            nav ul {
+                flex-direction: column;
+                flex-wrap: nowrap;
+                overflow-x: hidden;
+            }
+            
+            nav ul li {
+                width: 100%;
+                text-align: left;
+                min-width: auto;
+            }
+            
+            nav ul li a {
+                flex-direction: row;
+                padding: 15px;
+                justify-content: flex-start;
+            }
+            
+            nav ul li i {
+                margin-right: 15px;
+                margin-bottom: 0;
+                font-size: 1.5rem;
+            }
+            
+            nav ul li p {
+                font-size: 1rem;
+            }
+            
+            main {
+                margin-top: 60px;
+            }
+        }
+        
+        /* Ajuste del contenido principal */
+        main {
+            margin-top: 80px; /* Espacio para la navbar */
+            padding: 20px;
+        }
+        
+        /* Scrollbar personalizada para navegadores WebKit */
+        nav ul::-webkit-scrollbar {
+            height: 5px;
+        }
+        
+        nav ul::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+        
+        nav ul::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
 </head>
-<body >
+<body>
+    <div class="menu-toggle" id="mobile-menu">
+        <i class="fa fa-bars"></i>
+    </div>
 
-<nav>
-   
+    <nav id="navbar">
         <ul>
-            <li class="{% if request.path == '/ayuda/' %}nav-seleccion{% endif %}"><a href="/ayuda/" title="Ayuda"><i class="fa-solid fa-shop fa-2x"></i><p>AYUDA</p></a></li>
-            <li class="{% if request.path == '/vender/' %}nav-seleccion{% endif %}"><a href="/vender/" title="Ir al Punto de Venta"><i class="fa-solid fa-shop fa-2x"></i><p>Punto de venta</p></a></li>
-            <li class="{% if request.path == '/facturas/' %}nav-seleccion{% endif %}"><a href="/facturas/"  title="Ir a Facturas"><i class="fa-solid fa-file-invoice-dollar fa-2x"></i><p>Facturas</p></a></li>
-            <li class="{% if request.path == '/tickets/' %}nav-seleccion{% endif %}"><a href="/tickets/" title="Ir a Tickets"><i class="fa-solid fa-receipt fa-2x"></i><p>Tickets</p></a></li>
-            <li class="{% if request.path == '/reparacions/' %}nav-seleccion{% endif %}"><a href="/reparacions/" title="Ver Reparaciones"><i class="fa-solid fa-screwdriver-wrench fa-2x"></i><p>Reparacions</p></a></li>
-            <li class="{% if request.path == '/presupostos/' %}nav-seleccion{% endif %}"><a href="/presupostos/" title="Ver Presupuestos"><i class="fa-solid fa-hand-holding-dollar fa-2x"></i><p>Pressupostos</p></a></li>
-            <li class="{% if request.path == '/clientes/' %}nav-seleccion{% endif %}"><a href="/clientes/" title="Ver Clientes"><i class="fa-solid fa-users fa-2x"></i><p>Clients</p></a></li>
-            <li class="{% if request.path == '/stock/' %}nav-seleccion{% endif %}"><a href="/stock/"  title="Ir al Stock"><i class="fa-solid fa-boxes-stacked fa-2x"></i><p>Stock</p></a></li>
-            <li class="{% if request.path == '/pedidos/' %}nav-seleccion{% endif %}"><a href="/pedidos/" title="Ver Estado de Pedidos"><i class="fa-solid fa-truck fa-2x"></i><p>Pedidos</p></a></li>
-            <li class="{% if request.path == '/estadisticas/' %}nav-seleccion{% endif %}"><a href="/estadisticas/"  title="Ver Estadísticas"><i class="fa-solid fa-chart-pie fa-2x"></i><p>Estadistiques</p></a></li>
-            <li class="{% if request.path == '/hoy/' %}nav-seleccion{% endif %}" id="tancar-caixa"><a href="/hoy/"  title="Tancar Caixa"><i class="fa-solid fa-cash-register fa-2x"></i><p>Tancar Caixa</p></a></li>
-            <li class="{% if request.path == '/margen_ventas/' %}nav-seleccion{% endif %}" id="margen-ventas"><a href="/margen_ventas/"  title="Margen ventas"><i class="fa-solid fa-cash-register fa-2x"></i><p>Margen de Ventas</p></a></li>
+            <li class="{% if request.path == '/ayuda/' %}nav-seleccion{% endif %}"><a href="/ayuda/" title="Ayuda"><i class="fa-solid fa-shop"></i><p>AYUDA</p></a></li>
+            <li class="{% if request.path == '/vender/' %}nav-seleccion{% endif %}"><a href="/vender/" title="Ir al Punto de Venta"><i class="fa-solid fa-shop"></i><p>Punto de venta</p></a></li>
+            <li class="{% if request.path == '/facturas/' %}nav-seleccion{% endif %}"><a href="/facturas/"  title="Ir a Facturas"><i class="fa-solid fa-file-invoice-dollar"></i><p>Facturas</p></a></li>
+            <li class="{% if request.path == '/tickets/' %}nav-seleccion{% endif %}"><a href="/tickets/" title="Ir a Tickets"><i class="fa-solid fa-receipt"></i><p>Tickets</p></a></li>
+            <li class="{% if request.path == '/reparacions/' %}nav-seleccion{% endif %}"><a href="/reparacions/" title="Ver Reparaciones"><i class="fa-solid fa-screwdriver-wrench"></i><p>Reparacions</p></a></li>
+            <li class="{% if request.path == '/presupostos/' %}nav-seleccion{% endif %}"><a href="/presupostos/" title="Ver Presupuestos"><i class="fa-solid fa-hand-holding-dollar"></i><p>Pressupostos</p></a></li>
+            <li class="{% if request.path == '/clientes/' %}nav-seleccion{% endif %}"><a href="/clientes/" title="Ver Clientes"><i class="fa-solid fa-users"></i><p>Clients</p></a></li>
+            <li class="{% if request.path == '/stock/' %}nav-seleccion{% endif %}"><a href="/stock/"  title="Ir al Stock"><i class="fa-solid fa-boxes-stacked"></i><p>Stock</p></a></li>
+            <li class="{% if request.path == '/pedidos/' %}nav-seleccion{% endif %}"><a href="/pedidos/" title="Ver Estado de Pedidos"><i class="fa-solid fa-truck"></i><p>Pedidos</p></a></li>
+            <li class="{% if request.path == '/estadisticas/' %}nav-seleccion{% endif %}"><a href="/estadisticas/"  title="Ver Estadísticas"><i class="fa-solid fa-chart-pie"></i><p>Estadistiques</p></a></li>
+            <li class="{% if request.path == '/hoy/' %}nav-seleccion{% endif %}" id="tancar-caixa"><a href="/hoy/"  title="Tancar Caixa"><i class="fa-solid fa-cash-register"></i><p>Tancar Caixa</p></a></li>
+            <li class="{% if request.path == '/margen_ventas/' %}nav-seleccion{% endif %}" id="margen-ventas"><a href="/margen_ventas/"  title="Margen ventas"><i class="fa-solid fa-cash-register"></i><p>Margen Ventas</p></a></li>
             {% if user.is_authenticated %}
-            <li class="{% if request.path == '/logout/' %}nav-seleccion{% endif %}"><a href="/logout/" title="Sortir"><i class="fa-solid fa-right-from-bracket fa-2x"></i><p>Logout</p></a></li>
-
-            <li class="{% if request.path == '/user/' %}nav-seleccion{% endif %}"><a href="/user/" title="Usuari"><i class="fa-solid fa-user fa-2x"></i><p>Usuari</p></a></li>
-           
+            <li class="{% if request.path == '/logout/' %}nav-seleccion{% endif %}"><a href="/logout/" title="Sortir"><i class="fa-solid fa-right-from-bracket"></i><p>Logout</p></a></li>
+            <li class="{% if request.path == '/user/' %}nav-seleccion{% endif %}"><a href="/user/" title="Usuari"><i class="fa-solid fa-user"></i><p>Usuari</p></a></li>
             {% else %}
-            <li class="{% if request.path == '/signup/' %}nav-seleccion{% endif %}"><a href="/signup/" title="SignUp"><i class="fa-solid fa-user-plus fa-2x"></i><p>Sign Up</p></a></li>
+            <li class="{% if request.path == '/signup/' %}nav-seleccion{% endif %}"><a href="/signup/" title="SignUp"><i class="fa-solid fa-user-plus"></i><p>Sign Up</p></a></li>
             {% endif %}
         </ul>
+    </nav>
 
+    <main class="container mx-auto text-black">
+        {% block content %}
+        {% endblock %}
+    </main>
 
-</nav>
-
-
-<main class="container mx-auto mt-6 text-black">
-    {% block content %}
-    {% endblock %}
-</main>
-
-<script src="{% static 'script.js' %}"></script>
-
-  
-
-
+    <script src="{% static 'script.js' %}"></script>
+    <script>
+        // Script para el menú hamburguesa
+        document.getElementById('mobile-menu').addEventListener('click', function() {
+            document.getElementById('navbar').classList.toggle('active');
+        });
+        
+        // Cerrar el menú al hacer clic en un enlace (opcional)
+        document.querySelectorAll('#navbar a').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) {
+                    document.getElementById('navbar').classList.remove('active');
+                }
+            });
+        });
+        
+        // Ajustar el margen superior del main según la altura de la navbar
+        window.addEventListener('DOMContentLoaded', function() {
+            const navbar = document.getElementById('navbar');
+            const main = document.querySelector('main');
+            if (navbar && main) {
+                const navbarHeight = navbar.offsetHeight;
+                main.style.marginTop = navbarHeight + 'px';
+            }
+        });
+    </script>
 </body>
 </html>

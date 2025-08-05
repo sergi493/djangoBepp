@@ -18,27 +18,7 @@
             color: red;
             display: none;
         }
-        .popup-container {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-        }
-        .popup-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 600px;
-        }
+        
         .close-popup {
             padding: 5px 10px;
             background-color: #ddd;
@@ -190,9 +170,54 @@
             </div>
         </div>
 
-        <!-- Popup para modificar cliente -->
-        <div class="popup-container" id="popup"></div>
+       
     </div>
+
+    <!-- Popup para modificar cliente -->
+<div class="popup-container" id="popup" >
+    <div class="popup-content">
+        <h1>MODIFICAR CLIENTE</h1>
+        <p>ID: <span id="referencia"></span></p>
+        <table>
+            <tbody>
+                <tr>
+                    <td>NIF:</td>
+                    <td><input style="padding:7px;" id="nif-modificat"></td>
+                </tr>
+                <tr>
+                    <td>NOM:</td>
+                    <td><input style="padding:7px;" id="nom-modificat"></td>
+                </tr>
+                <tr>
+                    <td>LOCALITAT:</td>
+                    <td><input style="padding:7px;" id="localitat-modificat"></td>
+                </tr>
+                <tr>
+                    <td>CARRER:</td>
+                    <td><input style="padding:7px;" id="carrer-modificat"></td>
+                </tr>
+                <tr>
+                    <td>TELEFON:</td>
+                    <td><input style="padding:7px;" id="tel-modificat" type="number"></td>
+                </tr>
+                <tr>
+                    <td>EMAIL:</td>
+                    <td><input style="padding:7px;" id="email-modificat"></td>
+                </tr>
+                <tr>
+                    <td>BANC:</td>
+                    <td><input style="padding:7px;" id="banc-modificat"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="popup-buttons" style="margin-top: 20px;">
+            <button style="margin-right: 10px;" onclick="aplicarModificacio()" class="green-button">Aplicar</button>
+            <button id="close-popup" class="close-popup">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 
     <script>
         // Función para obtener el token CSRF
@@ -241,68 +266,34 @@
             });
         });
 
-        // Función para mostrar el popup de edición
-        function mostrarPopupEdicion(clientId) {
-            fetch(`/client_datos/${clientId}/`)
-                .then(response => response.json())
-                .then(client_dades => {
-                    const popup = document.getElementById('popup');
-                    
-                    let popupContent = `
-                        <div class="popup-content">
-                            <h1>MODIFICAR CLIENTE</h1>
-                            <p id="referencia">${client_dades.client_id}</p>
-                            
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td><p>NIF:</p></td>
-                                        <td><input style="padding:7px;" id="nif-modificat" value="${client_dades.client_nif}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>NOM:</p></td>
-                                        <td><input style="padding:7px;" id="nom-modificat" value="${client_dades.client_nom}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>LOCALITAT:</p></td>
-                                        <td><input style="padding:7px;" id="localitat-modificat" value="${client_dades.client_localitat}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>CARRER:</p></td>
-                                        <td><input style="padding:7px;" id="carrer-modificat" value="${client_dades.client_carrer}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>TELEFON:</p></td>
-                                        <td><input style="padding:7px;" id="tel-modificat" type="number" value="${client_dades.client_telefon}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>EMAIL:</p></td>
-                                        <td><input style="padding:7px;" id="email-modificat" value="${client_dades.client_email}"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><p>BANC:</p></td>
-                                        <td><input style="padding:7px;" id="banc-modificat" value="${client_dades.client_comp_banc}"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            
-                            <div class="popup-buttons" style="margin-top: 20px;">
-                                <button style="margin-right: 10px;" onclick="aplicarModificacio()" class="green-button">Aplicar</button>
-                                <button id="close-popup" class="close-popup">Cancelar</button>
-                            </div>
-                        </div>`;
-                    
-                    popup.innerHTML = popupContent;
-                    popup.style.display = 'block';
-                    
-                    // Event listener para cerrar el popup
-                    const closeButton = popup.querySelector('#close-popup');
-                    closeButton.addEventListener('click', function() {
-                        popup.style.display = 'none';
-                    });
-                })
-                .catch(error => console.error('Error al obtener datos del cliente:', error));
-        }
+        // Función para abrir y rellenar el popup
+function mostrarPopupEdicion(clientId) {
+    fetch(`/client_datos/${clientId}/`)
+        .then(response => response.json())
+        .then(client_dades => {
+            // Rellena los campos con los datos obtenidos
+            document.getElementById("referencia").innerText = client_dades.client_id;
+            document.getElementById("nif-modificat").value = client_dades.client_nif;
+            document.getElementById("nom-modificat").value = client_dades.client_nom;
+            document.getElementById("localitat-modificat").value = client_dades.client_localitat;
+            document.getElementById("carrer-modificat").value = client_dades.client_carrer;
+            document.getElementById("tel-modificat").value = client_dades.client_telefon;
+            document.getElementById("email-modificat").value = client_dades.client_email;
+            document.getElementById("banc-modificat").value = client_dades.client_comp_banc;
+
+            // Muestra el popup
+            document.getElementById("popup").style.display = "flex";
+        })
+        .catch(error => console.error("Error al obtener datos del cliente:", error));
+}
+
+// Evento para cerrar el popup
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("close-popup").addEventListener("click", () => {
+        document.getElementById("popup").style.display = "none";
+    });
+});
+
 
         // Función para crear un nuevo cliente
         function crearClient() {

@@ -22,43 +22,7 @@
 
         <div class="box">
            
-        <form method="POST">
-        <h1 id="h1-crear-signup">CREAR</h1>
-        {% csrf_token %}
-        <section id="form_signup">
             
-        <div class="input-group">
-            <i class="fas fa-user"></i>
-            {{ form.username }}
-        </div>
-        {% if form.username.errors %}
-            <div class="error-text">{{ form.username.errors.0 }}</div>
-        {% endif %}
-
-        <div class="input-group">
-            <i class="fas fa-lock"></i>
-            {{ form.password1 }}
-        </div>
-        {% if form.password1.errors %}
-            <div class="error-text">{{ form.password1.errors.0 }}</div>
-        {% endif %}
-
-        <div class="input-group">
-            <i class="fas fa-lock"></i>
-            {{ form.password2 }}
-        </div>
-        {% if form.password2.errors %}
-            <div class="error-text">{{ form.password2.errors.0 }}</div>
-        {% endif %}
-
-        <button id="btn-crear-compte">Crear i connectar</button>
-        <button>Confirmar amb mail</button>
-
-        {{ error }}
-
-        <p><a href="#">Contrasenya oblidada</a> o <a href="/login/">Ja tens compte?</a></p>
-    </section>
-</form>
 
         </div>
     </body>

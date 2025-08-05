@@ -7,10 +7,10 @@ class Producto(models.Model):
     codigo = models.CharField(max_length=200)
     cantidad= models.IntegerField()
     descripcion= models.CharField(max_length=300,default='')
-    precio= models.DecimalField(max_digits=9999999, decimal_places=2)
+    precio= models.DecimalField(max_digits=10, decimal_places=2)
     imagen = models.ImageField(upload_to='imagenes/')
-    preu_distribuidor=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
-    marge=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
+    preu_distribuidor=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    marge=models.DecimalField(max_digits=10, decimal_places=2,default=1)
     def __str__(self):
         return self.nombre+ " - " + self.codigo + " - " + str(self.cantidad) + " - " + str(self.precio) + "€"
 def validate_not_zero(value):
@@ -27,25 +27,32 @@ class Ticket(models.Model):
         ("Domiciliacio","Domiciliacio")
     ]
     metodo_pago = models.CharField(max_length=50, choices=METODO_PAGO_CHOICES, default='Efectiu')
-    total = models.DecimalField(max_digits=9999999, decimal_places=2, validators=[validate_not_zero])
+    total = models.DecimalField(max_digits=10, decimal_places=2, validators=[validate_not_zero])
     abono=models.IntegerField(null=True)
     
 class ProductoEnTicket(models.Model):
     ticket_id = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField(default=1)
-    preu_venut=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
-    preu_distribuidor=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
-    marge=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
+    preu_venut=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    preu_distribuidor=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    marge=models.DecimalField(max_digits=10, decimal_places=2,default=1)
 
 class Avui(models.Model):
     data=models.DateTimeField()
-    calaix=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
-    ingressat_banc=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
-    targeta=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
-    ingressat_banc=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
-    total=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
-    marge=models.DecimalField(max_digits=9999999, decimal_places=2, default=0)
+    calaix_obert=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    calaix_tancat=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    ingressat_banc=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    targeta=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    efectiu=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    altres=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    marge=models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+class Apuntes(models.Model):
+    id_avui = models.ForeignKey(Avui, on_delete=models.CASCADE)
+    quantitat = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    motiu = models.CharField(max_length=200, default="")
+    
 class Facturas(models.Model):
     numero= models.IntegerField(default=1)
     persona_id=models.IntegerField()
@@ -55,7 +62,7 @@ class Facturas(models.Model):
         ('Targeta', 'Tarjeta'),
     ]
     metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='Efectivo')
-    total= models.DecimalField(max_digits=9999999, decimal_places=2)
+    total= models.DecimalField(max_digits=10, decimal_places=2)
     abono=models.CharField(max_length=10, default=" ")
     procedencia=models.CharField(max_length=30, default=" ")
     taula_id_procedencia=models.IntegerField(default=0)
@@ -63,13 +70,13 @@ class ProductoEnFactura(models.Model):
     factura_id = models.ForeignKey(Facturas, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField(default=1)
-    preu_venut=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
-    preu_distribuidor=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
-    marge=models.DecimalField(max_digits=9999999, decimal_places=2,default=1)
+    preu_venut=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    preu_distribuidor=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    marge=models.DecimalField(max_digits=10, decimal_places=2,default=1)
 class FacturaCompra(models.Model):
     referencia_factura=models.CharField(max_length=30)
     data=models.DateTimeField()
-    total= models.DecimalField(max_digits=9999999, decimal_places=2, blank=True)
+    total= models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     estat=models.CharField(default="pendent", max_length=50)
 class Pedidos(models.Model):
     producto_id = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -85,13 +92,14 @@ class Pedidos(models.Model):
 class Pressupost(models.Model):
     persona_id      = models.IntegerField()
     date            = models.DateTimeField()
-    facturat        = models.CharField(max_length=100, default="no")
+    facturat        = models.CharField(max_length=10, default="no")
     total           = models.DecimalField(max_digits=12, decimal_places=2)
     metodo_pago     = models.CharField(
                           max_length=20,
                           choices=[('Targeta','Targeta'),('Efectivo','Efectiu')],
                           default='Targeta'
                       )
+    nota = models.CharField(max_length=300, default="")
 
 class ProducteEnPressupost(models.Model):
     pressupost = models.ForeignKey(Pressupost, on_delete=models.CASCADE)
@@ -103,13 +111,14 @@ class Reparacio(models.Model):
     persona_id=models.IntegerField()
     date=models.DateTimeField()
     
-    facturat=models.CharField(max_length=100, default="no")
-    total= models.DecimalField(max_digits=9999999, decimal_places=2)
+    facturat=models.CharField(max_length=10, default="no")
+    total= models.DecimalField(max_digits=10, decimal_places=2)
     metodo_pago     = models.CharField(
                           max_length=20,
                           choices=[('Targeta','Targeta'),('Efectivo','Efectiu')],
                           default='Targeta'
                       )
+    nota = models.CharField(max_length=300, default="")
 class ProducteEnReparacio(models.Model):
     reparacio = models.ForeignKey(Reparacio, on_delete=models.CASCADE)
     producte = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -127,9 +136,10 @@ class Persona(models.Model):
     def __str__(self):
         return self.nombre+ " - " + self.localidad + " - " + self.calle + " - " + self.nif + " - " + str(self.telefono)
     
+
 class Reparacions(models.Model):
     persona_id=models.ForeignKey(Persona, on_delete=models.CASCADE)
-    total=models.DecimalField(max_digits=9999999, decimal_places=2)
+    total=models.DecimalField(max_digits=10, decimal_places=2)
     data=models.DateTimeField()
     METODO_PAGO_CHOICES = [
         ('Efectivo', 'Efectivo'),

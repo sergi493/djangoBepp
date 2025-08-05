@@ -3,7 +3,9 @@ from django.http import HttpResponse,JsonResponse
 # Create your views here.
 #from .models import Project, Task
 from django.core.mail import EmailMessage
+from itertools import chain
 from django.core.paginator import Paginator
+from decimal import Decimal
 from django.shortcuts import render
 from django.db.models import Q
 from .models import Producto,Pressupost,ProducteEnPressupost,Pedidos,FacturaCompra,Reparacio, ProducteEnReparacio,Avui
@@ -23,7 +25,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Ticket
 import json
 from django.views.decorators.csrf import csrf_exempt
-from .models import Ticket
+from .models import Ticket, Avui, Apuntes
 from datetime import datetime
 from .models import Ticket, ProductoEnTicket, Producto, ProductoEnFactura
 from django.utils import timezone
@@ -179,34 +181,47 @@ def facturas(request):
 
 @csrf_exempt  # solo si vas a usar fetch sin form; si no, quita esto y usa el token
 def buscar_producto(request):
-    if request.method == 'POST':
-        texto = request.POST.get('texto', '').strip()
-        
-        if texto:
-            # Filtrar por código o descripcion (case-insensitive)
-            qs = Producto.objects.filter(
-                Q(codigo__icontains=texto) | Q(descripcion__icontains=texto)
-            )
-        else:
-            # Si texto está vacío, devolver todos los productos
-            qs = Producto.objects.all()
+    # 1. Término de búsqueda
+    texto = request.POST.get('texto', '').strip()
 
-        productos = []
-        for p in qs:
-            productos.append({
-                'id':                 p.id,
-                'imagen':            p.imagen.url if p.imagen else '',
-                'nombre':             p.nombre,
-                'codigo':             p.codigo,
-                'cantidad':           p.cantidad,
-                'descripcion':        p.descripcion,
-                'precio':             float(p.precio),
-                'preu_distribuidor':  float(p.preu_distribuidor),
-            })
+    # 2. Queryset filtrado
+    producto_qs = Producto.objects.filter(
+        Q(nombre__icontains=texto) | Q(descripcion__icontains=texto)
+    ).order_by('nombre')
 
-        return JsonResponse({'productos': productos}, status=200)
+    # 3. Paginator: 3 items por página
+    paginator = Paginator(producto_qs, 3)
 
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
+    # 4. Número de página (puede venir por POST o GET)
+    page_num = request.POST.get('page', 1)
+
+    # 5. Obtenemos los objetos paginados
+    page_obj = paginator.get_page(page_num)
+
+    # 6. Construimos la lista **solo** con los productos de la página actual
+    productos = []
+    for p in page_obj:
+        productos.append({
+            'id':                p.id,
+            'imagen':            p.imagen.url if p.imagen else '',
+            'nombre':            p.nombre,
+            'codigo':            p.codigo,
+            'cantidad':          p.cantidad,
+            'descripcion':       p.descripcion,
+            'precio':            float(p.precio),
+            'preu_distribuidor': float(p.preu_distribuidor),
+        })
+
+    # 7. Devolvemos la lista paginada + metadatos
+    return JsonResponse({
+        'productos': productos,
+        'page_info': {
+            'current': page_obj.number,
+            'total':   paginator.num_pages,
+            'has_next': page_obj.has_next(),
+            'has_prev': page_obj.has_previous(),
+        }
+    }, status=200)
 
 
 
@@ -216,7 +231,7 @@ def buscar_persona(request):
     # 1. Obtenemos el término de búsqueda desde POST
     texto = request.POST.get('texto', '').strip()
     # 2. Filtramos queryset
-    clientes_qs =Persona.objects.filter(nombre__icontains=texto)
+    clientes_qs =Persona.objects.filter(nombre__icontains=texto).order_by('nombre')
 
     # 3. __Paginator__ para 8 items por página
     paginator = Paginator(clientes_qs, 3)
@@ -437,6 +452,7 @@ def crear_nou_pressupost(request):
             data = json.loads(request.body)
             clientId = data.get('clientId')  
             total = data.get('total')  
+            descripcio = data.get('descripcio', '')  # Añadir campo opcional de descripción
             diccionariProductes = data.get("diccionariProductes")
 
             print(f"Client ID: {clientId}, Total: {total}")
@@ -447,7 +463,8 @@ def crear_nou_pressupost(request):
             pressupost = Pressupost.objects.create(
                 persona_id=clientId,
                 date=datetime.now(),
-                total=total
+                total=total,
+                nota=descripcio
             )
             pressupost.save()
             # Esperar 2 segons (opcional)
@@ -557,6 +574,7 @@ def aplicar_pressupost(request):
     metodo_pago_nou  = data.get("metodo_pago")
     productes_i_quant = data.get("productes", [])
     totalGeneral    = data.get("totalGeneral")
+    nota            = data.get("nota")
 
     total_preu = 0
     for unitat in productes_i_quant:
@@ -574,6 +592,7 @@ def aplicar_pressupost(request):
         )
         for fila in files:
             fila.quantitat = quantitat
+            
             fila.save()
 
     # Actualitzar Pressupost global
@@ -581,6 +600,7 @@ def aplicar_pressupost(request):
     pressupost.total       = totalGeneral
     pressupost.persona_id  = persona_id_nou    # ← **Actualització** persona
     pressupost.metodo_pago = metodo_pago_nou    # ← **Actualització** mètode pagament
+    pressupost.nota        = nota               # ← **Actualització** nota
     pressupost.save()
 
     return HttpResponse("Pressupost actualitzat correctament"+metodo_pago_nou)    
@@ -849,7 +869,8 @@ def obtenir_pressupost(request, pressupostId):
         "persona_tel":dades_persona.telefono,
         "persona_email":dades_persona.email if dades_persona.email else "sin mail",
         "facturat":pressupost.facturat,
-        "metodo_pago":pressupost.metodo_pago
+        "metodo_pago":pressupost.metodo_pago,
+        "nota":pressupost.nota
     }
     print(data)
     return JsonResponse(data)
@@ -898,10 +919,13 @@ def facturar_pressupost(request):
     ultima_factura=Facturas.objects.latest("id").id
     productes_i_quantitats_pressupost=ProducteEnPressupost.objects.filter(pressupost_id=id_press)
     for producte_i_quantitat in productes_i_quantitats_pressupost:
+        producto = Producto.objects.get(id=producte_i_quantitat.producte_id)
         producte_factura=ProductoEnFactura.objects.create(
             cantidad=producte_i_quantitat.quantitat,   
             producto_id=producte_i_quantitat.producte_id,
-            factura_id_id=ultima_factura
+            factura_id_id=ultima_factura,
+            preu_venut = producto.precio,
+            preu_distribuidor = producto.preu_distribuidor
         )
     pressupost.facturat=str(ultima_factura)
     pressupost.save()
@@ -1160,23 +1184,71 @@ def guardar_productos_factura(request):
 def tancar_caixa(request):
     data=json.loads(request.body)
     
-    total=data.get("total")
-    marge=data.get("marge")
     
+    marge=data.get("marge")
+    efectiu_calaix = data.get("efectiu_calaix")
     efectiu=data.get("efectiu")
+    obertura_efectiu = data.get("obertura_efectiu")
     targeta=data.get("targeta")
-    banc=data.get("banc")
-    nova_caixa= Avui.objects.create(
-        data=datetime.now(),
-        calaix=efectiu,
-        targeta=targeta,
-        ingressat_banc=banc,
-        total=total,
-        marge=marge,
-        
-        
-     )
+    banc = Decimal(data.get("banc") or "0")
+    #altres=data.get("altres")
+    altres=0
+    
+    element_calaix_per_obrir = Avui.objects.latest('id')
+    if element_calaix_per_obrir.data.date() == datetime.now().date():
+        element_calaix_per_obrir.calaix_obert = obertura_efectiu
+        element_calaix_per_obrir.calaix_tancat = efectiu_calaix
+        element_calaix_per_obrir.efectiu = efectiu
+        element_calaix_per_obrir.targeta = targeta
+        element_calaix_per_obrir.ingressat_banc += banc
+        element_calaix_per_obrir.altres = altres
+        element_calaix_per_obrir.marge = marge
+        element_calaix_per_obrir.save()
+    else:    
+        nova_caixa= Avui.objects.create(
+            data=datetime.now(),
+            calaix_obert=obertura_efectiu,
+            calaix_tancat =efectiu_calaix,  
+            efectiu=efectiu,
+            targeta=targeta,
+            ingressat_banc=banc,
+            altres=altres,
+            marge=marge        
+        )
     return HttpResponse("caixa tancada :)")
+
+@login_required
+def apunte_caixa(request):
+    
+    element_calaix_per_obrir = Avui.objects.latest('id')
+    data=json.loads(request.body)
+    
+    
+    motiu=data.get("motiu")
+    quantitat = Decimal(data.get("afegir_caixa", "0"))
+    
+    if element_calaix_per_obrir.data.date() == datetime.now().date():
+        
+        print("aa")
+        element_calaix_per_obrir.calaix_tancat += quantitat
+        element_calaix_per_obrir.save()
+        
+       
+        nou_apunte= Apuntes.objects.create(
+                quantitat= quantitat,
+                motiu=motiu,  
+                id_avui_id=element_calaix_per_obrir.id, 
+                
+        )
+    else:
+        return HttpResponse("no es pot, caixa tancada ja.. :(")
+        
+    
+            
+    return HttpResponse("apunte creat :)")
+    
+    
+    
 @login_required
 def stock(request):
     productos = Producto.objects.all()
@@ -1249,6 +1321,7 @@ def pedidos(request):
         prod.referencia=producte.codigo
         prod.descripcio=producte.descripcion
         prod.referencia_venda=producte.precio
+        prod.preu_distribuidor=producte.preu_distribuidor
         
     factures_compra=FacturaCompra.objects.all()
     dia=timezone.now().date()
@@ -1325,9 +1398,46 @@ def pedidos(request):
 
 @login_required
 def hoy(request):
-    avui = datetime.now().date()  # Obtén la fecha de hoy
-    factures = Facturas.objects.filter(date__date=avui)  # Filtra las facturas por la fecha actual
-    tickets=Ticket.objects.filter(date__date=avui)
+
+    caixes_queryset = Avui.objects.all().order_by('-id')
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(caixes_queryset, 8)
+    page = paginator.get_page(page_number)
+    
+    
+    #si ultima entrada de bd en taula avui es inferior a avui, agafa el calaix tancat d'aquesta ultima entrada i enviala al front (sera el calaix obert del seguent dia). si a la taula apuntes l'id corresponent no té cap coincidencia aquest xifra es deixa igual, pero si existeix, suma el calaix tancat d'aquesta ultima entrada al calaix obert del dia actual avans d'enviarho al front. 
+    calaix_tancat=''
+    print("aa")
+    try:
+        element_calaix_per_obrir = Avui.objects.latest('id')  # Obtiene el último registro
+        print("ww")
+        print("rrrr"+str(element_calaix_per_obrir.calaix_tancat))
+        if element_calaix_per_obrir.data.date() is None:
+            calaix_per_obrir = 200
+        elif element_calaix_per_obrir.data.date() < datetime.now().date():
+            calaix_per_obrir = element_calaix_per_obrir.calaix_tancat
+            print("peeet")
+        elif element_calaix_per_obrir.data.date() == datetime.now().date():
+            calaix_per_obrir = element_calaix_per_obrir.calaix_obert
+            calaix_tancat= str(element_calaix_per_obrir.calaix_tancat)
+            print("cal"+calaix_tancat)
+        else:
+            calaix_per_obrir = 200  # Valor por defecto para fechas futuras
+    except Avui.DoesNotExist:
+        # Si no hay registros en Avui
+        calaix_per_obrir = 200
+    except Exception as e:
+        # Manejo de otros errores potenciales
+        calaix_per_obrir = 200
+        # Opcional: registrar el error
+        # logger.error(f"Error al obtener cajón: {str(e)}")
+    efectiu_calaix=0
+
+    
+    factures = Facturas.objects.filter(date__date=datetime.now().date())  
+    tickets=Ticket.objects.filter(date__date=datetime.now().date())
+    fact_y_tickets = list(chain(factures, tickets))
+    fact_y_tickets = sorted(fact_y_tickets, key=lambda x: x.date, reverse=True)
     # Imprime para depuración (puedes eliminar esto en producción)
     cost=0
     preu=0
@@ -1342,8 +1452,10 @@ def hoy(request):
             
         if factura.metodo_pago=="Efectivo":
             preu_efectiu+=factura.total
+            efectiu_calaix+=factura.total
             
-        elif factura.metodo_pago=="Targeta":
+            
+        elif factura.metodo_pago=="Tarjeta":
             preu_targeta+=factura.total
     # Calcula els costos i preus dels tickets
     for ticket in tickets:
@@ -1352,8 +1464,9 @@ def hoy(request):
             cost += producte.preu_distribuidor
             preu += producte.preu_venut
             
-        if ticket.metodo_pago=="Efectivo":
+        if ticket.metodo_pago=="Efectiu":
             preu_efectiu+=ticket.total
+            efectiu_calaix+=ticket.total
             
         elif ticket.metodo_pago=="Targeta":
             preu_targeta+=ticket.total
@@ -1364,10 +1477,20 @@ def hoy(request):
     else:
         marge = 0
         marge_benefici = 0
+    total=preu_efectiu + preu_targeta
+    efectiu_calaix+=calaix_per_obrir
+    if calaix_tancat !='':
+        efectiu_calaix= calaix_tancat
     print(factures)
+    print(efectiu_calaix)
+    print(total)
+    
+    
+    
+    
     
     # Renderiza la plantilla pasando las facturas como contexto
-    return render(request, "hoy.html", {'factures': factures,'tickets':tickets,'total':total,'marge':marge,'marge_benefici':marge_benefici,'preu_efectiu':preu_efectiu,'preu_targeta':preu_targeta})
+    return render(request, "hoy.html", { "caixes": page,'obertura_efectiu':calaix_per_obrir,'factures': fact_y_tickets,'total':total,'marge':marge,'marge_benefici':marge_benefici,'preu_efectiu':preu_efectiu,'preu_targeta':preu_targeta,'efectiu_calaix':efectiu_calaix})
 
 
 def presupostos(request):
@@ -1416,6 +1539,32 @@ def presupostos(request):
     })
 
 
+@login_required
+def obtenir_apuntes(request, caixa_id):
+   
+    try:
+        caixa = Avui.objects.get(id=caixa_id)
+    except Avui.DoesNotExist:
+        return JsonResponse({"error": "Caixa no trobada"}, status=404)
+
+    # Obtener todos los apuntes relacionados con esta caja
+    apuntes_qs = Apuntes.objects.filter(id_avui=caixa.id)
+
+    apuntes_list = []
+    for ap in apuntes_qs:
+        apuntes_list.append({
+            "id": ap.id,
+            "quantitat": str(ap.quantitat),  # convertir Decimal a string
+            "motiu": ap.motiu,
+            "id_caixa_dia": ap.id_avui_id,
+            "dia": caixa.data.strftime("%Y-%m-%d %H:%M"),
+        })
+
+    
+
+    return JsonResponse({"apuntes":apuntes_list})
+    
+    
 @login_required
 def reparacions(request):
     data_inici = request.GET.get('data_inicio')
@@ -1589,8 +1738,22 @@ def filtrar_tickets(request):
             return JsonResponse({'error': str(e)}, status=400)
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-
+@login_required
+def ayuda(request):
+    return render(request, "ayuda.html")
    
+@csrf_exempt
+def actualizar_metodo_pago(request, factura_id):
+    if request.method == 'POST':
+        try:
+            factura = Facturas.objects.get(id=factura_id)
+            data = json.loads(request.body)
+            factura.metodo_pago = data.get('metodo_pago')
+            factura.save()
+            return JsonResponse({'status': 'success', 'metodo_pago': factura.metodo_pago})
+        except Facturas.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Factura no encontrada'}, status=404)
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 @login_required
 def afegir_ultim_producte(request):
     time.sleep(1)
@@ -1732,8 +1895,66 @@ def modificar_producte(request):
     
 @login_required
 def user(request):
-    return render(request, "user.html")
+       # Sólo admins pueden ver y usar el form
+    success = False
+    form = None
+    # obtener todos los users
+    users = User.objects.all().order_by('username')
+    if request.user.is_staff:
+        if request.method == "POST":
+            print("poooost")
+            form = CustomUserCreationForm(request.POST)
+            if form.is_valid():
+                try:
+                    form.save()
+                    success = True
+                    form = CustomUserCreationForm()  # resetea el form
+                except IntegrityError:
+                    form.add_error("username", "¡Ese usuario ya existe!")
+            else:
+                # debug opcional:
+                print(form.errors)  
+        else:
+            form = CustomUserCreationForm()
+
+    return render(request, "user.html", {
+        "form": form,
+        "success": success,
+        "users":users
+    })
  
+ 
+@login_required
+def update_user(request):
+    if request.method == "POST":
+        data = json.loads(request.body.decode('utf-8')) 
+        
+        username = data.get('username')
+       
+        username_real = data.get('username_real')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        email = data.get('email')
+        is_staff = data.get('is_staff')
+        
+        is_active = data.get('is_active')
+        
+        print(username, username_real, email, is_staff, is_active)
+
+        try:
+            user = User.objects.get(username=username_real)
+            user.username = username
+            user.email = email
+            user.is_staff = is_staff
+            user.is_active = is_active
+            if password == confirm_password and password !='':
+                user.set_password(password)
+            user.save()
+            return HttpResponse(status=204)
+            
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
     
 @login_required
 def estadisticas(request):
@@ -1985,7 +2206,8 @@ def enviar_factura_email(request):
 
         pdf_base64 = data.get('pdf')
         factura = data.get('factura')
-        missatge = data.get('missatge')
+        missatge = data.get('mensaje')
+        mail = data.get('clientEmail')
 
         if not pdf_base64 or not factura:
             return JsonResponse({'error': 'Falten dades'}, status=400)
@@ -1997,11 +2219,45 @@ def enviar_factura_email(request):
             subject=f"Factura núm. {factura['id']}",
             body=missatge,
             from_email="gineriussergi@gmail.com",
-            to=[factura['email']],
+            to=[mail],
         )
         email.attach(f"factura_{factura['id']}.pdf", pdf_bytes, 'application/pdf')
         email.content_subtype = "html"
         email.send()
+        print(mail)
+
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+
+def enviar_pressupost_email(request):
+    if request.method == 'POST':
+        import json
+
+        data = json.loads(request.body)
+
+        pdf_base64 = data.get('pdf')
+        pressupost = data.get('pressupost')
+        missatge = data.get('missatge')
+        mail = data.get("clientEmail")
+
+        if not pdf_base64 or not pressupost:
+            return JsonResponse({'error': 'Falten dades'}, status=400)
+
+        # Decodificar PDF
+        pdf_bytes = base64.b64decode(pdf_base64.split(',')[1])
+
+        email = EmailMessage(
+            subject=f"Pressupost núm. {pressupost['id']}",
+            body=missatge,
+            from_email="gineriussergi@gmail.com",
+            to=[mail],
+        )
+        email.attach(f"pressupost_{pressupost['id']}.pdf", pdf_bytes, 'application/pdf')
+        email.content_subtype = "html"
+        email.send()
+        print(mail)
 
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'error': 'Method not allowed'}, status=405)

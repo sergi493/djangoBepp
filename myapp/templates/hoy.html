@@ -1,5 +1,6 @@
 
 {% extends "layouts/base.html" %}
+{% load static %}
 
 
 {% block content %}
@@ -37,6 +38,51 @@
         
     }
 </style>
+<script>
+      function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+     function apunte_caixa(){
+        let afegir_caixa = document.getElementById("afegir_caixa").value;
+        let motiu = document.getElementById("motiu").value;
+        var csrftoken = getCookie('csrftoken');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/apunte_caixa/", true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                console.log("Respuesta del servidor:", xhr.responseText);
+                
+            } else {
+                console.error("Error en la solicitud:", xhr.statusText);
+            }
+        };
+        xhr.onerror = function () {
+            console.error("Error de red al enviar la solicitud.");
+        };
+        
+
+        xhr.send(JSON.stringify({afegir_caixa:afegir_caixa,motiu:motiu}));
+        
+
+    }
+
+    
+    </script>
 
 <div class="main-content">
     <div class="products-section">
@@ -58,81 +104,197 @@
             <tbody>
                 {% for factura in factures %}
                 <tr>
-                    <td></td>
-                    <td><p>{{factura.id}}</p></td>
+                    <td>{% if not factura.persona_id %} {{ factura.id }} {% endif %}</td>
+                    <td><p>{% if factura.persona_id %} {{ factura.id }} {% endif %}</p></td>
                     <td><p>{{factura.persona_id}}</p></td>
                     <td><p>{{factura.date|date:"H:i:s"}}</p></td>
                     <td><p>{{factura.metodo_pago}}</p></td>
                     <td><p id="total">{{factura.total}}</p></td>
                 </tr>
                 {% endfor %}
-                {% for ticket in tickets %}
-                <tr>
-                    <td><p>{{ticket.id}}</p></td>
-                    <td></td>
-                    <td></td>
-                    <td><p>{{ticket.date|date:"H:i:s"}}</p></td>
-                    <td><p>{{ticket.metodo_pago}}</p></td>
-                    <td><p id="total">{{ticket.total}}</p></td>
-                    
-                </tr>
-                {% endfor %}
+                
             </tbody>
         </table>
     </div>
     <div id="dreta">
-        <h1>TOTAL FET: <span id="total_avui"></span> <br> Marge-avui: {{marge}}€ <br>{{marge_benefici}}%</h1>
-        <h1> Efectiu al calaix: {{preu_efectiu}} </h1>
+        <h1>TOTAL FET: <span id="total_avui">{{total}}</span> <br> Marge-avui: {{marge}}€ <br>{{marge_benefici}}%</h1>
+        <h3>Calaix al principi del dia: {{obertura_efectiu}}</h3> 
+      
+        <h1> Efectiu al calaix: <span id="efectiu_calaix">{{efectiu_calaix}} </span></h1>
         <h1> Total Targeta: {{preu_targeta}} </h1>
+        <h1>Total altres: (tranferencia, bancari....);0</h1>
+
+     
+<br>
         <label>Ingres al banc</label>
-        <input id="ingressar_banc" type="text"></input>
-        <button onclick="Tancar_Caixa('{{total}}','{{marge}}','{{preu_efectiu}}','{{preu_targeta}}')">Tancar caixa </button>
+        <input id="ingressar_banc" type="text" value="0"></input>
+
+        
+        <button onclick="tancar_caixa('{{total}}','{{marge}}','{{preu_efectiu}}','{{preu_targeta}}','{{obertura_efectiu}}')">Tancar caixa </button>
+<br><br>
+
+        <label>Afegir/treure a caixa</label>
+        <input id="afegir_caixa" type="text"></input>
+<br>
+        <label>Motiu:</label>
+        <input id="motiu" type="text"></input>
+        <button onclick="apunte_caixa()">Afegir apunte</button>
     </div>
+    
+</div>
+  <form method="get" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+    <label for="data_buscar">Dia:</label>
+    <input type="date" id="data_buscar" name="data_buscar" value="{{ data_buscar }}">
+    <button type="submit" class="blue-button">🔍</button>
+  </form>
+<table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Obertura</th>
+                <th>Tancament</th>
+                <th>Ingressat banc</th>
+                <th>Targeta</th>
+                <th>Efectiu</th>
+                <th>Altres</th>
+                <th>Marge</th>
+                <th>Apuntes</th>
+
+              
+            </tr>
+        </thead>
+       <tbody>
+        {% for caixa in caixes %}
+        <tr>
+          <td>{{ caixa.id }}</td>
+          <td>{{ caixa.data|date:"d/m/Y H:i" }}</td>
+
+          <td>{{ caixa.calaix_obert }}</td>
+          <td>{{ caixa.calaix_tancat }}</td>
+            <td>{{ caixa.ingressat_banc }}</td>
+            <td>{{ caixa.targeta }}</td>
+            <td>{{ caixa.efectiu }}</td>
+            <td>{{ caixa.altres }}</td>
+            <td>{{ caixa.marge }}</td>
+            <td>
+                <button type="button" class="popup-trigger" data-caixa-id="{{ caixa.id }}">
+                    <i class="fa-regular fa-eye"></i>
+                </button>
+            </td>
+          
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="text-align: center; margin-top: 2rem;">
+  {% if facturas.has_previous %}
+    <a href="?page={{ facturas.previous_page_number }}" class="blue-button">⬅️ Anteriors</a>
+  {% endif %}
+
+  <span style="margin: 0 1rem; font-weight: bold;">
+    Pàgina {{ facturas.number }} de {{ facturas.paginator.num_pages }}
+  </span>
+
+  {% if facturas.has_next %}
+    <a href="?page={{ facturas.next_page_number }}" class="blue-button">➡️ Següents</a>
+  {% endif %}
+</div>
+
+
+
+<div id="popup" class="popup-container" style="display:none;">
+    <div class="popup-content" id="popup-content">
+    </div>
+
 </div>
 <script>
 
-    document.addEventListener('DOMContentLoaded', function() {
-        sumarTotales();
-    });
-    
-    function sumarTotales() {
-        // Obtener todos los elementos con id="total"
-        const totales = document.querySelectorAll('#total');
-        
-        let suma = 0;
-    
-        // Recorrer los elementos y sumar sus valores
-        totales.forEach(function(elemento) {
-            suma += parseFloat(elemento.textContent) || 0; // Convertir a número y sumar, si no es un número se suma 0
+  document.addEventListener('DOMContentLoaded', () => {
+    const popup = document.getElementById('popup');
+    const popupContent = document.getElementById('popup-content');
+    const triggerButtons = document.querySelectorAll('.popup-trigger');
+
+    // Evento click en cada botón de caja
+    triggerButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const caixaId = button.dataset.caixaId;
+            console.log("🔍 Click en caja ID:", caixaId);
+
+            fetch(`/obtenir_apuntes/${caixaId}/`)
+                .then(res => res.json())
+                .then(data => showCaixaPopup(data))
+                .catch(err => console.error('❌ Error carregant la caixa:', err));
         });
-    
-        // Mostrar la suma en el elemento con id="total_avui"
-        document.getElementById('total_avui').textContent = suma.toFixed(2); // Formato de dos decimales
-    }
+    });
 
+   
+});
+ // Función para mostrar el popup
+    function showCaixaPopup(data) {
+        console.log(data);
+        const popup = document.getElementById('popup');
+        const popupContent = document.getElementById('popup-content');
 
+        let apuntesHTML = "<h3>📌 Apuntes</h3>";
 
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+        if (data.apuntes.length > 0) {
+            apuntesHTML += "<ul>";
+            data.apuntes.forEach(ap => {
+                apuntesHTML += `
+                    <li>
+                        <b>ID:</b> ${ap.id} | 
+                        <b>Quantitat:</b> ${ap.quantitat} | 
+                        <b>Motiu:</b> ${ap.motiu} | 
+                        <b>Dia:</b> ${ap.dia}
+                    </li>`;
+            });
+            apuntesHTML += '</ul> <button id="tancar_popup" class="close-popup">Tancar</button>';
+            
+        } else {
+            alert("❌ No hi ha apuntes per aquesta caixa.");
         }
-        return cookieValue;
+        popupContent.innerHTML = apuntesHTML;
+        popup.querySelector('.close-popup').addEventListener('click', () => {
+            popup.style.display = 'none';
+      });
+
+        // ✅ Mostrar popup
+         popup.style.display = 'block';
     }
-function Tancar_Caixa(total,marge,efectiu,targeta){
+
+document.getElementById("ingressar_banc").addEventListener("input", function() {
+    // Obtener valores
+    let ingressar = parseFloat(this.value) || 0;
+    let efectiuSpan = document.getElementById("efectiu_calaix");
+
+    // Valor original (guardado en un atributo data para no perderlo con múltiples restas)
+    if (!efectiuSpan.dataset.original) {
+        efectiuSpan.dataset.original = efectiuSpan.textContent.trim();
+    }
+
+    let original = parseFloat(efectiuSpan.dataset.original);
+
+    // Calcular nuevo valor
+    let nouValor = original - ingressar;
+
+    // Mostrarlo
+    efectiuSpan.textContent = nouValor.toFixed(2); 
+});
+
+
+
+
+
+
+  
+function tancar_caixa(total,marge,efectiu,targeta, obertura_efectiu){
+        efectiu_calaix=document.getElementById("efectiu_calaix").textContent;
         var csrftoken = getCookie('csrftoken');
-        var xhr = new XMLHttpRequest();
+        
         banc=document.getElementById("ingressar_banc").value
             
-        
+        var xhr = new XMLHttpRequest();
         xhr.open("POST", "/tancar_caixa/", true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
@@ -149,7 +311,8 @@ function Tancar_Caixa(total,marge,efectiu,targeta){
         };
         
 
-        xhr.send(JSON.stringify({total:total,marge:marge,efectiu:efectiu,targeta:targeta,banc:banc}));
+        xhr.send(JSON.stringify({total:total,marge:marge,efectiu:efectiu,targeta:targeta,banc:banc,
+            efectiu_calaix:efectiu_calaix, obertura_efectiu:obertura_efectiu}));
         
 
     }

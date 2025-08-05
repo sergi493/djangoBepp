@@ -357,68 +357,103 @@ document.addEventListener('DOMContentLoaded', function () {
             
             </tbody>
         </table>
+        <div id="pagination"></div>
     </div>
+
     <div class="popup-container" id="popup">
     
     </div> <!-- Moví el cierre de este div al final -->
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const input = document.getElementById("inputBuscarProducte");
-    const tbody = document.getElementById("tbody_prod");
+document.addEventListener("DOMContentLoaded", () => {
+           const input = document.getElementById("inputBuscarProducte");
+            const tbody = document.getElementById("tbody_prod");
+            const pagination = document.getElementById("pagination");
+            let currentPage = 1;
 
-    input.addEventListener("input", function () {
+    function fetchProductos(page = 1) {
         const texto = input.value.trim();
-        if (texto === "") {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
-            return;
-        }
+                currentPage = page;
 
         fetch("{% url 'buscar_producto' %}", {
             method: "POST",
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: new URLSearchParams({ texto: texto })
-        })
-        .then(response => response.json())
-        .then(data => {
-            tbody.innerHTML = "";
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: new URLSearchParams({ texto, page })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
 
-            if (data.productos && data.productos.length > 0) {
-                data.productos.forEach(prod => {
-                    const fila = document.createElement("tr");
-                    fila.innerHTML = `
-                      
-                        <td>${prod.nombre}</td>
-                        <td>${prod.codigo}</td>
+                    if (data.productos && data.productos.length > 0) {
+                        data.productos.forEach(producto => {
+                        const fila = document.createElement("tr");
+                        fila.id = `producto-${producto.id}`;           // Para tu importarProducto(id)
+                        fila.innerHTML = `
+                            <td>${producto.nombre}</td>
+                        <td>${producto.codigo}</td>
                         <td>
-                            ${ prod.cantidad }
-                            <input type="number" name="cantidad_real_${ prod.codigo }" value="${ prod.cantidad }" onkeypress="actualitzarStock(event)">
+                            ${ producto.cantidad }
+                            <input type="number" name="cantidad_real_${ producto.codigo }" value="${ producto.cantidad }" onkeypress="actualitzarStock(event)">
                         </td>   
-                        <td>${ prod.descripcion }</td>
-                    <td>${ prod.precio } €</td>
-                       <td><button type="button" class="popup-trigger" onclick="mostrarPopup('${prod.codigo}')"><i
-                        class="fa-regular fa-pen-to-square"></i></button></td>
-                    `;
-                    tbody.appendChild(fila);
+                        <td>${ producto.descripcion }</td>
+                    <td>${ producto.precio } €</td>
+                       <td><button type="button" class="popup-trigger" onclick="mostrarPopup('${producto.codigo}')"><i
+                        class="fa-regular fa-pen-to-square"></i></button></td>`;
+                        tbody.appendChild(fila);
+                        });
+
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align:center; font-style:italic;">
+                                    No se encontraron clientes
+                                </td>
+                            </tr>`;
+                    }
+
+                    renderPagination(data.page_info);
+                })
+                .catch(err => {
+                    console.error("Error al buscar clientes:", err);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align:center; color:red;">
+                                Error al buscar clientes
+                            </td>
+                        </tr>`;
+                    pagination.innerHTML = "";
                 });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
             }
-        })
-        .then(data => {
-  console.log('🔍 data:', data);
 
-})
+            function renderPagination({ current, total, has_prev, has_next }) {
+                pagination.innerHTML = "";
 
-        .catch(error => {
-            console.error("Error al buscar productes:", error);
+                if (has_prev) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.textContent = "« Anterior";
+                    prevBtn.onclick = () => fetchProductos(current - 1);
+                    pagination.appendChild(prevBtn);
+                }
+
+                const info = document.createElement("span");
+                info.textContent = ` Página ${current} de ${total} `;
+                pagination.appendChild(info);
+
+                if (has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.textContent = "Siguiente »";
+                    nextBtn.onclick = () => fetchProductos(current + 1);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            fetchProductos();
+            input.addEventListener("input", () => fetchProductos(1));
         });
-    });
-});
 
-
+        
 
 
 

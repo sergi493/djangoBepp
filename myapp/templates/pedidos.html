@@ -97,7 +97,7 @@
                     <td><input class="input-num-factura-pedidos" id="factura_{{ producte.id }}" placeholder="FV-9833"></td>
 
                     <td>
-                        <input type="number" class="preu-factura-pedido-input compra-producte" id="producte_preu_unitat_{{ producte.id }}" placeholder="12.95" oninput="calcularMarge({{ producte.id }})">
+                        <input type="number" class="preu-factura-pedido-input compra-producte" id="producte_preu_unitat_{{ producte.id }}" value="{{ producte.preu_distribuidor }}" placeholder="12.95" oninput="calcularMarge({{ producte.id }})">
                       </td>
                       
                       <td>

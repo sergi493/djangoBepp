@@ -1,0 +1,284 @@
+  {% extends "layouts/base.html" %}
+
+{% load static %}
+{% block content %}
+<script src="{% static 'js/mainBuscarCliente.js' %}"></script>
+   <style>
+    #overlay{
+        z-index:9999;
+    }
+</style>
+ 
+   <!-- Overlay para el fondo gris -->
+    <div class="overlay" id="overlay">
+        <!-- Popup con inputs -->
+        <div class="popup">
+            <div class="izq">
+            <h1>CLIENTES</h1>
+        <!-- <input type="text" id="searchpeople" placeholder="Joan Martí">  <button>IMPORTAR</button>  -->
+            <!--<p>dividir la popup en 2. izq -- crear; drch -- table + search input client amb boto per importar</p> -->
+            
+            <label for="username">Nom: </label>             
+        <input type="text" id="Nom" placeholder="Jonh">
+        
+        <label for="username">NIF/DNI</label>
+        <input type="text" id="DNI" placeholder="000 000 00A">
+        
+        
+        <label for="username">Direcció</label>
+        <input type="text" id="Direccio" placeholder="Carrer del Pi, 24, Mora d'Ebre, 43452">
+    
+        <label for="username">Localitat</label>
+        <input type="text" id="Localitat" placeholder="Carrer, Mora d'Ebre, 43452">
+    
+        <label for="username">E-mail</label>
+        <input type="text" id="E-mail" placeholder="example@gmail.com">
+    
+        <label for="username">Num tel</label>
+        <input type="text" id="telf" placeholder=" + 34 629 74 27 68">
+        
+        <label for="username">Compte Banc (Domiciliació)</label>
+        <input type="text" id="comp_banc" placeholder=" ES45 3423 6543 8646 3489 8654">
+        <button onclick="guardarInformacion()">Crear e importar</button>
+            <button class="close-popup" onclick="hideOverlay()">Salir</button>
+        </div>
+
+        <script>
+            function guardarInformacion(){
+                var csrftoken = getCookie('csrftoken'); // Obtener el token CSRF
+                
+                
+                
+                
+                var nom= document.getElementById("Nom").value;
+                var nif= document.getElementById("DNI").value;
+                var direccio= document.getElementById("Direccio").value;
+                var email= document.getElementById("E-mail").value;
+                var telefon= document.getElementById("telf").value;
+                var localitat= document.getElementById("Localitat").value;
+                var banc= document.getElementById("comp_banc").value;
+            
+            
+                console.log(direccio);
+            
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "/guardar_cliente/", true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        console.log("Respuesta del servidor:", xhr.responseText);
+                        obtenirUltimClient();
+                    } else {
+                        console.error("Error en la solicitud:", xhr.statusText);
+                    }
+                };
+                xhr.onerror = function () {
+                    console.error("Error de red al enviar la solicitud.");
+                };
+                xhr.send(JSON.stringify({nom:nom,nif:nif,direccio:direccio,localitat:localitat,banc:banc, email:email,telefon:telefon}));
+            }
+            
+                function obtenirUltimClient() {
+        fetch('/ultim_client_id/')
+            .then(response => response.json())
+            .then(data => {
+                
+        
+
+        document.getElementById("clientIdSelCrear").textContent=`${data.id}`;
+        document.getElementById("clientNomSelCrear").textContent=`${data.nom}`;
+        document.getElementById("clientNifSelCrear").textContent=`${data.nif}`;
+        document.getElementById("clientTelSelCrear").textContent=`${data.telefon}`;
+                document.getElementById("clientLocalSelCrear").textContent=`${data.localitat}`;
+                    
+        
+
+                document.getElementById("clientIdSelEdit").textContent=`${data.id}`;
+        document.getElementById("clientNomSelEdit").textContent=`${data.nom}`;
+        document.getElementById("clientNifSelEdit").textContent=`${data.nif}`;
+        document.getElementById("clientTelSelEdit").textContent=`${data.telefon}`;
+                document.getElementById("clientEmailSelEdit").textContent=`${data.email}`;
+                    
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+        </script>
+
+        <div class="dret">
+            <button class="close-popup" onclick="hideOverlay()">X</button>
+        <div class="main-content">
+            <div class="products-section">
+                <input type="text" id="searchCliente" placeholder="Buscar producto...">
+                <!--<button onclick="guardarInformacion()">Crear e importar</button>-->
+            
+                <table id="productTable">
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>Nom</th>
+                            <th>Localitat</th>
+                            <th>Carrer</th>
+                            <th>NIF</th>
+                            <th>tlf</th>
+                            <th>E-mail</th>
+                            <th>Compte-Banc</th>
+                            <th>Importar</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody id="tbody_clientes">
+                       
+                    </tbody>
+                   
+                    
+                </table>
+                  <div id="paginationCliente"></div>
+            </div>
+            
+        </div>
+        
+    </div>
+    <script>
+ document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("searchCliente");
+            const tbody = document.getElementById("tbody_clientes");
+            const pagination = document.getElementById("paginationCliente");
+            let currentPage = 1;
+
+            function fetchPersonas(page = 1) {
+                const texto = input.value.trim();
+                currentPage = page;
+
+                fetch("{% url 'buscar_persona' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: new URLSearchParams({ texto, page })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+
+                    if (data.personas && data.personas.length > 0) {
+                        data.personas.forEach(persona => {
+                        const fila = document.createElement("tr");
+                        fila.id = `cliente-${persona.id}`;           // Para tu 
+                        fila.innerHTML = `
+                            <td>${persona.id}</td>
+                            <td>${persona.nombre}</td>
+                            <td>${persona.localidad}</td>
+                            <td>${persona.calle}</td>
+                            <td>${persona.nif}</td>
+                            <td>${persona.telefono}</td>
+                            <td>${persona.email}</td>
+                            <td>${persona.compte_banc}</td>
+                            <td>
+                            <button onclick="importarCliente('${persona.id}', '${persona.nombre}', '${persona.nif}', '${persona.telefono}', '${persona.email}','${persona.localidad}    ')" class="importar-btn">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            </td>`;
+                        tbody.appendChild(fila);
+                        });
+
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align:center; font-style:italic;">
+                                    No se encontraron clientes
+                                </td>
+                            </tr>`;
+                    }
+
+                    renderPagination(data.page_info);
+                })
+                .catch(err => {
+                    console.error("Error al buscar clientes:", err);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align:center; color:red;">
+                                Error al buscar clientes
+                            </td>
+                        </tr>`;
+                    pagination.innerHTML = "";
+                });
+            }
+
+            function renderPagination({ current, total, has_prev, has_next }) {
+                pagination.innerHTML = "";
+
+                if (has_prev) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.textContent = "« Anterior";
+                    prevBtn.onclick = () => fetchPersonas(current - 1);
+                    pagination.appendChild(prevBtn);
+                }
+
+                const info = document.createElement("span");
+                info.textContent = ` Página ${current} de ${total} `;
+                pagination.appendChild(info);
+
+                if (has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.textContent = "Siguiente »";
+                    nextBtn.onclick = () => fetchPersonas(current + 1);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            fetchPersonas();
+            input.addEventListener("input", () => fetchPersonas(1));
+        });
+
+         // Función para ocultar el overlay
+        function hideOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "none";
+        }
+
+        // Función para mostrar el overlay
+        function showOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "block";
+        }
+
+        function importarCliente(id, nombre, nif, telefono, email,localitat) {
+            console.log("Importando cliente:", id, nombre, nif, telefono, email);
+
+    var idClient=document.getElementById("clientIdSelCrear");
+    var nomClient=document.getElementById("clientNomSelCrear");
+    var nifClient=document.getElementById("clientNifSelCrear");
+    var telClient=document.getElementById("clientTelSelCrear");
+    var locClient=document.getElementById("clientLocalSelCrear");
+
+    var idClientEdit = document.getElementById("clientIdSelEdit");
+    var nomClientEdit = document.getElementById("clientNomSelEdit");
+    var nifClientEdit = document.getElementById("clientNifSelEdit");
+    var telClientEdit = document.getElementById("clientTelSelEdit");
+    var emailClientEdit = document.getElementById("clientEmailSelEdit");
+
+    if (idClientEdit && nomClientEdit && nifClientEdit && telClientEdit && emailClientEdit) {
+        idClientEdit.textContent = id;
+        nomClientEdit.textContent = nombre;
+        nifClientEdit.textContent = nif;
+        telClientEdit.textContent = telefono;
+        emailClientEdit.textContent = email;
+    }
+    console.log("aa",nif);
+    idClient.innerHTML=id;
+    nomClient.innerHTML=nombre;
+    nifClient.innerHTML=nif;
+    telClient.innerHTML=telefono;
+    locClient.innerHTML=localitat;
+
+    
+    hideOverlay();
+}
+    </script>
+
+    {% endblock %}

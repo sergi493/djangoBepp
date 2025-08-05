@@ -15,7 +15,7 @@ class CreateNewProject(forms.Form):
 from django import forms
 class CustomUserCreationForm(UserCreationForm):
     username = forms.CharField(widget=forms.TextInput(
-        attrs={'placeholder': 'Introduce tu nombre de usuario', 'class': 'form-control'}
+        attrs={'placeholder': 'Introdu  ce tu nombre de usuario', 'class': 'form-control'}
     ))
     password1 = forms.CharField(widget=forms.PasswordInput(
         attrs={'placeholder': 'Introduce tu contraseña', 'class': 'form-control'}
@@ -23,7 +23,9 @@ class CustomUserCreationForm(UserCreationForm):
     password2 = forms.CharField(widget=forms.PasswordInput(
         attrs={'placeholder': 'Repite tu contraseña', 'class': 'form-control'}
     ))
-
+    email = forms.EmailField(widget=forms.EmailInput(
+        attrs={'placeholder': 'Introduce tu correo electrónico', 'class': 'form-control'}
+    ))
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2']
+        fields = ['username', 'password1', 'password2','email']

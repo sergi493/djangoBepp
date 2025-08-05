@@ -5,22 +5,25 @@ from .views import guardar_ticket
 
 urlpatterns = [
      path("login/", views.signin, name="login"),
-     path("signup/", views.signup, name="ind"),
+
      path("logout/", views.signout, name="logout"),
      path("user/", views.user, name="user"),
      path("", views.signin, name="home"),
     path("pedidos/", views.pedidos, name="pedidos"),
+      path("update_user/", views.update_user, name="update_user"),
     path("hoy/", views.hoy, name="hoy"),
     path("margen_ventas/", views.margen_ventas, name="margen_ventas"),
     path("presupostos/", views.presupostos, name="presupostos"),
     path("reparacions/", views.reparacions, name="reparacions"),
     path("index/", views.index, name="index"),
+    path("ayuda/", views.ayuda, name="ayuda"),
     path("vender/", views.vender, name="vender"),
     path("facturas/", views.facturas, name="facturas"),
     path("tickets/", views.tickets, name="tickets"),
     path("devoluciones/", views.tasks, name="devoluciones"),
     path("stock/", views.stock, name="stock"),
      path("clientes/", views.clientes, name="clientes"),
+     path('actualizar_metodo_pago/<int:factura_id>/', views.actualizar_metodo_pago, name='actualizar_metodo_pago'),
      path("create_project/", views.create_project, name="create_project"),
     path("guardar_ticket/", views.guardar_ticket, name='guardar_ticket'),
     path("guardar_factura/", views.guardar_factura, name='guardar_ticket'),
@@ -36,6 +39,7 @@ urlpatterns = [
     path('guardar_cliente/', views.guardar_cliente, name='guardar_cliente'),
     path('crear_client/', views.guardar_cliente, name='guardar_client'),
     
+
    path('obtenir_factura_compra/<int:facturaReferencia>/', views.obtenir_factura_compra, name='obtenir_factura_compra'),
     
     
@@ -69,9 +73,12 @@ urlpatterns = [
     
     path('tancar_caixa/', views.tancar_caixa, name='tancar_caixa'),
     path('enviar_factura_email/', views.enviar_factura_email, name='enviar_factura_email'),
+    path('enviar_pressupost_email/', views.enviar_pressupost_email, name='enviar_pressupost_email'),
     path('buscar_producto/', views.buscar_producto, name='buscar_producto'),
     path('buscar_persona/', views.buscar_persona, name='buscar_persona'),
-    
+    path('apunte_caixa/', views.apunte_caixa, name='apunte_caixa'),
+    path('obtenir_apuntes/<int:caixa_id>/', views.obtenir_apuntes, name='obtenir_apuntes'),
+
 
     
     

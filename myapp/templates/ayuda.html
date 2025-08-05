@@ -1,0 +1,96 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+
+<div class="main-content"" style="display: flex; gap: 20px; padding: 20px;">
+  <!-- **Barra lateral**: lista de temas con **filtro** y scroll -->
+  <div class="help-sidebar" style="flex: 1; max-width: 300px;">
+    <input type="text" id="help-search" placeholder="Buscar tema..." style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;" />
+    <ul id="help-topics" style="list-style: none; padding: 0; max-height: 400px; overflow-y: auto;">
+    <li data-topic="tancar-caixa" style="padding: 8px; cursor: pointer;">Com tancar caixa</li>
+      <li data-topic="crear-usuario" class="active" style="padding: 8px; cursor: pointer;">Crear usuario</li>
+      <li data-topic="crear-factura" style="padding: 8px; cursor: pointer;">Crear factura</li>
+      <li data-topic="crear-client" style="padding: 8px; cursor: pointer;">Crear/Editar client</li>
+      <li data-topic="borrar-cuenta" style="padding: 8px; cursor: pointer;">Borrar cuenta</li>
+      <li data-topic="vender" style="padding: 8px; cursor: pointer;">Vender Ticket/Factura</li>
+      <li data-topic="generar-presupuesto" style="padding: 8px; cursor: pointer;">Generar Presupuesto/Reparacion</li>
+      <li data-topic="editar-factura" style="padding: 8px; cursor: pointer;">Editar/Reembolsar factura</li>
+      <li data-topic="editar-ticket" style="padding: 8px; cursor: pointer;">Editar/Reembolsar ticket</li>
+      <li data-topic="editar-productes" style="padding: 8px; cursor: pointer;">Crear/Modificar productes</li>
+    <li data-topic="gestio-pedidos" style="padding: 8px; cursor: pointer;">Gestió dels pedidos</li>
+    <li data-topic="informacio-estadistiques" style="padding: 8px; cursor: pointer;">Informacio de les estadistiques</li>
+    <li data-topic="margen-ventas" style="padding: 8px; cursor: pointer;">Margen de ventas</li>
+    <li data-topic="editar-perfil" style="padding: 8px; cursor: pointer;">Editar perfil</li>
+      <!-- Añade más temas aquí -->
+    </ul>
+  </div>
+
+  <!-- **Contenido**: pasos detallados según el tema seleccionado -->
+  <div class="help-content" style="flex: 3; max-height: 500px; overflow-y: auto; border-left: 1px solid #eee; padding-left: 20px;">
+    <div id="crear-usuario" class="topic-steps">
+      <h2>Crear usuario</h2>
+      <ol>
+        <li>Ve al menú <em>Usuarios</em> y haz clic en <strong>+ Nuevo usuario</strong>.</li>
+        <li>Rellena los campos obligatorios: <u>nombre</u>, <u>email</u>, <u>rol</u>.</li>
+        <li>Presiona <strong>Guardar</strong> y recibe confirmación.</li>
+      </ol>
+    </div>
+
+    <div id="crear-factura" class="topic-steps" style="display: none;">
+      <h2>Crear factura</h2>
+      <ol>
+        <li>Dirígete a <em>Facturas</em> y selecciona <strong>+ Nueva factura</strong>.</li>
+        <li>Escoge el cliente y añade los productos o servicios.</li>
+        <li>Verifica totales y haz clic en <strong>Emitir</strong>.</li>
+      </ol>
+    </div>
+
+    <div id="editar-perfil" class="topic-steps" style="display: none;">
+      <h2>Editar perfil</h2>
+      <ol>
+        <li>Accede a tu avatar arriba a la derecha y selecciona <strong>Perfil</strong>.</li>
+        <li>Modifica tu <u>foto</u>, <u>nombre</u> o <u>información de contacto</u>.</li>
+        <li>Guarda cambios para actualizar tus datos.</li>
+      </ol>
+    </div>
+
+    <div id="borrar-cuenta" class="topic-steps" style="display: none;">
+      <h2>Borrar cuenta</h2>
+      <ol>
+        <li>Ve a <em>Configuración</em> > <strong>Privacidad</strong>.</li>
+        <li>Haz clic en <strong>Eliminar cuenta</strong> y confirma.</li>
+        <li>Recibirás un correo de confirmación; sigue el enlace para completar.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('help-search');
+    const topics = document.querySelectorAll('#help-topics li');
+    const steps = document.querySelectorAll('.topic-steps');
+
+    // Filtro dinámico de temas
+    searchInput.addEventListener('input', () => {
+      const filter = searchInput.value.toLowerCase();
+      topics.forEach(li => {
+        li.style.display = li.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    });
+
+    // Cambio de tema y visualización de pasos
+    topics.forEach(li => {
+      li.addEventListener('click', () => {
+        topics.forEach(item => item.classList.remove('active'));
+        li.classList.add('active');
+
+        const selected = li.getAttribute('data-topic');
+        steps.forEach(div => {
+          div.style.display = div.id === selected ? '' : 'none';
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,21 +1,19 @@
 
 {% extends "layouts/base.html" %}
 
-
+{% load static %}
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda</title>
-    
+ 
+     <script src="{% static 'js/pressupostos.js' %}"></script>
+
     <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    
 
 <div class="main-content">
+    <div id="popup" class="popup-container" >
+        <div class="popup-content">
+            <!-- The content will be inserted here by JavaScript -->
+        </div>
+    </div>
     <div class="products-section">
         <h1>PRESUPOSTOS</h1>
 <p>(es pot eliminar, descarregar, reembolsar, veure datos, enviar per mail?)</p>
@@ -64,7 +62,7 @@
                  <!-- A IMPLEMENTAR A MODELS, VIEWS...
                 <td>{{ factura.total }} €</td>-->
               
-                <td><button type="button" class="popup-trigger" data-pressupost-id="{{ pressupost.id }}"><i
+                <td><button type="button" class="popup-trigger" onclick="mostrarPressupost({{ pressupost.id }})" ><i
                         class="fa-regular fa-pen-to-square"></i></button></td>
             </tr>
             {% endfor %}
@@ -90,26 +88,31 @@
         <div class="clientPressupost">
         <h2>Afegir Pressupost</h2>
         <button onclick="showOverlay()">Afegir client</button>
-        <span id="clientIdPressupost" >aa</span>
-        <span id="clientNomPressupost"></span>
-        <span id="clientNifPressupost"></span>
-        <span id="clientTelPressupost"></span>
+       
+        <span id="clientIdSelCrear" >aa</span>
+        <span id="clientNomSelCrear"></span>
+        <span id="clientNifSelCrear"></span>
+        <span id="clientTelSelCrear"></span>
+        <span id="clientLocalSelCrear"></span>
+        
         </div>
         <div class="inputDESCRIPCIO">
         <label>INFO ADICIONAL<br></label>
         <textarea  id="DescripcioPressupost" placeholder="MA D'OBRA: CANVI DE PANTALA..."></textarea>
         </div>
         <div style="text-align:left;">
-        <button onclick="showOverlay2()">+</button>
+        <button onclick="showBuscar_productos()">+</button>
         </div>
-        <table id="taulaPressupostProductes">
+        <table class="taula-productes-pressupost" id="taula-crear">
         <thead>
             <tr>
-                <th>Cod</th>
-                <th>Desc</th>
-                <th>Preu unitat</th>
-                <th>Quantitat</th>
-                <th>Preu total</th>
+                <th>ID</th>
+                <th>NOM</th>
+                <th>QUNATITAT</th>
+                <th>PREU</th>
+                <th>total</th>
+                <th>IMATGE</th>
+                <th>BORRAR</th>
             </tr>
         </thead>
         <tbody>
@@ -122,7 +125,7 @@
                 <td style="background:white;"></td>
                 <td></td>
                 <td>Productes: <span id="sumQuantitat"></span></td>
-                <td style="background:white;">Total: <span id="sumTotal"></span></td>
+                <td style="background:white;">Total: <span class="sumTotal">0</span></td>
 
             </tr>
         
@@ -134,1145 +137,157 @@
     </div>
 </div>
 
-<style>
-    .clientPressupost{
-        margin-bottom:25px;
-        margin-top:20px;
-    }
-    .overlay{
-        display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    }
-    .popup2{
-        position: absolute;
-    top: 50%;
-    left: 53%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width:80%;
-    display:flex;
-    }
-    .overlay3{
-        position: absolute;
-    top: 50%;
-    left: 53%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width:80%;
-    display:flex;
-    }
-    .izq{
-        flex:1;
-        margin-top:30px;
-    }
-    .der{
-        flex:1;
-        margin-top:30px;
-    }
-    .tick-fac-num{
 
-        position:absolute;
-        
-    }
-    .boto-tancar-facturar{
-        position:absolute;
-         
-         margin-left:45%;
-         margin-top:25%;
-        height:30px;
-        font-weight:750;
-        background:red;
-        color:white;
-        border:none;
-        border-radius:10px;
-     }
-     .overlay2{
-        display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    }
-    .overlay4{
-        display: none;
-    position: fixed;
 
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    }
-     .popup3 {
-        position: absolute;
-    top: 50%;
-    left: 53%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width:80%;
-    display:flex;
-    
-    }
-    .popup4 {
-        position: absolute;
-    top: 50%;
-    left: 53%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width:80%;
-    display:flex;
-    
-    }
-   
-</style>
-<div class="overlay4" id="overlay4">
-    <div class="popup4">
-        <div class="izq">
-            <p>CREAR PRODUCTE: 2</p>
-            <table>
-                <tbody>
-                    <tr>
-                        <td><label>NOM:</label></td>
-                        <td><input id="nom-input-nou" type="text"></td>
-                        </tr>
-                        <tr>
-                            <td><label>REFERENCIA:</label></td>
-                            <td><input id="referencia-input" type="text"></td>
-                            </tr>
-                            <tr>
-                         <td><label>DESCRIPCIO:</label></td>
-                                <td><input id="descripcio-input" type="text"></td>
-                                </tr>
-                                <tr>
-                                    <td><label>QUANTITAT:</label></td>
-                                    <td><input id="quantitat-input" type="number"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><label>PREU DISTRIBUIDOR:</label></td>
-                                        <td><input id="preu-compra-input" type="number"></td>
-                                        </tr>
-                                    <tr>
-                                        <td><label>PREU:</label></td>
-                                        <td><input id="preu-input" type="number"></td>
-                                        </tr>
-                                        
-                </tbody>
-            </table>
-            <button class="clientNou" onclick="PressupostCrearProducte()">Afegir i crear client</button>
-            
-            
-        </div>
-        <button class="boto-tancar-facturar" onclick="hideOverlay4()">Cancelar</button>
-        <div class="der">
-           <p><strong>BUSCAR PRODUCTE</strong></p>
 
-<input type="text" id="inputBuscarProducte" placeholder="Buscar producte...">
-
-<table id="taula_prod_presupost">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>NOM</th>
-            <th>CODI</th>
-            <th>QUANTITAT</th>
-            <th>DESCRIPCIÓ</th>
-            <th>PREU</th>
-            <th>ACCIONS</th>
-        </tr>
-    </thead>
-    <tbody id="tbody_prod_presupost">
-        <!-- Les files es generaran dinàmicament -->
-    </tbody>
-</table>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const input = document.getElementById("inputBuscarProducte");
-    const tbody = document.getElementById("tbody_prod_presupost");
-
-    input.addEventListener("input", function () {
-        const texto = input.value.trim();
-        if (texto === "") {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
-            return;
-        }
-
-        fetch("{% url 'buscar_producto' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: new URLSearchParams({ texto: texto })
-        })
-        .then(response => response.json())
-        .then(data => {
-            tbody.innerHTML = "";
-
-            if (data.productos && data.productos.length > 0) {
-                data.productos.forEach(prod => {
-                    const fila = document.createElement("tr");
-                    fila.innerHTML = `
-                        <td>${prod.id}</td>
-                        <td>${prod.nombre}</td>
-                        <td>${prod.codigo}</td>
-                        <td>${prod.cantidad ?? '-'}</td>
-                        <td>${prod.descripcion}</td>
-                        <td>${prod.precio}</td>
-                        <td>
-                            <button onclick="ImportarProducteExistentPressupost(
-                                '${prod.id}', '${prod.nombre}', '${prod.codigo}',
-                                '${prod.cantidad ?? ''}', '${prod.descripcion}', '${prod.precio}'
-                            )">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(fila);
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
-            }
-        })
-        .catch(error => {
-            console.error("Error al buscar productes:", error);
-        });
-    });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const input0 = document.getElementById("inputBuscarProducte0");
-    const tbody0 = document.getElementById("tbody_prod_presupost0");
-
-    input0.addEventListener("input", function () {
-        const texto0 = input0.value.trim();
-        if (texto0 === "") {
-            tbody0.innerHTML = `<tr><td colspan="7" style="text-align:center">Escriu per cercar...</td></tr>`;
-            return;
-        }
-
-        fetch("{% url 'buscar_producto' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: new URLSearchParams({ texto: texto0 })
-        })
-        .then(response => response.json())
-        .then(data => {
-            tbody0.innerHTML = "";
-
-            if (data.productos && data.productos.length > 0) {
-                data.productos.forEach(prod => {
-                    const fila = document.createElement("tr");
-                    fila.innerHTML = `
-                        <td>${prod.id}</td>
-                        <td>${prod.nombre}</td>
-                        <td>${prod.codigo}</td>
-                        <td>${prod.cantidad ?? '-'}</td>
-                        <td>${prod.descripcion}</td>
-                        <td>${prod.precio}</td>
-                        <td>
-                            <button onclick="ImportarProducteExistent(
-                                '${prod.codigo}', '${prod.descripcion}',
-                                '${prod.precio}'
-                            )">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody0.appendChild(fila);
-                });
-            } else {
-                tbody0.innerHTML = `<tr><td colspan="7" style="text-align:center">Cap producte trobat</td></tr>`;
-            }
-        })
-        .catch(error => {
-            console.error("Error al buscar productes:", error);
-        });
-    });
-});
-</script>
 
         </div>
     </div>
 </div>
 <script>
-     function updateTotalGeneral() {
-    let total = 0;
-    const table = document.querySelector('#taula-productes-pressupost');
-    if (!table) return; // no hay tabla (estás en el modal de crear presupuesto)
-
-    document.querySelectorAll('#taula-productes-pressupost tbody tr').forEach(row => {
-        const totalCell = row.querySelector('.producte-preu-total');
-        if (totalCell) total += parseFloat(totalCell.textContent || 0);
-    });
-
-    const totalGeneral = document.getElementById('total-general');
-    if (totalGeneral) {
-        totalGeneral.textContent = `${total.toFixed(2)} €`;
-    }
-}
-
-                    
-    function ImportarProducteExistentPressupost(id_producte, nom, referencia,quantitat,descripcio,preu){
-      if (document.querySelector(`.linea_productes_pressupost_${id_producte}`)) {
-        alert('Este producto ya está añadido al presupuesto.');
-        return;
-    }  
-        var csrftoken = getCookie('csrftoken');
-
-    var idPressupost=document.getElementById("pressupost_id_obtenir").innerHTML;  
-        console.log(idPressupost + "dd");
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/afegir_producte_pressupost/", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('X-CSRFToken', csrftoken);
-    xhr.onload = function () {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            console.log("Respuesta del servidor:", xhr.responseText);
-            
-            updateTotalGeneral();
-            
-        } else {
-            console.error("Error en la solicitud:", xhr.statusText);
-        }
-    };
-    xhr.onerror = function () {
-        console.error("Error de red al enviar la solicitud.");
-    };
-    xhr.send(JSON.stringify({ idPressupost:idPressupost,id_producte:id_producte }));
-    VeureUltimProductePressupost(id_producte,nom, referencia,quantitat,descripcio,preu);
-    }
-    
-
-
-   function VeureUltimProductePressupost(id_producte,nom, referencia,quantitat,descripcio,preu){
-    var table = document.getElementById("taula-productes-pressupost");
-
-    // Crea una nueva fila
-    var newRow = table.insertRow();
-    newRow.className = `linea_productes_pressupost_${id_producte} linea_productes_pressupost_edit`;
-    
-
-    // Crea y añade las celdas a la nueva fila
-    var cell1 = newRow.insertCell(0);
-    var cell2 = newRow.insertCell(1);
-    var cell3 = newRow.insertCell(2);
-    var cell4 = newRow.insertCell(3);
-    var cell5 = newRow.insertCell(4);
-    var cell6 = newRow.insertCell(5);
-    var cell7 = newRow.insertCell(6);
-    
-
-    // Asigna el contenido a cada celda
-    cell1.textContent = referencia;   // Reemplaza con el valor real
-    cell1.id = 'producte_id_pressupost';
-    cell2.textContent = nom;           // Reemplaza con el valor real
-      // Reemplaza con el valor real
-      var input = document.createElement("input");
-      input.type = "number";
-      input.id = "quantitat_" + id_producte;   
-             // Assigna un ID a l'element d'entrada
-      input.value = 1;   
-    input.id = "quantitat_" + id_producte; // Reemplaça amb el valor real si cal
-    input.className = "producte-input-quantitat";
-      cell3.appendChild(input);   // Reemplaza con el valor real
-      
-
-
-      var pElement = document.createElement("p");
-
-
-    // Crear el elemento span
-    var spanElement = document.createElement("span");
-    var spanElements = document.createElement("span");
-    // Asignar el contenido de texto al span
-    spanElement.textContent = preu;
-    // Agregar el span al p
-    spanElements.appendChild(spanElement);
-    // Agregar el símbolo del euro al p como texto
-    spanElements.appendChild(document.createTextNode("€"));
-    // Vaciar el contenido actual de cell4 (opcional)
-    cell4.textContent = "";
-    // Agregar el p a cell4
-    cell4.appendChild(spanElements);
-    spanElement.className="producte-preu-unitat";
-
-    var spanElements2 = document.createElement("span");
-    
-    // Crear el elemento span
-    var spanElement2 = document.createElement("span");
-    // Asignar el contenido de texto al span
-    spanElement2.textContent = preu;
-    // Agregar el span al p
-    spanElements2.appendChild(spanElement2);
-    // Agregar el símbolo del euro al p como texto
-    spanElements2.appendChild(document.createTextNode("€"));
-    // Vaciar el contenido actual de cell4 (opcional)
-    cell5.textContent = "";
-    // Agregar el p a cell4
-    cell5.appendChild(spanElements2);
-    spanElement2.className="producte-preu-total";
-    var button = document.createElement("button");
-    button.innerHTML="BORRAR";
-    press_id=document.getElementById("pressupost_id_obtenir").innerHTML;
-    button.onclick = function() {
-        esborrarDePressupost(id_producte,press_id);
-    };
-    cell7.appendChild(button);
-
-
-
-
-    function updateRowTotal(fila) {
-        const quantitatInput = fila.querySelector('.producte-input-quantitat');
-        const preuPerUnitat = parseFloat(fila.querySelector('.producte-preu-unitat').textContent);
-        const total = fila.querySelector('.producte-preu-total');
-        const quantitat = parseFloat(quantitatInput.value);
-        total.textContent = (preuPerUnitat * quantitat).toFixed(2);
-    }
-
-    // Actualizar el total general
-     // Actualizar el total general
-    
-
-    // Attach event listeners to quantity inputs
-    document.querySelectorAll('.producte-input-quantitat').forEach(input => {
-        input.addEventListener('input', function () {
-            const fila = input.closest('tr');
-            updateRowTotal(fila);
-            updateTotalGeneral();
-        });
-    });
-           // Reemplaza con el valor real
-};
    
+                
 </script>
-<div class="overlay" id="overlay">
-  
-    <div class="popup2">
 
-        <div class="izq">
-            <p>CREAR CLIENT:</p>
-            <table>
-                <tbody>
-                    <tr>
-                        <td><label>NOM:</label></td>
-                        <td><input id="nom-input" type="text"></td>
-                        </tr>
-                        <tr>
-                            <td><label>TELEFON:</label></td>
-                            <td><input id="telefon-input" type="number"></td>
-                            </tr>
+
+    
+</div>
+</div>
+<script>
+
+
+
+function mostrarPressupost(pressupostId) {
+    const popup = document.getElementById('popup');
+
+    fetch(`/obtenir_pressupost/${pressupostId}/`)
+        .then(response => response.json())
+        .then(data => {
+            localStorage.setItem(`pressupost-${data.id}`, JSON.stringify(data));
+            const dateObj = new Date(data.date);
+            const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
+            const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+
+            let rows = data.productos.map(p => `
+                <tr class="linea_productes_pressupost_${p.id} linea_productes_pressupost_edit">
+                    <td id="producte_id_pressupost">${p.producto_id}</td>
+                    <td>${p.nombre}</td>
+                    <td><input class="producte-input-quantitat" id="quantitat_${p.producto_id}" value="${p.cantidad}"></td>
+                    <td><span class="producte-preu-unitat">${p.preu}</span> €</td>
+                    <td><span class="producte-preu-total">${(p.preu * p.cantidad).toFixed(2)}</span> €</td>
+                    <td><img style="max-height:30px;" src="${p.producto_imagen}"></td>
+                    <td><button onclick="esborrarDePressupost('${p.id}', '${data.id}')">BORRAR</button></td>
+                </tr>
+            `).join('');
+
+            popup.innerHTML = `
+                <div class="popup-content">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div>
+                            <h2>PRESSUPOST núm. ${data.id}</h2>
+                            <p><strong>Data:</strong> ${formattedDate} - <strong>Hora:</strong> ${time}</p>
+                            <p>${data.facturat ? 'Facturat: ' + data.facturat : ''}</p>
+                        </div>
+                        <div>
+                            <button onclick="showOverlay()">Cambiar client</button>
+                            <span id="clientIdSelEdit" >${data.persona_id}</span>
+        <span id="clientNomSelEdit">|${data.persona_nom}</span>
+        <span id="clientNifSelEdit">|${data.persona_nif}</span>
+        <span id="clientTelSelEdit">|${data.persona_tel}</span>
+        <span id="clientEmailSelEdit">${data.persona_email}</span>
+                        </div>
+                    </div>
+
+                    <label for="paymentMethod">Mètode de pagament:</label>
+                    <select id="paymentMethod">
+                        <option value="Tarjeta" ${data.metodo_pago === 'Tarjeta' ? 'selected' : ''}>Targeta</option>
+                        <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectiu</option>
+                    </select>
+
+                    <div>
+                        <textarea id="notaPressupostEdit" rows="2" cols="30">${data.nota}</textarea>
+                    </div>
+
+                    <button onclick="showOverlay3()">Afegir producte</button>
+
+                    <table class="taula-productes-pressupost" id="taula-editar">
+                        <thead>
                             <tr>
-                         <td><label>LOCALITAT:</label></td>
-                                <td><input id="localitat-input" type="text"></td>
-                                </tr>
-                                <tr>
-                                    <td><label>DIRECCIO:</label></td>
-                                    <td><input id="direccio-input" type="text"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><label>NIF:</label></td>
-                                        <td><input id="nif-input" type="text"></td>
-                                        </tr>
-                                        <tr>
-                                            <td><label>EMAIL:</label></td>
-                                            <td><input id="email-input" type="text"></td>
-                                            </tr>
-                                            <tr>
-                                                <td><label></label>COMPTE BANC:</td>
-                                                <td><input id="banc-input" type="text"></td>
-                                                </tr>
-                </tbody>
-            </table>
-            <button class="clientNou" onclick="PressupostClientNou()">Afegir i crear client</button>
-            
-            
-        </div>
-        <button class="boto-tancar-facturar" onclick="hideOverlay()">Cancelar</button>
-        <div class="der">
-  <p><strong>BUSCAR CLIENTE</strong></p>
-  <input type="text" id="inputBuscarCliente" placeholder="Buscar cliente..." />
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Quantitat</th>
+                                <th>Preu</th>
+                                <th>Total</th>
+                                <th>Imatge</th>
+                                <th>Acció</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4">Total:</td>
+                                <td colspan="3"><span class="sumTotal total-editar">${data.total}</span> €</td>
+                            </tr>
+                        </tfoot>
+                    </table>
 
-  <table id="taula_client_presupost">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>NOM</th>
-        <th>tlf</th>
-        <th>NIF</th>
-        <th>Importar</th>
-      </tr>
-    </thead>
-    <tbody id="tbody_clientes_presupost">
-      <!-- Aquí inicias con un mensaje por defecto -->
-      <tr>
-        <td colspan="5" style="text-align:center">Escriu per cercar...</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("inputBuscarCliente");
-  const tbody = document.getElementById("tbody_clientes_presupost");
+                    <div class="popup-buttons">
+                        <button onclick="genPressupost()" class="blue-button">Descarregar</button>
+                        <button class="red-button">Eliminar</button>
+                        <button onclick="facturarPressupost(${data.id})" class="yellow-button">Facturar</button>
+                        <button onclick="aplicarPressupost(${data.id})" class="green-button">Aplicar</button>
+                        <button onclick="mostrarEditorEmail(${data.id})">Enviar per mail</button>
+                        <button class="close-popup">Tancar</button>
+                    </div>
+                </div>
+            `;
 
-  input.addEventListener("input", () => {
-    const texto = input.value.trim();
-
-    if (!texto) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align:center">Escriu per cercar...</td>
-        </tr>`;
-      return;
-    }
-
-    fetch("{% url 'buscar_persona' %}", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRFToken": "{{ csrf_token }}"
-      },
-      body: new URLSearchParams({ texto })
-    })
-    .then(res => res.json())
-    .then(data => {
-      tbody.innerHTML = "";
-
-      if (data.personas && data.personas.length > 0) {
-        data.personas.forEach(pers => {
-          const fila = document.createElement("tr");
-          fila.innerHTML = `
-            <td>${pers.id}</td>
-            <td>${pers.nombre}</td>
-            <td>${pers.telefono}</td>
-            <td>${pers.nif}</td>
-            <td>
-              <button onclick="ImportarClientPressupost(
-                '${pers.id}',
-                '${pers.nombre}',
-                '${pers.telefono}',
-                '${pers.nif}'
-              )">
-                <i class="fa-regular fa-pen-to-square"></i>
-              </button>
-            </td>`;
-          tbody.appendChild(fila);
-        });
-      } else {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" style="text-align:center">Cap client trobat</td>
-          </tr>`;
-      }
-    })
-    .catch(err => {
-      console.error("Error al buscar clients:", err);
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align:center; color:red">
-            Error de cerca 😬
-          </td>
-        </tr>`;
-    });
-  });
-});
-</script>
-
-    
-</div>
-</div>
-<script>
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const triggerButtons = document.querySelectorAll('.popup-trigger');
-        const popupContainer = document.getElementById('popup');
-        const popupContent = popupContainer.querySelector('.popup-content');
-    
-        triggerButtons.forEach(function (button) {
-            button.addEventListener('click', function () {
-                const pressupostId = button.getAttribute('data-pressupost-id');
-                fetch(`/obtenir_pressupost/${pressupostId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        localStorage.setItem(`pressupost-${data.id}`, JSON.stringify(data));
-                        const dateObj = new Date(data.date);
-                        const formattedDate = `${dateObj.getDate()}-${dateObj.getMonth() + 1}-${dateObj.getFullYear()}`;
-                        const hours = String(dateObj.getUTCHours()).padStart(2, '0');
-                        const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
-                        const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
-    
-                        let popupContentHTML = `
-                            <div class="popup-content-inner">
-                                <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
-                                    <div id="ticket-number">
-                                        <h2>PRESSUPOST número:<span id="pressupost_id_obtenir"> ${data.id}</span><br>  <br> </h2>
-                                        <button onclick="showOverlay()">Cambiar client</button>
-                                         <span id="clientIdPressupostEdit" >${data.persona_id}</span>
-        <span id="clientNomPressupostEdit">|${data.persona_nom}</span>
-        <span id="clientNifPressupostEdit">|${data.persona_nif}</span>
-        <span id="clientTelPressupostEdit">|${data.persona_tel}</span>
-        <span id="clientEmailPressupostEdit">${data.persona_email}</span>
-                                        <p>Facturat ${data.facturat === '' ? 'qq' : data.facturat}</p>
-                                        <div class="payment-container">
-                                            <label for="paymentMethod">Metode de Pagament:</label>
-                                            <div>
-                                          <select id="paymentMethod" name="paymentMethod">
-  <option value="Tarjeta" ${data.metodo_pago === 'Tarjeta' ? 'selected' : ''}>Tarjeta</option>
-  <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
-</select>
-
-
-
-                                            </div>
-                                            <p>${data.abono ? data.abono : ''}</p>
-                                        </div>
-                                    </div>
-                                    <div style="text-align: left;">
-                                        <div id="date"><h4>Data: ${formattedDate}</h4></div>
-                                        <div id="time"><h4>Hora: ${hours}:${minutes}:${seconds}</h4></div>
-                                    </div>
-                                </div>
-                                <hr>
-                                <ul>
-                                    <button onclick="showOverlay3()">+</button>
-                                    <table id="taula-productes-pressupost">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>NOM</th>
-                                                <th>QUANT.</th>
-                                                <th>PREU</th>
-                                                <th>TOTAL</th>
-                                                <th>IMG</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-    
-                        data.productos.forEach(producto => {
-                            popupContentHTML += `
-                                <tr class="linea_productes_pressupost_${producto.id} linea_productes_pressupost_edit" >
-                                    <td id="producte_id_pressupost">${producto.producto_id}</td>
-                                    <td>${producto.nombre}</td>
-                                    <td><input class="producte-input-quantitat" id="quantitat_${producto.producto_id}" value="${producto.cantidad}"></input></td>
-                                    <td><span class="producte-preu-unitat">${producto.preu}</span> €</td>
-                                    <td><span class="producte-preu-total">${(producto.preu * producto.cantidad).toFixed(2)}</span> €</td>
-                                    <td><img style="max-height:30px;" src="${producto.producto_imagen}"></td>
-                                    <td><button onclick="esborrarDePressupost('${producto.id}', '${data.id}')">BORRAR</button></td>
-                                </tr>`;
-                        });
-    
-                        popupContentHTML += `
-                                        </tbody>
-                                    </table>
-                                    <p>Total: <span id="total-general"> ${data.total}</span> €</p>
-                                </ul>
-                                <div class="popup-buttons">
-                                    <div>
-                                        <button onclick="genPressupost()" class="blue-button">DESCARGAR</button>
-                                        <button class="red-button">ELIMINAR</button>
-                                        <button onclick="facturarPressupost(${data.id})" class="yellow-button">FACTURAR</button>
-                                        <button onclick="aplicarPressupost(${data.id})" class="green-button">Aplicar</button>
-                                        <button onclick="mostrarEditorEmail(${data.id})">Enviar per mail</button>
-                                        <button id="close-popup" class="close-popup">Cancelar</button>
-                                    </div>
-                                </div>
-                            </div>`;
-    
-                        popupContent.innerHTML = popupContentHTML;
-                        popupContainer.style.display = 'block';
-                        
-                        // Adjuntar event listener al botón de cerrar
-                        // Función para actualizar el total de una fila
-                    function updateRowTotal(fila) {
-                        const quantitatInput = fila.querySelector('.producte-input-quantitat');
-                        const preuPerUnitat = parseFloat(fila.querySelector('.producte-preu-unitat').textContent);
-                        const total = fila.querySelector('.producte-preu-total');
-                        const quantitat = parseFloat(quantitatInput.value);
-                        total.textContent = (preuPerUnitat * quantitat).toFixed(2);
-                    }
-
-                    // Actualizar el total general
-                     // Actualizar el total general
-                     
-
-                    // Attach event listeners to quantity inputs
-                    document.querySelectorAll('.producte-input-quantitat').forEach(input => {
-                        input.addEventListener('input', function () {
-                            const fila = input.closest('tr');
-                            updateRowTotal(fila);
-                            updateTotalGeneral();
-                        });
+            // Attach event listeners to quantity inputs
+            popup.querySelectorAll('.producte-input-quantitat').forEach(input => {
+                input.addEventListener('input', function() {
+                    const row = this.closest('tr');
+                    const price = parseFloat(row.querySelector('.producte-preu-unitat').textContent);
+                    const quantity = parseFloat(this.value) || 0;
+                    const totalElement = row.querySelector('.producte-preu-total');
+                    totalElement.textContent = (price * quantity).toFixed(2);
+                    
+                    // Update grand total
+                    let grandTotal = 0;
+                    popup.querySelectorAll('.producte-preu-total').forEach(total => {
+                        grandTotal += parseFloat(total.textContent);
                     });
-
-                        const closeButton = popup.querySelector('.close-popup');
-                        
-                        closeButton.addEventListener('click', function () {
-                            popup.style.display = 'none';
-                        
-
-                            
-                        });
-                    })
-                    .catch(error => console.error('Error al obtener datos del ticket:', error));
+                    popup.querySelector('.sumTotal').textContent = grandTotal.toFixed(2);
+                });
             });
-        });
-    });
-   
-    function esborrarDePressupost(producte_id, pressupost_id){
-        const row = document.querySelector(`.linea_productes_pressupost_${producte_id}`);
-            if (row) {
-                row.remove();   
-                console.log(`Producto con ID ${producte_id} y data ID ${pressupost_id} ha sido eliminado.`);
-                // Aquí puedes añadir lógica adicional para manejar la eliminación en el servidor si es necesario
-            }
-        updateTotalGeneral();
-        alert("ESBORRA EL PRODUCTE " + producte_id +" DEL PRESSUPOST " + pressupost_id);
-        var csrftoken = getCookie('csrftoken');
-        var xhr = new XMLHttpRequest();
-        console.log("qq"+producte_id+"ww");
-        xhr.open("POST", "/borrar_de_pressupost/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({producte_id:producte_id,pressupost_id:pressupost_id}));
-    }
-    
- 
-    function aplicarPressupost(id_pressupost) {
-    const csrftoken = getCookie('csrftoken');
-    updateTotalGeneral();
 
-    // 1️⃣ Recopilar línies de productes
-    const productes = [];
-document.querySelectorAll('.linea_productes_pressupost_edit').forEach(row => {
-  // buscamos sólo el input con la clase
-  const input = row.querySelector('input.producte-input-quantitat');
-  if (!input) {
-    console.warn('Fila sin input de cantidad, la salto', row);
-    return;
-  }
-  // sacamos la cantidad
-  const quantitat = parseInt(input.value, 10) || 0;
-
-// y la referencia la extraemos directamente de la celda de referencia
-const referenciaCell = row.querySelector('#producte_id_pressupost').textContent.trim();
-
-  productes.push({
-    producte_id: referenciaCell,
-    quantitat: quantitat
-  });
-});
-
-console.log("Productes recollits:", productes);
-    // 2️⃣ Recollir nova persona i mètode de pagament
-    const novaPersonaId = document.getElementById('clientIdPressupostEdit').innerText.trim();
-    const metodePagament = document.getElementById('paymentMethod').value;
-    // 3️⃣ Actualizar el total general en el popup
-    const totalGeneral = document.getElementById('total-general').textContent.replace('€', '').trim();
-
-    console.log("Enviant:", { productes, id_pressupost, novaPersonaId, metodePagament,totalGeneral });
-
-    // 3️⃣ Enviar al backend
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/aplicar_pressupost/", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('X-CSRFToken', csrftoken);
-    xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            console.log("Resposta servidora:", xhr.responseText);
-            obtenirUltimClient();
-        } else {
-            console.error("Error sol·licitud:", xhr.statusText);
-        }
-    };
-    xhr.onerror = () => console.error("Error de xarxa.");
-    xhr.send(JSON.stringify({
-        productes: productes,
-        id_pressupost: id_pressupost,
-        persona_id: novaPersonaId,
-        metodo_pago: metodePagament,
-        totalGeneral:totalGeneral
-    }));
-}
-
-   
-
-    function showOverlay3(){
-        var overlay = document.getElementById("overlay4");
-        overlay.style.display = "block";
-    }
-
-    function facturarPressupost(id){
-
-        var csrftoken = getCookie('csrftoken');
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/facturar_pressupost/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                obtenirUltimClient();
-                
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({ id:id }));
-        
-
-    }
-
-function ImportarClientPressupost(id,nom,nif,tel){
-    var idClient=document.getElementById("clientIdPressupost");
-    var nomClient=document.getElementById("clientNomPressupost");
-    var nifClient=document.getElementById("clientNifPressupost");
-    var telClient=document.getElementById("clientTelPressupost");
-
-    var idClientEdit=document.getElementById("clientIdPressupostEdit");
-    var nomClientEdit=document.getElementById("clientNomPressupostEdit");
-    var nifClientEdit=document.getElementById("clientNifPressupostEdit");
-    var telClientEdit=document.getElementById("clientTelPressupostEdit");
-    console.log("aa",nif);
-    idClient.textContent=id;
-    nomClient.textContent=nom;
-    nifClient.textContent=nif;
-    telClient.textContent=tel;
-
-    idClientEdit.textContent=id;
-    nomClientEdit.textContent=nom;
-    nifClientEdit.textContent=nif;
-    telClientEdit.textContent=tel;
-    hideOverlay();
-}
-    function PressupostClientNou(){
-        var csrftoken = getCookie('csrftoken');
-
-        var nom=document.getElementById("nom-input").value;
-        var telefon=document.getElementById("telefon-input").value;
-        var banc=document.getElementById("banc-input").value;
-        var localitat=document.getElementById("localitat-input").value;
-        var direccio=document.getElementById("direccio-input").value;
-        var nif=document.getElementById("nif-input").value;
-        var email=document.getElementById("email-input").value;
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/crear_client/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                obtenirUltimClient();
-                
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({ nom:nom, telefon:telefon, nif:nif, email:email, localitat:localitat, direccio:direccio, banc:banc }));
-        hideOverlay();
-    }
-    
-    function obtenirUltimClient() {
-        fetch('/ultim_client_id/')
-            .then(response => response.json())
-            .then(data => {
-                
-        
-
-        document.getElementById("clientIdPressupost").textContent=`${data.id}`;
-        document.getElementById("clientNomPressupost").textContent=`${data.nom}`;
-        document.getElementById("clientNifPressupost").textContent=`${data.nif}`;
-        document.getElementById("clientTelPressupost").textContent=`${data.telefon}`;
-                    
-        
-        var taula = document.getElementById("taula_client_presupost").getElementsByTagName('tbody')[0];
-                    var fila = taula.insertRow(-1);
-                    var celda0 = fila.insertCell(0);
-                    var celda1 = fila.insertCell(1);
-                    var celda2 = fila.insertCell(2);
-                    var celda3 = fila.insertCell(3);
-                    var celda4 = fila.insertCell(4);
-                    
-                    celda0.textContent = `${data.id}`;
-                    celda1.textContent = `${data.nom}`;
-                    
-                    celda2.textContent = `${data.telefon}`
-                    celda3.textContent = `${data.nif}`;
-                    
-                    
-                    celda4.innerHTML = `<button onclick="ImportarClientPressupost('${data.id}', '${data.nom}', '${data.telefon}', '${data.nif}')"><i class="fa-regular fa-pen-to-square"></i></button>`;
-
-
-
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
+            popup.style.display = 'flex';
+            popup.querySelector('.close-popup').addEventListener('click', () => {
+                popup.style.display = 'none';
             });
-    }
-    function showOverlay() {
-
-        var overlay = document.getElementById("overlay");
-        overlay.style.display = "block";
-
-    }
-
-    function hideOverlay() {
-
-        var overlay = document.getElementById("overlay");
-        overlay.style.display = "none";
-        
-        
-        
-    }
-    function hideOverlay4() {
-
-        var overlay = document.getElementById("overlay4");
-        overlay.style.display = "none";
-        
-        
-        
-    }
-
-document.addEventListener('DOMContentLoaded', function () {
-    const afegirReparacioBtn = document.getElementById('afegir-reparacio-btn');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-
-    afegirReparacioBtn.addEventListener('click', function () {
-        modalOverlay.style.display = 'flex'; // Mostrar el overlay
-    });
-
-    closeModalBtn.addEventListener('click', function () {
-        modalOverlay.style.display = 'none'; // Ocultar el overlay
-    });
-
-    // Opcional: cerrar el modal al hacer clic fuera del panel
-    modalOverlay.addEventListener('click', function (event) {
-        if (event.target === modalOverlay) {
-            modalOverlay.style.display = 'none'; // Ocultar el overlay
-        }
-    });
-});
-
-
-function genPressupost() {
-  // 1️⃣ Recogemos datos del presupuesto
-  const id = document.getElementById('pressupost_id_obtenir').textContent.trim();
-  const dateText = document.querySelector('#date h4').textContent;
-  const clienteId = document.getElementById('clientIdPressupostEdit').textContent;
-  const clienteNom = document.getElementById('clientNomPressupostEdit').textContent;
-  // 2️⃣ Recogemos líneas de productos
-  const rows = document.querySelectorAll('#taula-productes-pressupost tbody tr');
-  let baseTotal = 0;
-  const body = [];
-  rows.forEach(row => {
-    const ref = row.querySelector('td:first-child').textContent;
-    const nom = row.children[1].textContent;
-    const qty = parseInt(row.querySelector('.producte-input-quantitat').value, 10);
-    const unit = parseFloat(row.querySelector('.producte-preu-unitat').textContent);
-    const total = (unit * qty).toFixed(2);
-    baseTotal += parseFloat(total);
-    body.push([
-      { text: ref, alignment: 'left' },
-      { text: nom, alignment: 'left' },
-      { text: `${qty}`, alignment: 'center' },
-      { text: `${unit.toFixed(2)} €`, alignment: 'right' },
-      { text: `${total} €`, alignment: 'right' }
-    ]);
-  });
-  // 3️⃣ Montamos el documento
-  const docDefinition = {
-    pageSize: 'A4',
-    content: [
-      { text: `PRESUPOST núm. ${id}`, style: 'header' },
-      `Data: ${dateText}`,
-      { text: 'Cliente:', style: 'subheader' },
-      `ID: ${clienteId} — Nombre: ${clienteNom}`,
-      {
-        table: {
-          headerRows: 1,
-          widths: ['auto', '*', 'auto', 'auto', 'auto'],
-          body: [
-            [
-              { text: 'Ref.', bold: true },
-              { text: 'Descripción', bold: true },
-              { text: 'Cant.', bold: true },
-              { text: 'P.U.', bold: true },
-              { text: 'Total', bold: true }
-            ],
-            ...body
-          ]
-        },
-        layout: 'lightHorizontalLines',
-        margin: [0, 20, 0, 20]
-      },
-      {
-        columns: [
-          { width: '*', text: '' },
-          {
-            width: 'auto',
-            table: {
-              body: [
-                [
-                  { text: 'Total presupuestado:', bold: true },
-                  { text: `${baseTotal.toFixed(2)} €`, bold: true, alignment: 'right' }
-                ]
-              ]
-            },
-            layout: 'noBorders'
-          }
-        ]
-      }
-    ],
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
-    },
-    footer: () => ({
-      text: 'Documento generado automáticamente. ¡Gracias por confiar en nosotros!',
-      alignment: 'center',
-      margin: [0, 20, 0, 0],
-      italics: true
-    })
-  };
-  // 4️⃣ Disparo la descarga
-  pdfMake.createPdf(docDefinition).download(`Presupost_${id}.pdf`);
+        })
+        .catch(error => console.error('Error carregant el pressupost:', error));
 }
-
-
-</script>
-<div class="overlay2" id="overlay2">
-  
-    <div class="popup3">
-
-        <div class="izq">
-            <p>CREAR PRODUCTE: 222</p>
-            <table>
-                <tbody>
-                    <tr>
-                        <td><label>NOM:</label></td>
-                        <td><input id="nom-input-nou1" type="text"></td>
-                        </tr>
-                        <tr>
-                            <td><label>REFERENCIA:</label></td>
-                            <td><input id="referencia-input1" type="text"></td>
-                            </tr>
-                            <tr>
-                         <td><label>DESCRIPCIO:</label></td>
-                                <td><input id="descripcio-input1" type="text"></td>
-                                </tr>
-                                <tr>
-                                    <td><label>QUANTITAT:</label></td>
-                                    <td><input id="quantitat-input1" type="number"></td>
-                                    </tr>
-                                    <tr>
-                                        <td><label>PREU DISTRIBUIDOR:</label></td>
-                                        <td><input id="preu-compra-input1" type="number"></td>
-                                        </tr>
-                                    <tr>
-                                        <td><label>PREU:</label></td>
-                                        <td><input id="preu-input1" type="number"></td>
-                                        </tr>
-                                        
-                </tbody>
-            </table>
-            <button class="clientNou" onclick="PressupostCrearProducte1()">Afegir i crear client</button>
-            
-            
-        </div>
-        <button class="boto-tancar-facturar" onclick="hideOverlay2()">Cancelar</button>
-        <div class="der">
-            <p>BUSCAR PRODUCTE</p>
-            <input type="text" id="inputBuscarProducte0" placeholder="Buscar producte...">
-
-            <table id="taula_prod_presupost0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>NOM</th>
-                        <th>tlf</th>
-                        <th>NIF</th>
-                    </tr>
-                </thead>
-                 <tbody id="tbody_prod_presupost0">
-        <!-- Les files es generaran dinàmicament -->
-    </tbody>
-                
-                <tfoot>
-                    <tr>
-                        <td colspan="3">
-                            <button id="prev-btn2" onclick="changePage(-1)" disabled>&larr; Anterior</button>
-                            <button id="next-btn2" onclick="changePage(1)">Siguiente &rarr;</button>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    
-</div>
-</div>
-<script>
-
+   
 function mostrarEditorEmail(pressupostId) {
+  let clientIdSelEdit = document.getElementById('clientIdSelEdit').textContent;
+  let clientNomSelEdit = document.getElementById('clientNomSelEdit').textContent
+  let clientNifSelEdit = document.getElementById('clientNifSelEdit').textContent;
+  let clientTelSelEdit = document.getElementById('clientTelSelEdit').textContent;
+  let clientEmailSelEdit = document.getElementById('clientEmailSelEdit').textContent;
+
   const pressupostData = JSON.parse(localStorage.getItem(`pressupost-${pressupostId}`));
   if (!pressupostData) return alert("Pressupost no trobada");
 
   const popup = document.getElementById('popup');
   const container = popup.querySelector('.popup-content');
 
-  // Limpiar contenido previo
-  
   const textarea = document.createElement('textarea');
   textarea.id = 'email-message';
-  textarea.placeholder = 'Missatge que s\'enviarà per correu...';
+  textarea.placeholder = 'Missatge que s’enviarà per correu...';
   textarea.style.width = '100%';
   textarea.style.minHeight = '100px';
   textarea.style.marginTop = '1rem';
-  textarea.value = `Hola ${pressupostData.persona_nom},\n\nEt fem arribar adjunta la factura núm. ${pressupostData.id}.\n\nSalutacions.`;
+  textarea.value = `Hola ${clientNomSelEdit},\n\nEt fem arribar adjunta la pressupost núm. ${pressupostData.id}.\n\nSalutacions.`;
 
   const btn = document.createElement('button');
   btn.textContent = '✉️ Enviar correu';
@@ -1280,9 +295,10 @@ function mostrarEditorEmail(pressupostId) {
   btn.style.marginTop = '1rem';
 
   btn.onclick = () => {
+    aplicarPressupost(pressupostId)
     const missatge = textarea.value;
 
-    // Generar PDF
+    // 🔁 Generar el mateix PDF que a `genFactura()`
     const dateObj = new Date(pressupostData.date);
     const formattedDate = `${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
     const time = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
@@ -1291,9 +307,13 @@ function mostrarEditorEmail(pressupostId) {
       content: [
         { text: `Pressupost núm. ${pressupostData.id}`, style: 'header' },
         { text: `Data: ${formattedDate} - Hora: ${time}`, style: 'subheader' },
-        { text: `Client: ${pressupostData.persona_nom} (ID: ${pressupostData.persona_id})`, style: 'subheader' },
-        { text: `Telèfon: ${pressupostData.persona_tel}`, style: 'subheader' },
-        { text: `Email: ${pressupostData.persona_email}`, style: 'subheader' },
+        { text: `Client: ${clientIdSelEdit} (ID: ${pressupostData.persona_id})`, style: 'subheader' },
+        { text: `Telèfon: ${clientTelSelEdit}`, style: 'subheader' },
+        { text: `Email: ${clientEmailSelEdit}`, style: 'subheader' },
+        { text: `NIF: ${clientNifSelEdit}`, style: 'subheader' },
+        { text: `Nota: ${pressupostData.nota}`, style: 'subheader' },
+        { text: `\n`, style: 'subheader' },
+        { text: `Mètode de pagament: ${pressupostData.metodo_pago}`, style: 'subheader' },
         { text: '\n' },
         {
           table: {
@@ -1312,7 +332,7 @@ function mostrarEditorEmail(pressupostId) {
           }
         },
         { text: '\n' },
-        { text: `Total pressupost: ${pressupostData.total} €`, style: 'total' }
+        { text: `Total factura: ${pressupostData.total} €`, style: 'total' }
       ],
       styles: {
         header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 0, 0, 10] },
@@ -1322,37 +342,29 @@ function mostrarEditorEmail(pressupostId) {
     };
 
     pdfMake.createPdf(docDefinition).getDataUrl(pdfBase64 => {
-      // Preparar datos para enviar
-      const facturaData = {
-        id: pressupostData.id,
-        email: pressupostData.persona_email,
-        persona_nom: pressupostData.persona_nom,
-        total: pressupostData.total
-      };
-
-      fetch('/enviar_factura_email/', {
+      fetch('/enviar_pressupost_email/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken'),
         },
         body: JSON.stringify({
-          pdf: pdfBase64,
-          factura: facturaData,
-          missatge: missatge
+          pressupost: pressupostData,
+           
+          
+            clientEmail: clientEmailSelEdit,
+          missatge: missatge,
+          pdf: pdfBase64
         })
       })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         alert('Correu enviat correctament!');
         popup.style.display = 'none';
       })
       .catch(err => {
         console.error('Error al enviar:', err);
-        alert('Error enviant el correu: ' + err.message);
+        alert('Error enviant el correu.');
       });
     });
   };
@@ -1362,468 +374,22 @@ function mostrarEditorEmail(pressupostId) {
 }
 
 
-
-    document.addEventListener('DOMContentLoaded', (event) => {
-        function initializePagination(rowClass, prevBtnId, nextBtnId) {
-            const rows = document.querySelectorAll(rowClass);
-            const rowsPerPage = 5;
-            let currentPage = 0;
-            const totalPages = Math.ceil(rows.length / rowsPerPage);
-    
-            function showPage(page) {
-                const start = page * rowsPerPage;
-                const end = start + rowsPerPage;
-    
-                rows.forEach((row, index) => {
-                    if (index >= start && index < end) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-    
-                document.getElementById(prevBtnId).disabled = currentPage === 0;
-                document.getElementById(nextBtnId).disabled = currentPage === totalPages - 1;
-            }
-    
-            function changePage(direction) {
-                currentPage += direction;
-                showPage(currentPage);
-            }
-    
-            document.getElementById(prevBtnId).addEventListener('click', () => changePage(-1));
-            document.getElementById(nextBtnId).addEventListener('click', () => changePage(1));
-    
-            showPage(currentPage);
-        }
-    
-        initializePagination('.cliente-row0', 'prev-btn0', 'next-btn0');
-        initializePagination('.cliente-row2', 'prev-btn2', 'next-btn2');
-        initializePagination('.cliente-row', 'prev-btn', 'next-btn');
-    });
     
 
-    function ImportarProducteExistent(referencia, descripcio, preu){
-        updateTotalGeneral();
-        var taula = document.getElementById("taulaPressupostProductes");
-        console.log("WW");
-        // Crear una nueva fila al final de la tabla
-        var newRow = taula.insertRow(taula.rows.length - 1);
-    
-        // Crear y añadir celdas a la nueva fila
-        var cell1 = newRow.insertCell(0);
-        var cell2 = newRow.insertCell(1);
-        var cell3 = newRow.insertCell(2);
-        var cell4 = newRow.insertCell(3);
-        var cell5 = newRow.insertCell(4);
-    
-        // Rellenar las celdas con los datos pasados como parámetros
-        cell1.textContent = referencia;
-        cell1.id="referencia-producte-taula-pressupost";
-        cell2.textContent = descripcio;
-        cell3.textContent = preu;
-        
-        // Crear elementos para el input y el span
-        var inputQuantitat = document.createElement("input");
-        inputQuantitat.id = "input-quantitat-producte";
-        inputQuantitat.type = "number";
-        inputQuantitat.value = "1"; // Valor por defecto o inicial
-        
-        
-        
-        // Función para actualizar el span y el total cuando cambia el valor del input
-        inputQuantitat.addEventListener("input", function() {
-            var quantitat = parseInt(inputQuantitat.value); // Convertir el valor del input a entero
-            var preuUnitari = parseFloat(preu); // Convertir el precio a número decimal
-            var total = quantitat * preuUnitari; // Calcular el total
-            
-            // Mostrar el total en la celda5
-            cell5.textContent = total.toFixed(2); // Asegurar que el total tenga 2 decimales
-            calcularTotal();
-            calcularSumaProductes();
-        });
-        
-        // Añadir el input y el span a la celda correspondiente
-        
-        cell4.appendChild(inputQuantitat);
-        
-        // Mostrar el precio inicial en la celda5
-        cell5.textContent = parseFloat(preu).toFixed(2); // Mostrar el precio por unidad inicial
-    
-        cell5.className = "preu-total";
-        calcularTotal();
-        calcularSumaProductes();
-    }
-    
-    
-    
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    function PressupostCrearProducte1(){
-        var csrftoken = getCookie('csrftoken');
-
-        var nom=document.getElementById("nom-input-nou1").value;
-        var referencia=document.getElementById("referencia-input1").value;
-        var descripcio=document.getElementById("descripcio-input1").value;
-        var preu=document.getElementById("preu-input1").value;
-        var quantitat=document.getElementById("quantitat-input1").value;
-        var preuCompra=document.getElementById("preu-compra-input1").value;
-        console.log("aa" + nom +quantitat);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/crear_producte/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                var response = JSON.parse(xhr.responseText);
-        // Obtener el ID del producto
-                var productId = response.id;
-                console.log(productId+"sss");
-                ImportarProducteExistent(referencia, descripcio, preu);
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({ nom:nom, referencia:referencia, quantitat:quantitat, descripcio:descripcio, preu:preu,preuCompra:preuCompra }));
-        hideOverlay2();
-        
-        afegirUltimProducte();
-        
-    }
-
-
-    function PressupostCrearProducte(){
-        var csrftoken = getCookie('csrftoken');
-
-        var nom=document.getElementById("nom-input-nou").value;
-        var referencia=document.getElementById("referencia-input").value;
-        var descripcio=document.getElementById("descripcio-input").value;
-        var preu=document.getElementById("preu-input").value;
-        var quantitat=document.getElementById("quantitat-input").value;
-        var preuCompra=document.getElementById("preu-compra-input").value;
-        console.log("aa" + nom +quantitat);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/crear_producte/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                var response = JSON.parse(xhr.responseText);
-        // Obtener el ID del producto
-                var producteId = response.id;
-                console.log(producteId+"sss");
-                ImportarProducteExistentPressupost(producteId, nom, referencia,quantitat,descripcio,preu);
-                VeureUltimProductePressupost(producteId,nom, referencia,quantitat,descripcio,preu);
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send(JSON.stringify({ nom:nom, referencia:referencia, quantitat:quantitat, descripcio:descripcio, preu:preu,preuCompra:preuCompra }));
-        hideOverlay2();
-        
-        
-        
-    }
-
-  
-    
-    function importarProducteCreat(nom, referencia, quantitat, descripcio, preu){
-        var taula = document.getElementById("taulaPressupostProductes");
-    
-        // Crear una nueva fila al final de la tabla
-        var newRow = taula.insertRow(taula.rows.length - 1);
-    
-        // Crear y añadir celdas a la nueva fila
-        var cell1 = newRow.insertCell(0);
-        var cell2 = newRow.insertCell(1);
-        var cell3 = newRow.insertCell(2);
-        var cell4 = newRow.insertCell(3);
-        var cell5 = newRow.insertCell(4);
-    
-        // Rellenar las celdas con los datos pasados como parámetros
-        cell1.textContent = referencia;
-        cell1.id="referencia-producte-taula-pressupost";
-        cell2.textContent = descripcio;
-        cell3.textContent = preu;
-        
-        // Crear elementos para el input y el span
-        var inputQuantitat = document.createElement("input");
-        inputQuantitat.id = "input-quantitat-producte";
-        inputQuantitat.type = "number";
-        inputQuantitat.value = "1"; // Valor por defecto o inicial
-        
-        
-        
-        // Función para actualizar el span y el total cuando cambia el valor del input
-        inputQuantitat.addEventListener("input", function() {
-            var quantitat = parseInt(inputQuantitat.value); // Convertir el valor del input a entero
-            var preuUnitari = parseFloat(preu); // Convertir el precio a número decimal
-            var total = quantitat * preuUnitari; // Calcular el total
-            
-            // Mostrar el total en la celda5
-            cell5.textContent = total.toFixed(2); // Asegurar que el total tenga 2 decimales
-            calcularTotal();
-            calcularSumaProductes();
-        });
-        
-        // Añadir el input y el span a la celda correspondiente
-        
-        cell4.appendChild(inputQuantitat);
-        
-        // Mostrar el precio inicial en la celda5
-        cell5.textContent = parseFloat(preu).toFixed(2); // Mostrar el precio por unidad inicial
-    
-        cell5.className = "preu-total";
-        calcularTotal();
-        calcularSumaProductes();
-    }
-    
-
-    function calcularTotal() {
-        var total = 0;
-        var preusTotalElements = document.querySelectorAll("#taulaPressupostProductes .preu-total");
-        var totalPres=document.getElementById("sumTotal");
-        preusTotalElements.forEach(function(element) {
-            total += parseFloat(element.textContent);
-        });
-    
-        totalPres.textContent=total;
-    }
-
-    function calcularSumaProductes() {
-        var total = 0;
-        var quantitatProductesElements = document.querySelectorAll("#taulaPressupostProductes #input-quantitat-producte");
-        console.log(quantitatProductesElements)
-        var QuantitatProductes = document.getElementById("sumQuantitat");
-    
-        quantitatProductesElements.forEach(function(element) {
-            total += parseInt(element.value); // Asegurar que el valor sea numérico o cero si es vacío
-            // total += parseFloat(element.value); // Si los valores pueden ser decimales
-        });
-    
-        console.log(total);
-        QuantitatProductes.textContent = total;
-    }
-    
-
-
-    function actualitzarSumaQuantitatPreu(){
-        var sum = 0;
-       
-        var quantities = document.querySelectorAll('.cantidad');
-        quantities.forEach(function(cell) {
-            sum += parseFloat(cell.textContent) || 0;
-        });
-        document.getElementById('sumQuantitat').textContent = sum;
-
-        var total=0;
-        var preus = document.querySelectorAll('.preu');
-        preus.forEach(function(cell) {
-            total += parseFloat(cell.textContent) || 0;
-        });
-        document.getElementById('sumTotal').textContent = total;
-    }
-    function afegirUltimProducte(){
-        var csrftoken = getCookie('csrftoken');
-
-        console.log("ultimmm")
-        
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/afegir_ultim_producte/", true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-CSRFToken', csrftoken);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                console.log("Respuesta del servidor:", xhr.responseText);
-                var prod = JSON.parse(xhr.responseText);
-                    console.log("Respuesta del servidor:", prod,"ee");
-
-                    var taula = document.getElementById("taula_prod_presupost").getElementsByTagName('tbody')[0];
-                    var fila = taula.insertRow();
-                    var celda0 = fila.insertCell(0);
-                    var celda1 = fila.insertCell(1);
-                    var celda2 = fila.insertCell(2);
-                    var celda3 = fila.insertCell(3);
-                    var celda4 = fila.insertCell(4);
-                    var celda5 = fila.insertCell(5);
-                    var celda6 = fila.insertCell(6);
-                    celda0.textContent = prod.id;
-                    celda1.textContent = prod.nom;
-                    celda2.textContent = prod.referencia;
-                    celda3.textContent = prod.quantitat;
-                    celda4.textContent = prod.descripcio;
-                    celda5.textContent = prod.preu;
-                    console.log(prod.preu)
-                    celda6.innerHTML = '<button onclick="ImportarProducteExistent({{ prod.codigo }}, {{prod.descripcion}},{{prod.precio}})"><i class="fa-regular fa-pen-to-square"></i></button>';
-            } else {
-                console.error("Error en la solicitud:", xhr.statusText);
-            }
-        };
-        xhr.onerror = function () {
-            console.error("Error de red al enviar la solicitud.");
-        };
-        xhr.send();
-        
-
-    }
-    
-
-function showOverlay2() {
-
-    var overlay2 = document.getElementById("overlay2");
-    overlay2.style.display = "block";
-    console.log(overlay2)
-
-}
-
-function hideOverlay2() {
-
-    var overlay2 = document.getElementById("overlay2");
-    overlay2.style.display = "none";
-    
-    
-}
-
-function CrearNouPresupost(){
-    var clientId=document.getElementById("clientIdPressupost").innerHTML;
-    var descripcio=document.getElementById("DescripcioPressupost").value;
-    var total=document.getElementById("sumTotal").innerHTML;
-    var referenciesProd=document.querySelectorAll("#taulaPressupostProductes #referencia-producte-taula-pressupost");
-    var quantitatsProd=document.querySelectorAll("#input-quantitat-producte");
-
-    var diccionariProductes = {};
-    
-    
-    referenciesProd.forEach(function(element, index) {
-        let referencia = element.innerHTML;
-        let quantitat = quantitatsProd[index].value;
-        diccionariProductes[referencia] = quantitat;
-    });
-    
-    console.log(diccionariProductes);
-    var csrftoken = getCookie('csrftoken'); 
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/crear_nou_pressupost/", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('X-CSRFToken', csrftoken); // Include the CSRF token in the request header
-    xhr.onload = function () {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            console.log("Respuesta del servidor:", xhr.responseText);
-            window.location.reload();
-            
-        } else {
-            console.error("Error en la solicitud:", xhr.statusText);
-            alert("Falten dades per omplir. Revisa el client i els productes")
-        }
-    };
-    xhr.onerror = function () {
-        console.error("Error de red al enviar la solicitud.");
-    };
-    xhr.send(JSON.stringify({diccionariProductes:diccionariProductes, descripcio:descripcio,clientId:clientId,total:total}));
-   
-    
-
-}
 </script>
-<style>
-    /* styles.css */
 
-    .popup-container {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 10;
-        overflow-y: auto; /* Enable vertical scrolling if necessary */
-    }
-    #taula_prod_presupost{
-        margin-left:100px;
-    }
-    .popup-content {
-        position: relative;
-        top: 60%;
-        left: 50%;
-        
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        max-height: 80%; /* Limit the height of the content */
-        overflow-y: auto; /* Enable vertical scrolling for content */
-        width: 80%;
-        box-sizing: border-box; /* Ensure padding is included in the width */
-    }
-    
-    body {
-        font-family: Arial, sans-serif;
-    }
-    
-    #modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5); /* Fondo gris semitransparente */
-        display: none; /* Oculta el overlay al cargar la página */
-        justify-content: center;
-        align-items: center;
-        z-index: 1000; /* Asegura que esté encima de todo */
-    }
-    
-    #modal-panel {
-        width: 50%;
-        max-width: 600px;
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        text-align: center;
-    }
-    
-    .hidden {
-        display: none;
-    }
-    
-</style>
+<script>
+
+
+</script>
+
         
     </div>
-    <div id="popup" class="popup-container">
-        <div class="popup-content">
-            <!-- The content will be inserted here by JavaScript -->
-        </div>
-    </div>
+    
     
 </div>
+   {% include "buscar_cliente.html" %}
+     {% include "buscar_producto.html" %}
 
-</body>
-</html>
 
 {% endblock %}

@@ -1,0 +1,182 @@
+  {% extends "layouts/base.html" %}
+
+{% load static %}
+{% block content %}
+<script src="{% static 'js/mainBuscarProducto.js' %}"></script>
+<div class="buscar_productos" id="buscar_productos">
+    <div class="popup4">
+        <div class="izq">
+            <p>CREAR PRODUCTE: 2</p>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><label>NOM:</label></td>
+                        <td><input id="nom-input-nou" type="text"></td>
+                        </tr>
+                        <tr>
+                            <td><label>REFERENCIA:</label></td>
+                            <td><input id="referencia-input" type="text"></td>
+                            </tr>
+                            <tr>
+                         <td><label>DESCRIPCIO:</label></td>
+                                <td><input id="descripcio-input" type="text"></td>
+                                </tr>
+                                <tr>
+                                    <td><label>QUANTITAT:</label></td>
+                                    <td><input id="quantitat-input" type="number"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><label>PREU DISTRIBUIDOR:</label></td>
+                                        <td><input id="preu-compra-input" type="number"></td>
+                                        </tr>
+                                    <tr>
+                                        <td><label>PREU:</label></td>
+                                        <td><input id="preu-input" type="number"></td>
+                                        </tr>
+                                        
+                </tbody>
+            </table>
+            <button class="clientNou" onclick="PressupostCrearProducte()">Afegir i crear client</button>
+            
+            
+        </div>
+        <button class="boto-tancar-facturar" onclick="hideOverlay4()">Cancelar</button>
+        <div class="der">
+           <p><strong>BUSCAR PRODUCTE</strong></p>
+
+<input type="text" id="searchProducto" placeholder="Buscar producto...">
+
+<table id="taula_prod_presupost">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>NOM</th>
+            <th>CODI</th>
+            <th>QUANTITAT</th>
+            <th>DESCRIPCIÓ</th>
+            <th>PREU</th>
+            <th>ACCIONS</th>
+        </tr>
+    </thead>
+    <tbody id="tbody_prod">
+        <!-- Les files es generaran dinàmicament -->
+    </tbody>
+</table>
+<div id="paginationProducto"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("searchProducto");
+            const tbody = document.getElementById("tbody_prod");
+            const pagination = document.getElementById("paginationProducto");
+            let currentPage = 1;
+
+            function fetchProducto(page = 1) {
+                const texto = input.value.trim();
+                currentPage = page;
+
+                fetch("{% url 'buscar_producto' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: new URLSearchParams({ texto, page })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = "";
+
+                    if (data.productos && data.productos.length > 0) {
+                        data.productos.forEach(producto => {
+                        const fila = document.createElement("tr");
+                        console.log("Producto:", producto, producto.id, producto.nombre, producto.codigo, producto.cantidad, producto.descripcion, producto.precio);
+                        fila.id = `producto-${producto.id}`;           // Para tu 
+                        fila.innerHTML = `
+                            <td>${producto.id}</td>
+                            <td>${producto.nombre}</td>
+                            <td>${producto.codigo}</td>
+                            <td>${producto.cantidad}</td>
+                            <td>${producto.descripcion}</td>
+                            <td>${producto.precio}</td>
+                            
+                            <td>
+                            <button onclick="ImportarProducte(
+                                '${producto.id}', '${producto.nombre}', '${producto.codigo}',
+                                '${producto.cantidad ?? ''}', '${producto.descripcion}', '${producto.precio}'
+                            )">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                        </td>`;
+                        tbody.appendChild(fila);
+                        });
+
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align:center; font-style:italic;">
+                                    No se encontraron clientes
+                                </td>
+                            </tr>`;
+                    }
+
+                    renderPagination(data.page_info);
+                })
+                .catch(err => {
+                    console.error("Error al buscar clientes:", err);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align:center; color:red;">
+                                Error al buscar clientes
+                            </td>
+                        </tr>`;
+                    pagination.innerHTML = "";
+                });
+            }
+
+            function renderPagination({ current, total, has_prev, has_next }) {
+                pagination.innerHTML = "";
+
+                if (has_prev) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.textContent = "« Anterior";
+                    prevBtn.onclick = () => fetchProducto(current - 1);
+                    pagination.appendChild(prevBtn);
+                }
+
+                const info = document.createElement("span");
+                info.textContent = ` Página ${current} de ${total} `;
+                pagination.appendChild(info);
+
+                if (has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.textContent = "Siguiente »";
+                    nextBtn.onclick = () => fetchProducto(current + 1);
+                    pagination.appendChild(nextBtn);
+                }
+            }
+
+            fetchProducto();
+            input.addEventListener("input", () => fetchProducto(1));
+        });
+
+         // Función para ocultar el overlay
+        function hideOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "none";
+        }
+
+        // Función para mostrar el overlay
+        function showOverlay() {
+            var overlay = document.getElementById("overlay");
+            overlay.style.display = "block";
+        }
+
+ </script>
+ <style>
+    #buscar_productos{
+        z-index:9999;
+    }
+</style>
+
+ {% endblock %}

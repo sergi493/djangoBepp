@@ -2,9 +2,12 @@
 {% load static %}
 
 {% block content %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
+
+
+<style>
+
+</style>
 <div class="main-content">
    <h1>🧾 FACTURES</h1>
   <div class="products-section" id="barra-dies">
@@ -95,6 +98,43 @@
 </style>
 
 <script>
+  async function aplicarMetodoPago(facturaId) {
+    try {
+        // Obtener el método de pago seleccionado
+        const metodoPago = document.getElementById('paymentMethod').value;
+        console.log(metodoPago)
+        // Validar que se haya seleccionado un método
+        if (!metodoPago) {
+            alert('Por favor selecciona un método de pago');
+            return;
+        }
+
+        // Enviar los datos al servidor
+        const response = await fetch(`/actualizar_metodo_pago/${facturaId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrf_token')
+            },
+            body: JSON.stringify({
+                metodo_pago: metodoPago
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            alert('Método de pago actualizado correctamente');
+            // Actualizar la UI si es necesario
+            return data;
+        } else {
+            throw new Error('Error al actualizar el método de pago');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el método de pago: ' + error.message);
+    }
+}
+
   document.addEventListener('DOMContentLoaded', () => {
     const popup = document.getElementById('popup');
     const triggerButtons = document.querySelectorAll('.popup-trigger');
@@ -127,12 +167,13 @@
       `).join('');
       
       popup.innerHTML = `
-        <div class="popup-content">
+        <div class="popup-content" >
           <h2>Factura núm. ${data.id}</h2>
-          <p><strong>Procedència:</strong> ${data.procedencia}/ (ID: ${data.taula_id_procedencia})</p>
-          <p><strong>Data:</strong> ${formattedDate} - <strong>Hora:</strong> ${time}</p>
-          <p><strong>Client:</strong> ${data.persona_nombre} (ID: ${data.persona_id}) - ${data.telefon} - ${data.email}</p>
-
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <p><strong>Procedència:</strong> ${data.procedencia}/ (ID: ${data.taula_id_procedencia}) <br><strong>Data:</strong> ${formattedDate} - <br><strong>Hora:</strong> ${time}</p>
+        
+          <p><strong>Client:</strong> ${data.persona_nombre} (ID: ${data.persona_id}) <br>${data.telefon} <br> ${data.email}</p>
+</div>
           <label for="paymentMethod">Mètode de pagament:</label>
           <select id="paymentMethod">
             <option value="Tarjeta" ${data.metodo_pago === 'Targeta' ? 'selected' : ''}>Targeta</option>
@@ -152,17 +193,20 @@
             </thead>
             <tbody>${rows}</tbody>
           </table>
-
-          <h3>Total factura: <span id="total-valor">${data.total} €</h3>
-          <h3>IVA (21%): <span id="iva-valor"></span> €</h3>
+<div style="display: flex; justify-content: space-between;margin-left:30%;margin-right:15%; margin-bottom: 10px;">
+          <p>Base: <span id="base-valor"></span></p>
+           <p>IVA (21%): <span id="iva-valor"></span> €</p>
+          <p>Total factura: <span id="total-valor">${data.total} €</p>
+          </div>
+         
          
           
-          <h3>Base<span id="base-valor"></span></h3>
+          
 
           <div class="popup-buttons">
             <button id="descarregarFactura" class="blue-button">Descarregar</button>
             <button class="red-button" onclick="reembolsarFactura(${data.id})">Reemborsar</button>
-            <button class="green-button">Aplicar</button>
+            <button onclick="aplicarMetodoPago( ${data.id} )" class="green-button">Aplicar</button>
            <button class="green-button" onclick="mostrarEditorEmail(${data.id})">Enviar per mail</button>
 
             <button class="close-popup">Tancar</button>
@@ -196,6 +240,7 @@
     const cookie = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
     return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
   }
+
 
   function reembolsarFactura(id) {
     const csrftoken = getCookie('csrftoken');
@@ -358,4 +403,7 @@ function mostrarEditorEmail(facturaId) {
   
 
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 {% endblock %}
