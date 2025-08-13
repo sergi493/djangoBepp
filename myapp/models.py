@@ -8,9 +8,20 @@ class Producto(models.Model):
     cantidad= models.IntegerField()
     descripcion= models.CharField(max_length=300,default='')
     precio= models.DecimalField(max_digits=10, decimal_places=2)
-    imagen = models.ImageField(upload_to='imagenes/')
+    
     preu_distribuidor=models.DecimalField(max_digits=10, decimal_places=2,default=1)
     marge=models.DecimalField(max_digits=10, decimal_places=2,default=1)
+    imagen = models.ImageField(upload_to='imagenes/')
+
+    # Guarda la ruta/nom (opcional, es pot usar file.name directament)
+    path = models.CharField(max_length=500, blank=True)
+    data_creacio = models.DateTimeField(auto_now_add=True)
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # un cop guardat, assegurem la ruta al camp path
+        if self.imagen:
+            self.path = self.imagen.name
+            super().save(update_fields=['path'])
     def __str__(self):
         return self.nombre+ " - " + self.codigo + " - " + str(self.cantidad) + " - " + str(self.precio) + "€"
 def validate_not_zero(value):
@@ -66,6 +77,7 @@ class Facturas(models.Model):
     abono=models.CharField(max_length=10, default=" ")
     procedencia=models.CharField(max_length=30, default=" ")
     taula_id_procedencia=models.IntegerField(default=0)
+    
 class ProductoEnFactura(models.Model):
     factura_id = models.ForeignKey(Facturas, on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
@@ -127,7 +139,7 @@ class ProducteEnReparacio(models.Model):
 class Persona(models.Model):
     nombre=models.CharField(max_length=200, default=" ")
     localidad= models.CharField(max_length=200)
-    calle=models.CharField(max_length=200)
+   
     nif=models.CharField(max_length=200)
     telefono=models.IntegerField()
     email=models.EmailField(blank=True)

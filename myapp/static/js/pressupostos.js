@@ -70,6 +70,13 @@ function esborrarDePressupost(producte_id, pressupost_id){
     }
     
  
+   
+
+    function showOverlay3(){
+        var overlay = document.getElementById("buscar_productos");
+        overlay.style.display = "block";
+    }
+
     function aplicarPressupost(id_pressupost) {
       
     const csrftoken = getCookie('csrftoken');
@@ -130,15 +137,8 @@ console.log("Productes recollits:", productes);
     }));
 }
 
-   
-
-    function showOverlay3(){
-        var overlay = document.getElementById("buscar_productos");
-        overlay.style.display = "block";
-    }
-
     function facturarPressupost(id){
-
+        aplicarPressupost(id);
         var csrftoken = getCookie('csrftoken');
 
         var xhr = new XMLHttpRequest();
@@ -262,90 +262,120 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-function genPressupost() {
-  // 1️⃣ Recogemos datos del presupuesto
+
+
+async function genPressupost() {
   const id = document.getElementById('pressupost_id_obtenir').textContent.trim();
-  const dateText = document.querySelector('#date h4').textContent;
+  const dateText = document.querySelector('#data').textContent;
   const clienteId = document.getElementById('clientIdSelEdit').textContent;
   const clienteNom = document.getElementById('clientNomSelEdit').textContent;
-  // 2️⃣ Recogemos líneas de productos
+
   const rows = Array.from(
-  document.querySelectorAll('.taula-productes-pressupost tbody tr')
-).filter(row => row.offsetParent !== null);
+    document.querySelectorAll('.taula-productes-pressupost tbody tr')
+  ).filter(row => row.offsetParent !== null);
+
   let baseTotal = 0;
-  const body = [];
-  rows.forEach(row => {
+  const productos = rows.map(row => {
     const ref = row.querySelector('td:first-child').textContent;
     const nom = row.children[1].textContent;
     const qty = parseInt(row.querySelector('.producte-input-quantitat').value, 10);
     const unit = parseFloat(row.querySelector('.producte-preu-unitat').textContent);
     const total = (unit * qty).toFixed(2);
     baseTotal += parseFloat(total);
-    body.push([
-      { text: ref, alignment: 'left' },
-      { text: nom, alignment: 'left' },
-      { text: `${qty}`, alignment: 'center' },
-      { text: `${unit.toFixed(2)} €`, alignment: 'right' },
-      { text: `${total} €`, alignment: 'right' }
-    ]);
+    return {
+      producto_id: ref,
+      nombre: nom,
+      preu: unit.toFixed(2),
+      cantidad: qty,
+      total: total
+    };
   });
-  // 3️⃣ Montamos el documento
+
+  const base64Logo = await getBase64ImageFromUrl('/static/media/imagenes/beep.png');
+
   const docDefinition = {
-    pageSize: 'A4',
     content: [
-      { text: `PRESUPOST núm. ${id}`, style: 'header' },
-      `Data: ${dateText}`,
-      { text: 'Cliente:', style: 'subheader' },
-      `ID: ${clienteId} — Nombre: ${clienteNom}`,
+      // Encabezado con logo e info
+      {
+        columns: [
+          {
+            width: 'auto',
+            stack: [
+              { image: base64Logo, width: 80 },
+              { text: 'Beep Informàtica', style: 'title', margin: [0, 10, 0, 2] },
+              { text: 'C/ Exemple, 123', style: 'companyInfo' },
+              { text: '43736 El Masroig, Tarragona', style: 'companyInfo' },
+              { text: 'Tel: 977 123 456', style: 'companyInfo' },
+              { text: 'Email: beep@beep.com', style: 'companyInfo' },
+              { text: 'CIF: B12345678', style: 'companyInfo' }
+            ]
+          },
+          {
+            width: '*',
+            stack: [
+              { text: `Pressupost núm. ${id}`, style: 'header', alignment: 'right' },
+              { text: `Data: ${dateText}`, style: 'subheader', alignment: 'right' },
+              { text: `Client: ${clienteNom}`, style: 'subheader', margin: [0, 10, 0, 2], alignment: 'right' },
+              { text: `Número client: ${clienteId}`, style: 'subheader', alignment: 'right' }
+            ]
+          }
+        ]
+      },
+
+      { text: '\n' },
+
+      // Tabla de productos
       {
         table: {
           headerRows: 1,
           widths: ['auto', '*', 'auto', 'auto', 'auto'],
           body: [
             [
-              { text: 'Ref.', bold: true },
-              { text: 'Descripción', bold: true },
-              { text: 'Cant.', bold: true },
-              { text: 'P.U.', bold: true },
-              { text: 'Total', bold: true }
+              { text: 'Ref.', style: 'tableHeader' },
+              { text: 'Descripció', style: 'tableHeader' },
+              { text: 'Quantitat', style: 'tableHeader' },
+              { text: 'P.U.', style: 'tableHeader' },
+              { text: 'Total', style: 'tableHeader' }
             ],
-            ...body
+            ...productos.map(p => [
+              p.producto_id,
+              p.nombre,
+              { text: `${p.cantidad}`, alignment: 'center' },
+              { text: `${p.preu} €`, alignment: 'right' },
+              { text: `${p.total} €`, alignment: 'right' }
+            ])
+          ]
+        },
+        layout: 'lightHorizontalLines'
+      }
+    ],
+
+    footer: (currentPage, pageCount) => {
+      return {
+        table: {
+          widths: ['*', 'auto'],
+          body: [
+            [
+              { text: 'Total Pressupostat:', bold: true, fontSize: 14 },
+              { text: `${baseTotal.toFixed(2)} €`, bold: true, fontSize: 14, alignment: 'right' }
+            ]
           ]
         },
         layout: 'lightHorizontalLines',
-        margin: [0, 20, 0, 20]
-      },
-      {
-        columns: [
-          { width: '*', text: '' },
-          {
-            width: 'auto',
-            table: {
-              body: [
-                [
-                  { text: 'Total presupuestado:', bold: true },
-                  { text: `${baseTotal.toFixed(2)} €`, bold: true, alignment: 'right' }
-                ]
-              ]
-            },
-            layout: 'noBorders'
-          }
-        ]
-      }
-    ],
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] }
+        margin: [300, -50, 40, 0]
+      };
     },
-    footer: () => ({
-      text: 'Documento generado automáticamente. ¡Gracias por confiar en nosotros!',
-      alignment: 'center',
-      margin: [0, 20, 0, 0],
-      italics: true
-    })
+
+    styles: {
+      title: { fontSize: 20, bold: true, color: '#0056A3' },
+      companyInfo: { fontSize: 10, color: '#555' },
+      header: { fontSize: 16, bold: true, color: '#0056A3' },
+      subheader: { fontSize: 11, margin: [0, 2, 0, 2] },
+      tableHeader: { bold: true, fontSize: 12, fillColor: '#E0E0E0', alignment: 'center' }
+    }
   };
-  // 4️⃣ Disparo la descarga
-  pdfMake.createPdf(docDefinition).download(`Presupost_${id}.pdf`);
+
+  pdfMake.createPdf(docDefinition).download(`Pressupost_${id}.pdf`);
 }
 
 

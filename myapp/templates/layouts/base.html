@@ -8,6 +8,7 @@
     <link rel="icon" href="{% static 'media/imagenes/esaip.png' %}">
     <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{% static 'styles/main.css' %}">
+    <script src="{% static 'js/general.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.72/vfs_fonts.js"></script>
     <style>
@@ -142,7 +143,7 @@
         /* Ajuste del contenido principal */
         main {
             margin-top: 80px; /* Espacio para la navbar */
-            padding: 20px;
+          
         }
         
         /* Scrollbar personalizada para navegadores WebKit */
@@ -167,7 +168,7 @@
 
     <nav id="navbar">
         <ul>
-            <li class="{% if request.path == '/ayuda/' %}nav-seleccion{% endif %}"><a href="/ayuda/" title="Ayuda"><i class="fa-solid fa-shop"></i><p>AYUDA</p></a></li>
+            
             <li class="{% if request.path == '/vender/' %}nav-seleccion{% endif %}"><a href="/vender/" title="Ir al Punto de Venta"><i class="fa-solid fa-shop"></i><p>Punto de venta</p></a></li>
             <li class="{% if request.path == '/facturas/' %}nav-seleccion{% endif %}"><a href="/facturas/"  title="Ir a Facturas"><i class="fa-solid fa-file-invoice-dollar"></i><p>Facturas</p></a></li>
             <li class="{% if request.path == '/tickets/' %}nav-seleccion{% endif %}"><a href="/tickets/" title="Ir a Tickets"><i class="fa-solid fa-receipt"></i><p>Tickets</p></a></li>
@@ -210,14 +211,7 @@
         });
         
         // Ajustar el margen superior del main según la altura de la navbar
-        window.addEventListener('DOMContentLoaded', function() {
-            const navbar = document.getElementById('navbar');
-            const main = document.querySelector('main');
-            if (navbar && main) {
-                const navbarHeight = navbar.offsetHeight;
-                main.style.marginTop = navbarHeight + 'px';
-            }
-        });
+       
     </script>
 </body>
 </html>

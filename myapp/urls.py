@@ -41,6 +41,8 @@ urlpatterns = [
     
 
    path('obtenir_factura_compra/<int:facturaReferencia>/', views.obtenir_factura_compra, name='obtenir_factura_compra'),
+   
+   path('eliminar_pedido/', views.eliminar_pedido, name='eliminar_pedido'),
     
     
 

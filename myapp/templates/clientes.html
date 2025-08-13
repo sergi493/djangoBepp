@@ -94,26 +94,11 @@
                     <th>NIF</th>
                     <th>Telefon</th>
                     <th>Email</th>
-                    <th>Acció</th>
+                    <th>Acció88</th>
                 </tr>
             </thead>
             <tbody id="tbody-clientes">
-                {% for pers in persona %}
-                <tr>
-                    <td>{{ pers.id }}</td>
-                    <td>{{ pers.nombre }}</td>
-                    <td>{{ pers.localidad }}</td>
-                    <td>{{ pers.calle }}</td>
-                    <td>{{ pers.nif }}</td>
-                    <td>{{ pers.telefono }}</td>
-                    <td>{{ pers.email }}</td>
-                    <td>
-                        <button class="popup-trigger" data-client-id="{{ pers.id }}">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
+                
             </tbody>
         </table>
         
@@ -409,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <td>${p.id}</td>
                                 <td>${p.nombre}</td>
                                 <td>${p.localidad}</td>
-                                <td>${p.calle}</td>
+                                <td>${p.direccion}</td>
                                 <td>${p.nif}</td>
                                 <td>${p.telefono}</td>
                                 <td>${p.email}</td>

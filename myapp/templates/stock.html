@@ -479,43 +479,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 📦 Construcción del contenido del popup
             popup.innerHTML = `
-                <div style="text-align:center;" class="popup-content">
+                <div id="modal-overlay" style="display:flex;">
+                    <div id="modal-panel" class="popup-content">
                     <p><strong>PRODUCTE:</strong> <span id="referencia">${producto_id}</span></p>
-                    <img id="imatge_producte" src="${imatge}" alt="Imatge Producte" />
+                    <img id="imatge_producte" src="${imatge}" alt="Imatge Producte {{ imatge }}" />
+                    <table>
+                    <thead>
+                    <tr>
+                                    <th>LABELS</th>
+                                    <th>INPUTS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                 <td><label>Referència</label></td>
+                   
+                        <td><input id="referencia-modificat" value="${producto_id}"> </td>
+                    </tr>
+                    <tr>
 
-                    <div>
-                        <label><strong>REFERÈNCIA:</strong></label>
-                        <input id="referencia-modificat" value="${producto_id}" />
-                    </div>
+                        <td><label><strong>NOM:</strong></label></td>
+                        <td><input id="nom-modificat" value="${nombre}"> </td>
+                   </tr>
+                   <tr>
 
-                    <div>
-                        <label><strong>NOM:</strong></label>
-                        <input id="nom-modificat" value="${nombre}" />
-                    </div>
+                   
+                        <td><label><strong>QUANTITAT:</strong></label></td>
+                        <td><input id="quantitat-modificat" type="number" value="${cantidad}"> </td>
+                    </tr>
 
-                    <div>
-                        <label><strong>QUANTITAT:</strong></label>
-                        <input id="quantitat-modificat" type="number" value="${cantidad}" />
-                    </div>
+                    <tr>
+                        <td><label><strong>PREU VENDA:</strong></label></td>
+                        <td><input id="preu-modificat" oninput="calcularMargen()" type="number" value="${preu}"> </td>
+                    </tr>
 
-                    <div>
-                        <label><strong>PREU VENDA:</strong></label>
-                        <input id="preu-modificat" oninput="calcularMargen()" type="number" value="${preu}" />
-                    </div>
+                    <tr>
+                        <td><label><strong>PREU COMPRA:</strong></label></td>
+                        <td><input id="preu-compra-modificat" oninput="calcularMargen()" type="number" value="${preu_distribuidor}"> </td>
+                    </tr>
 
-                    <div>
-                        <label><strong>PREU COMPRA:</strong></label>
-                        <input id="preu-compra-modificat" oninput="calcularMargen()" type="number" value="${preu_distribuidor}" />
-                    </div>
-
-                    <div>
-                        <label><strong>IMATGE:</strong></label>
-                        <input id="fileInput" type="file" accept="image/*" />
+                    <tr>
+                        <td><label><strong>IMATGE:</strong></label></td>
+                        <td><input id="fileInput" type="file" accept="image/*" /></td>
                         <p id="filePath"></p>
-                    </div>
-
+                    </tr>
+</tbody>
+</table>
                     <p><strong>Marge:</strong> <span id="marge-diferencia"></span>%</p>
-
+                
                     <div class="popup-buttons">
                         <button id="apply-btn" class="green-button"><u>Aplicar</u></button>
                         <button id="close-popup" class="close-popup">Cancelar</button>

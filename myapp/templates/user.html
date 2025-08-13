@@ -19,6 +19,8 @@
         <p>Fecha de creación: {{ user.date_joined }}</p>
         <p>Es admin?: {{user.is_staff}} </p>
         {% if user.is_staff %}
+
+        <button id="boto-ajuda" class="{% if request.path == '/ayuda/' %}nav-seleccion{% endif %}"><a href="/ayuda/" title="Ayuda"><i class="fa-solid fa-shop"></i><p>AYUDA</p></a></button>
         <div>
             <form method="POST">
         <h1 id="h1-crear-signup">CREAR</h1>
@@ -216,5 +218,11 @@ console.log("Datos a enviar:", {
     </div>
 
 </body>
+<style>
+    #boto-ajuda{
+        background-color:black;
+
+    }
+</style>
 </html>
         {% endblock %}

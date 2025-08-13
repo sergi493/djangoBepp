@@ -184,8 +184,8 @@ function mostrarPressupost(pressupostId) {
                 <div class="popup-content">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                         <div>
-                            <h2>PRESSUPOST núm. ${data.id}</h2>
-                            <p><strong>Data:</strong> ${formattedDate} - <strong>Hora:</strong> ${time}</p>
+                            <h2>PRESSUPOST núm. <span id="pressupost_id_obtenir"> ${data.id}</span></h2>
+                            <p><strong>Data:</strong> <span id="data"> ${formattedDate}</span> - <strong>Hora:</strong> ${time}</p>
                             <p>${data.facturat ? 'Facturat: ' + data.facturat : ''}</p>
                         </div>
                         <div>
@@ -202,6 +202,9 @@ function mostrarPressupost(pressupostId) {
                     <select id="paymentMethod">
                         <option value="Tarjeta" ${data.metodo_pago === 'Tarjeta' ? 'selected' : ''}>Targeta</option>
                         <option value="Efectivo" ${data.metodo_pago === 'Efectivo' ? 'selected' : ''}>Efectiu</option>
+                        <option value="Transferencia" ${data.metodo_pago === 'Transferencia' ? 'selected' : ''}>Transferencia</option>
+                        <option value="Xec bancari" ${data.metodo_pago === 'Xec bancari' ? 'selected' : ''}>Xec bancari</option>
+                        <option value="Domiciliació" ${data.metodo_pago === 'Domiciliació' ? 'selected' : ''}>Domiciliació</option>
                     </select>
 
                     <div>
@@ -269,6 +272,7 @@ function mostrarPressupost(pressupostId) {
 }
    
 function mostrarEditorEmail(pressupostId) {
+  aplicarPressupost(pressupostId);
   let clientIdSelEdit = document.getElementById('clientIdSelEdit').textContent;
   let clientNomSelEdit = document.getElementById('clientNomSelEdit').textContent
   let clientNifSelEdit = document.getElementById('clientNifSelEdit').textContent;

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse,JsonResponse
 # Create your views here.
 #from .models import Project, Task
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.core.mail import EmailMessage
 from itertools import chain
 from django.core.paginator import Paginator
@@ -243,7 +244,7 @@ def buscar_persona(request):
     # 6. Convertimos a lista JSON‑serializable
     personas = list(
         page_obj.object_list.values(
-            'id','nombre','localidad','calle','nif','telefono','email'
+            'id','nombre','localidad','direccion','nif','telefono','email','comp_banc'
         )
     )
 
@@ -262,51 +263,46 @@ def buscar_persona(request):
 
 @login_required
 def tickets(request):
-    tickets = Ticket.objects.all()
+    data_inici = request.GET.get('data_inicio')
+    data_fi = request.GET.get('data_fi')
+    
+    
+    tickets_queryset = Ticket.objects.all().order_by('-date')
     persona=Persona.objects.all()
     numeros_abono = []
-    for ticket in tickets:
+    for ticket in tickets_queryset:
         if ticket.abono:
             try:
                 numero_entero = int(ticket.abono)
                 numeros_abono.append(numero_entero)
             except ValueError:
                 continue
-                
-    if request.method == 'POST':
-        for ticket in tickets:
-            cantidad_real = request.POST.get('cantidad_real_' + str(ticket.id))
-            if cantidad_real:
-                print(f"ID del Ticket: {ticket.id}, Cantidad Real: {cantidad_real}")
-                ticket.total = cantidad_real
-                ticket.save()
-                print("Cantidad actualizada")
-            else:
-                print("No se recibió la cantidad real")
-
-
-
-    ticket_queryset = Ticket.objects.all().order_by('-date')
-
+    # Filtrar por búsqueda: buscar todas las personas que coinciden
+  
+    # Filtrar por fechas
+    if data_inici and data_fi:
+        try:
+            data_inici_obj = datetime.strptime(data_inici, "%Y-%m-%d")
+            data_fi_obj = datetime.strptime(data_fi, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            tickets_queryset = tickets_queryset.filter(date__range=(data_inici_obj, data_fi_obj))
+        except ValueError:
+            pass
 
     # Paginación
     page_number = request.GET.get('page', 1)
-    paginator = Paginator(ticket_queryset, 8)
+    paginator = Paginator(tickets_queryset, 8)
     page = paginator.get_page(page_number)
 
-   
-
-   # return render(request, "facturas.html", {
-        #"facturas": page,
-        #"data_inicio": data_inici or '',
-        #"data_fi": data_fi or '',
-        #"search": search or ''
-   # })
-
+    # Reemplazar persona_id por nombre
     
-    return render(request, "tickets.html", {'tickets': page,'persona':persona,'numeros_abono':numeros_abono})
 
-
+    return render(request, "tickets.html", {
+        "tickets": page,
+        "data_inicio": data_inici or '',
+        "data_fi": data_fi or '','persona':persona,
+        'numeros_abono':numeros_abono
+        
+    })
 
 
 @login_required
@@ -328,6 +324,7 @@ def facturar_ticket(request):
             ultimo_ticket = Ticket.objects.latest('id').id
             ticket.abono=ultimo_ticket +1
             ticket.save()
+            
             productos_en_ticket = ProductoEnTicket.objects.filter(ticket_id=ticket)
             productos_y_cantidades = productos_en_ticket.values('producto', 'cantidad')
             print("aa",productos_en_ticket)
@@ -336,7 +333,9 @@ def facturar_ticket(request):
                     date=datetime.now(),
                     total=total,
                     persona_id=idClient,
-                    numero=0
+                    numero=0,
+                    procedencia = "Ticket",
+                    taula_id_procedencia =idTicket
             )
             factura.save()
             total=total*(-1)
@@ -685,7 +684,7 @@ def guardar_cliente(request):
             nombre = data.get('nom')  
             dni = data.get('nif')
             direccion= data.get('direccio')
-            localitat= data.get("localitat")
+            localitat= data.get('localitat')
             email= data.get('email')
             telefono= data.get('telefon') 
             comp_banc= data.get('banc')
@@ -740,6 +739,8 @@ def guardar_factura(request):
             data = json.loads(request.body)
             total = data.get('totalText')  # Use .get() method to safely retrieve the total
             num_Cli=data.get("num_Cli")
+            pagament=data.get("metodePagament")
+            print(total)
             
             print("Número de cliente recibido:", num_Cli)
             print("Total recibido:", total)  # Add this debug log
@@ -751,6 +752,7 @@ def guardar_factura(request):
                     persona_id=num_Cli,
                     numero=0,
                     procedencia="Venta",
+                    metodo_pago=pagament
                 )
                 factura.save()
                 return JsonResponse({'message': 'Fac guardado correctamente.'})
@@ -806,51 +808,53 @@ def reembolsar_ticket(request):
         return JsonResponse({'error': 'Método no permitido.'}, status=405)
     
 def reembolsar_factura(request):
-    if request.method=="POST":
-        data=json.loads(request.body)
-        id=data.get("id")
-        
-        factura=Facturas.objects.get(id=id)
-        print(factura)
-        factura_base = get_object_or_404(Facturas, id=id)
-        ultima_factura = Facturas.objects.latest('id').id
-        factura_base.abono=ultima_factura +1
-        factura_base.save()
-        reembolso=Facturas.objects.create(
-            persona_id=factura.persona_id,
-            date=datetime.now(),
-            total=factura.total*(-1),
-            metodo_pago=factura.metodo_pago,
-            abono=factura.id,
-            
-            
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    data = json.loads(request.body)
+    factura = get_object_or_404(Facturas, id=data.get('id'))
+
+    # Si ya tiene abono, salimos con error
+    if factura.abono !=" ":
+        print("yaaa remb",factura.abono)
+        return JsonResponse(
+            {'error': 'Esta factura ya ha sido reembolsada.','abono': factura.abono},
+            status=400
         )
-        reembolso.save()
-        
-        
-        productos_en_factura = ProductoEnFactura.objects.filter(factura_id=factura_base)
-        
-        print("aaa",productos_en_factura)
-        productos_y_cantidades = productos_en_factura.values('producto', 'cantidad')
-        print("sss",productos_y_cantidades)
-        for item in productos_en_factura:
-            cantidad=item.cantidad*(-1)
-            Productoenfactura= ProductoEnFactura.objects.create(
-                    factura_id_id=reembolso.id,
-                    producto_id=item.producto_id,
-                    cantidad=cantidad,
-                    preu_venut=item.preu_venut*(-1),
-                    preu_distribuidor=item.preu_distribuidor*(-1)
-            )
-            Productoenfactura.save()
-            
-            producto = Producto.objects.get(id=item.producto_id)
-            producto.cantidad+=int(cantidad)
-            print("nnnn",producto.cantidad) 
-            producto.save()  
-        return JsonResponse({'message': 'Fac guardado correctamente.'})
-    else:
-        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+    # Marcamos en la original su número de abono
+    ultima_id = Facturas.objects.latest('id').id
+    factura.abono = ultima_id + 1
+    factura.save()
+
+    # Creamos la factura de reembolso
+    reembolso = Facturas.objects.create(
+        persona_id=factura.persona_id,
+        date=datetime.now(),
+        total=-factura.total,
+        metodo_pago=factura.metodo_pago,
+        abono=factura.id,
+        procedencia="reembolso",
+        taula_id_procedencia=factura.id
+    )
+    print("en curso")
+    # Clonamos líneas y devolvemos stock
+    items = ProductoEnFactura.objects.filter(factura_id=factura)
+    for item in items:
+        cantidad_neg = -item.cantidad
+        ProductoEnFactura.objects.create(
+            factura_id_id=reembolso.id,
+            producto_id=item.producto_id,
+            cantidad=cantidad_neg,
+            preu_venut=-item.preu_venut,
+            preu_distribuidor=-item.preu_distribuidor
+        )
+        prod = Producto.objects.get(id=item.producto_id)
+        prod.cantidad += cantidad_neg
+        prod.save()
+
+    return JsonResponse({'message': 'Factura reembolsada correctamente.'})
+
 def obtenir_pressupost(request, pressupostId):
     pressupost = Pressupost.objects.get(id=pressupostId)
     
@@ -1023,6 +1027,7 @@ def aplicar_rebre_factura_compra(request):
 def aplicar_factura_compra(request):
     data=json.loads(request.body)
     data=data.get("data")
+    
     print(data)
    
     
@@ -1034,6 +1039,7 @@ def aplicar_factura_compra(request):
         print(data["id"])
         modificar_pedido=Pedidos.objects.get(factura_compra=data["id"])
         modificar_pedido.quantitat=quantitat
+        
         modificar_pedido.save()
         producte_modificat=Producto.objects.get(id=prod_id)
         producte_modificat.quantitat=producte_modificat.cantidad + int(quantitat)
@@ -1069,7 +1075,8 @@ def obtenir_factura_compra(request, facturaReferencia):
         })
     total_factura = sum(item['total'] for item in productos_y_cantidades)
     data = {
-        'id': factura.referencia_factura,
+        'id': factura.id,
+        'referencia':factura.referencia_factura,
         'date': factura.data,
         'total': total_factura,
         'productos': productos_y_cantidades,
@@ -1286,29 +1293,37 @@ def ficar_factura_pedido(request):
     total_dist=data.get("totalDistribuidor")
     total_venda=data.get("totalVenda")
     producte_pedido_id=data.get("producteId")
+  
     print(factura,producte_pedido_id)
+    
+    if not FacturaCompra.objects.filter(referencia_factura=factura).exists():
+        # Crear una nueva factura si no existe
+        factura_compra = FacturaCompra.objects.create(
+            referencia_factura=factura,
+            data=datetime.now(),
+            total=total_dist
+        )
+        factura_compra.save()
+        
+        
+    else:
+        factura_compra = FacturaCompra.objects.get(referencia_factura=factura)
+        factura_compra.total+=Decimal(total_dist)
+        
     
     
     
     pedido_producte=Pedidos.objects.get(id=producte_pedido_id)
     pedido_producte.factura_compra=factura
+    pedido_producte.factura_compra_id_id = factura_compra.id
+   
     pedido_producte.save()
     producte=Producto.objects.get(id=pedido_producte.producto_id_id)
     producte.precio=total_venda
     producte.preu_distribuidor=total_dist
     producte.save()
     
-    if not FacturaCompra.objects.filter(referencia_factura=factura).exists():
-        # Crear una nueva factura si no existe
-        nova_factura_compra = FacturaCompra.objects.create(
-            referencia_factura=factura,
-            data=datetime.now(),
-            total=total_dist
-        )
-        nova_factura_compra.save()
-    else:
-        factura_compra = FacturaCompra.objects.get(referencia_factura=factura)
-        factura_compra.total+=total_dist
+   
     return HttpResponse("QQ")
 
 @login_required
@@ -1492,7 +1507,7 @@ def hoy(request):
     # Renderiza la plantilla pasando las facturas como contexto
     return render(request, "hoy.html", { "caixes": page,'obertura_efectiu':calaix_per_obrir,'factures': fact_y_tickets,'total':total,'marge':marge,'marge_benefici':marge_benefici,'preu_efectiu':preu_efectiu,'preu_targeta':preu_targeta,'efectiu_calaix':efectiu_calaix})
 
-
+@login_required
 def presupostos(request):
     data_inici = request.GET.get('data_inicio')
     data_fi = request.GET.get('data_fi')
@@ -1518,7 +1533,7 @@ def presupostos(request):
 
     # Paginación
     page_number = request.GET.get('page', 1)
-    paginator = Paginator(pressupostos, 8)
+    paginator = Paginator(pressupostos, 3)
     page = paginator.get_page(page_number)
 
     # Reemplazar persona_id por nombre
@@ -1537,6 +1552,26 @@ def presupostos(request):
         "search": search or '',
         "persona":personas
     })
+
+
+@login_required
+def eliminar_pedido(request):
+    data = json.loads(request.body)
+    fact_id = data.get("id")
+    try:
+        factura = FacturaCompra.objects.get(pk=fact_id)
+
+        # Consigue TODOS los pedidos (aunque sean 0) y los borras de golpe
+        pedidos_qs = Pedidos.objects.filter(factura_compra_id=factura.id)
+        pedidos_qs.delete()
+
+        # Ahora borras la factura
+        factura.delete()
+
+        return JsonResponse({"success": True})
+    except FacturaCompra.DoesNotExist:
+        return JsonResponse({"error": "Factura no encontrada"}, status=404)
+
 
 
 @login_required
@@ -1746,11 +1781,20 @@ def ayuda(request):
 def actualizar_metodo_pago(request, factura_id):
     if request.method == 'POST':
         try:
-            factura = Facturas.objects.get(id=factura_id)
             data = json.loads(request.body)
-            factura.metodo_pago = data.get('metodo_pago')
-            factura.save()
-            return JsonResponse({'status': 'success', 'metodo_pago': factura.metodo_pago})
+            elem = data.get('elem')
+            if elem == "factura":
+                factura = Facturas.objects.get(id=factura_id)
+                
+                factura.metodo_pago = data.get('metodo_pago')
+                
+                factura.save()
+                return JsonResponse({'status': 'success', 'metodo_pago': factura.metodo_pago})
+            if elem == "ticket":
+                ticket = Ticket.objects.get(id=factura_id)
+                ticket.metodo_pago = data.get('metodo_pago')
+                ticket.save()
+                return JsonResponse({'status': 'success', 'metodo_pago': ticket.metodo_pago})
         except Facturas.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Factura no encontrada'}, status=404)
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
@@ -1838,7 +1882,7 @@ def client_datos(request, clientId):
              "client_id":client.id,
              "client_nom":client.nombre,
              "client_localitat":client.localidad,
-             "client_carrer":client.calle,
+             "client_carrer":client.direccion,
              "client_nif":client.nif,
              "client_telefon":client.telefono,
              "client_email":client.email,
@@ -1880,6 +1924,8 @@ def modificar_producte(request):
         preu = data.get('preu')
         preuCompra = data.get('preuCompra')
         nom = data.get('nom')
+        imatge = data.get('imatge')
+        print(imatge)
         print("qqq",producte)
         base_dades_producte = Producto.objects.get(codigo=producte)
         
@@ -2203,11 +2249,11 @@ def enviar_factura_email(request):
         import json
 
         data = json.loads(request.body)
-
+        print(data)
         pdf_base64 = data.get('pdf')
         factura = data.get('factura')
-        missatge = data.get('mensaje')
-        mail = data.get('clientEmail')
+        missatge = data.get('missatge')
+        mail = factura.get('email')
 
         if not pdf_base64 or not factura:
             return JsonResponse({'error': 'Falten dades'}, status=400)

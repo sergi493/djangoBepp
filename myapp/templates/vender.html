@@ -9,6 +9,8 @@
     <!DOCTYPE html>
     <html lang="en">
     <head>
+        <script src="{% static 'js/pdfFactura.js' %}"></script>
+
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Tienda</title>
@@ -21,6 +23,9 @@
             }
             #botoClient{
                 display:;
+            }
+            .canvi{
+                display:none;
             }
             
         </style>
@@ -39,9 +44,82 @@
                 
                 <script>
                     var cestaProductos = [];
+                     function genTicket() {
+                // Obtener elementos de la tabla de la cesta
+                var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
+                var metodePagament = document.querySelector('#pagament').value;
+                // Calcular el total de la cesta
+                var total = calcularTotal();
+
+                // Encabezado visual del ticket
+                var docDefinition = {
+                    pageSize: { width: 220, height: 'auto' }, // Ticket pequeño
+                    pageMargins: [10, 10, 10, 10],
+                    content: [
+                        { text: 'TICKET DE VENTA', style: 'ticketHeader', alignment: 'center', margin: [0, 0, 0, 8] },
+                        { text: getFormattedDateTime(), style: 'ticketDate', alignment: 'center', margin: [0, 0, 0, 8] },
+                        {
+                            table: {
+                                headerRows: 1, 
+                                widths: [30, '*', 20, 20, 30],
+                                body: [
+                                    [
+                                        { text: 'Cód.', style: 'ticketTableHeader', alignment: 'left' },
+                                        { text: 'Producte', style: 'ticketTableHeader', alignment: 'left' },
+                                        { text: 'Uds', style: 'ticketTableHeader', alignment: 'center' },
+                                        { text: 'Preu', style: 'ticketTableHeader', alignment: 'right' },
+                                        { text: 'Total', style: 'ticketTableHeader', alignment: 'right' }
+                                    ]
+                                ]
+                            },
+                            layout: 'lightHorizontalLines',
+                            margin: [0, 0, 0, 8]
+                        }
+                    ],
+                    styles: {
+                        ticketHeader: { fontSize: 14, bold: true },
+                        ticketDate: { fontSize: 8, italics: true },
+                        ticketTableHeader: { fontSize: 8, bold: true },
+                        ticketTableCell: { fontSize: 8 },
+                        ticketTotal: { fontSize: 10, bold: true, alignment: 'right' }
+                    }
+                };
+
+                // Agregar cada producto de la cesta a la tabla
+                var tableBody = docDefinition.content[2].table.body;
+                cartRows.forEach(function(cartRow) {
+                    var productCode = cartRow.cells[0].innerText;
+                    var productName = cartRow.cells[1].innerText;
+                    var productPrice = cartRow.cells[2].innerText;
+                    var productQuantity = cartRow.cells[4].innerText;
+                    var productTotal = cartRow.cells[6].innerText;
+                    tableBody.push([
+                        { text: productCode, style: 'ticketTableCell', alignment: 'left' },
+                        { text: productName, style: 'ticketTableCell', alignment: 'left' },
+                        { text: productQuantity, style: 'ticketTableCell', alignment: 'center' },
+                        { text: productPrice, style: 'ticketTableCell', alignment: 'right' },
+                        { text: productTotal, style: 'ticketTableCell', alignment: 'right' }
+                    ]);
+                });
+
+                // Línea separadora y total
+                docDefinition.content.push(
+                    { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 } ], margin: [0, 8, 0, 8] },
+                    { text: `TOTAL: ${total} €`, style: 'ticketTotal', margin: [0, 0, 0, 8] },
+                    { text: 'Gràcies per la seva compra!', alignment: 'center', fontSize: 9, margin: [0, 10, 0, 0] },
+                    { text: `Mètode de pagament: ${metodePagament}`, alignment: 'center', fontSize: 9, margin: [0, 10, 0, 0] }
+
+                );
+
+                pdfMake.createPdf(docDefinition).print();
+
+                enviarDatosTicket(total,metodePagament);
+                vaciarCesta();
+            }   
+
                 </script>
 
-
+<div class="table-responsive">
                 <table id="productTable">
 
                     <thead>
@@ -70,6 +148,7 @@
                
                     </tbody> 
                 </table>
+            </div>
                 <div id="paginationProducto"></div>
             </div>
             <div class="cart-section">
@@ -89,7 +168,8 @@
         Nom: <span id="clientNomSelCrear"> </span> 
         DNI: <span id="clientNifSelCrear"> </span> 
         TLF: <span id="clientTelSelCrear"> </span> 
-        LOC: <span id="clientLocalSelCrear"> </span></p>
+        LOC: <span id="clientLocalSelCrear"> </span>
+        BANC: <span id="clientBancSelCrear"> </span></p>
 
         <script>
             
@@ -125,9 +205,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         <td>${producto.codigo}</td>
                         <td>
                             ${ producto.cantidad }
-                            
+                            pe
                         </td>   
-                        <td>${ producto.descripcion }</td>
+                        <td title="${ producto.descripcion }">${ producto.descripcion.length > 20 ? producto.descripcion.substring(0, 20) + '...' : producto.descripcion }</td>
                     <td>${ producto.precio } €</td>
                        <td><button type="button" class="popup-trigger" onclick="botonAñadirCarta(event)"><i
                         class="fa-regular fa-pen-to-square"></i></button></td>`;
@@ -279,44 +359,41 @@ document.addEventListener("DOMContentLoaded", () => {
                         <hr>
                         <div class="cart-options">
                             <p>Total: <span id="total"></span> €</p>
-                        <div class="ef">
+                        <div class="canvi" >
                             <label>Efectiu: </label>
                             <input type="number" id="Efectivo" placeholder="50€">
                         </div>
                         <form id="FormTipusPagament">
-                            <label for="checkbox0">Targeta</label>
-                            <input value="Targeta" type="checkbox" id="checkbox0" name="pagament">
-                            
-                            <label for="checkbox1">Efectiu</label>
-                            <input value="Efectiu" type="checkbox" id="checkbox1" name="pagament">
-                            
-                            <label for="checkbox2">Transferencia</label>
-                            <input value="Transferencia" type="checkbox" id="checkbox2" name="pagament">
-                            
-                            <label for="checkbox3">Chec bancari</label>
-                            <input value="Chec bancari" type="checkbox" id="checkbox3" name="pagament">
-                            
-                            <label for="checkbox4">domiciliació</label>
-                            <input value="Domiciliacio" type="checkbox" id="checkbox4" name="pagament">
-                            
-                        
-                        </form>
+    <label for="pagament">Mètode de pagament:</label>
+    <select id="pagament" name="pagament">
+        <option value="Targeta">Targeta</option>
+        <option id="opcioEfectiu" value="Efectiu">Efectiu</option>
+        <option value="Transferencia">Transferència</option>
+        <option value="Chec bancari">Xec bancari</option>
+        <option value="Domiciliacio">Domiciliació</option>
+    </select>
+</form>
+
                         
                         <script>
                             // Función para manejar el cambio en el checkbox
-                            document.getElementById('checkbox').addEventListener('change', function() {
-                                var efDiv = document.querySelector('.ef');
-                                var cambioParagraph = document.querySelector('#cambio').parentNode; // Obtener el párrafo que contiene el texto "CAMBIO"
-                        
-                                // Si el checkbox está marcado, ocultar el div "ef" y el párrafo del cambio
-                                if (this.checked) {
-                                    efDiv.style.display = 'none';
-                                    cambioParagraph.style.display = 'none';
-                                } else { // Si no está marcado, mostrar el div "ef" y el párrafo del cambio
-                                    efDiv.style.display = 'block';
-                                    cambioParagraph.style.display = 'block';
-                                }
-                            });
+                            document.getElementById('pagament').addEventListener('change', function() {
+    var efDiv = document.querySelector('.canvi');
+    var cambioParagraph = document.querySelector('#cambio').parentNode;
+
+    if (this.value === 'Efectiu') {
+        // Si es "Efectiu", ocultamos
+        efDiv.style.display = 'block';
+        cambioParagraph.style.display = 'block';
+    } else {
+        // Si no, mostramos
+        efDiv.style.display = 'none';
+        cambioParagraph.style.display = 'none';
+    }
+});
+
+
+
                         </script>
                         <style>
                             .botoTicketFactura{
@@ -328,10 +405,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         <p>CANVI: <span id="cambio"></span></p>
                         <div class="botoTicketFactura">
-                        <button  id="botoFacturar" onclick="genFactura()">FACTURAR (Imprimir + Guardar + Buidar cistell)</button>
-        <button id="botoTicket" class="cart-button" onclick="genTicketYEnviar()"> TICKET DE VENTA (Imprimir + Guardar + Buidar cistell)</button>
+                        <button  id="botoFacturar" onclick="prepararFactura()">FACTURAR (Imprimir + Guardar + Buidar cistell)</button>
+        <button id="botoTicket" class="cart-button" onclick="genTicket()"> TICKET DE VENTA (Imprimir + Guardar + Buidar cistell)</button>
                     </div>
                         <script>
+                            
+
                             // Función para calcular el cambio
                             function calcularCambio() {
                                 // Obtenemos el valor total y el efectivo introducido
@@ -412,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             .dret {
                 flex: 1;
+                margin-left:160px;
             
             }
             
@@ -445,6 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             #productTable {
                 width: 100%;
+              
                 border-collapse: collapse;
                 
             }
@@ -660,156 +741,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-        function genFactura() {
-            var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
+        function prepararFactura() {
+            const cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
+  const metodoPago = document.querySelector('#pagament').value;
+
+  // Recoger productos en el formato que espera genFactura
+  const productos = Array.from(cartRows).map(row => {
+    return {
+      producto_id: row.cells[0].innerText,
+      nombre: row.cells[1].innerText,
+      preu: parseFloat(row.cells[2].innerText.replace('€', '').trim()),
+      cantidad: parseInt(row.cells[4].innerText),
+    };
+  });
+
+  // Calcular total sumando (precio * cantidad)
+  const total = productos.reduce((acc, p) => acc + p.preu * p.cantidad, 0).toFixed(2);
+
+  // Recoger datos cliente (asegúrate que existan esos IDs en el DOM)
+  const data = {
+    id: Date.now(), // o el número de factura que uses
+    persona_nombre: document.getElementById('clientNomSelCrear').innerText,
+    persona_id: document.getElementById('clientNifSelCrear').innerText,
+    telefon: document.getElementById('clientTelSelCrear').innerText,
+    procedencia: document.getElementById('clientLocalSelCrear').innerText, // Cambia si tienes otro campo para "procedencia"
+    taula_id_procedencia: 'N/A', // Si tienes este dato, ponlo aquí, sino pon 'N/A' o vacío
+    metodo_pago: metodoPago,
+    total: total,
+    productos: productos
+  };
+
+  // Llamar a la función final real con data
+  genFactura(data, 'print');
             
-            // Calcular el total de la cesta
-            var total = calcularTotal();
-        
-            // Datos de la empresa (modificar según tus datos)
-            var empresa = {
-                nombre: 'Empresa S.L.',
-                nif: 'B12345678',
-                telefono: '123456789',
-                direccion: 'Calle Ejemplo, 123'
-            };
             
-            // Obtener datos del cliente desde el DOM
-            var cliente = {
-                nombre: document.getElementById('clientNomSelCrear').innerHTML,
-                nif: document.getElementById('clientNifSelCrear').innerHTML,
-                telefono: document.getElementById('clientTelSelCrear').innerHTML,
-                direccion: document.getElementById('clientLocalSelCrear').innerHTML
-            };
-            
-            // Datos de la tabla
-            var tableBody = [];
-            var baseTotal = 0;
-            var ivaTotal = 0;
-            
-            cartRows.forEach(function(cartRow) {
-                var productCode = cartRow.cells[0].innerText;
-                var productName = cartRow.cells[1].innerText;
-                var productPrice = parseFloat(cartRow.cells[2].innerText.replace('€', ''));
-                var productQuantity = parseInt(cartRow.cells[4].innerText);
-                var productTotal = parseFloat(cartRow.cells[6].innerText.replace('€', ''));
-                
-                // Calcular la base sin IVA y el IVA
-                var baseSinIVA = (productTotal / 1.21).toFixed(2);
-                var iva = (baseSinIVA * 0.21).toFixed(2);
-                var totalLinea = (parseFloat(baseSinIVA) + parseFloat(iva)).toFixed(2);
-        
-                // Sumar al total base e IVA
-                baseTotal += parseFloat(baseSinIVA) * productQuantity;
-                ivaTotal += parseFloat(iva) * productQuantity;
-        
-                // Añadir a la tabla
-                tableBody.push([
-                    { text: productCode, alignment: 'left' },
-                    { text: productName, alignment: 'left' },
-                    { text: `${productQuantity}`, alignment: 'center' },
-                    { text: `${baseSinIVA} €`, alignment: 'right' },
-                    { text: `${iva} €`, alignment: 'right' },
-                    { text: `${totalLinea} €`, alignment: 'right' }
-                ]);
-            });
-        
-            // Calcular el IVA total y el total con IVA
-            var totalConIVA = (baseTotal + ivaTotal).toFixed(2);
-            
-            var docDefinition = {
-                pageSize: 'A4',
-                content: [
-                    {
-                        columns: [
-                            {
-                                width: '50%',
-                                stack: [
-                                    { text: empresa.nombre, style: 'header' },
-                                    `NIF: ${empresa.nif}`,
-                                    `Teléfono: ${empresa.telefono}`,
-                                    `Dirección: ${empresa.direccion}`
-                                ],
-                                margin: [0, 20, 0, 0]
-                            },
-                            {
-                                width: '50%',
-                                stack: [
-                                    { text: 'Cliente:', style: 'header' },
-                                    `Nombre: ${cliente.nombre}`,
-                                    `NIF: ${cliente.nif}`,
-                                    `Teléfono: ${cliente.telefono}`,
-                                    `Dirección: ${cliente.direccion}`
-                                ],
-                                alignment: 'right',
-                                margin: [0, 20, 0, 0]
-                            }
-                        ],
-                        columnGap: 20,
-                        margin: [0, 0, 0, 20]
-                    },
-                    {
-                        table: {
-                            headerRows: 1,
-                            widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto'],
-                            body: [
-                                [
-                                    { text: 'Código', bold: true },
-                                    { text: 'Descripción', bold: true },
-                                    { text: 'Cantidad', bold: true },
-                                    { text: 'Base sin IVA', bold: true },
-                                    { text: 'IVA (21%)', bold: true },
-                                    { text: 'Total', bold: true }
-                                ],
-                                ...tableBody
-                            ]
-                        },
-                        layout: 'lightHorizontalLines',
-                        margin: [0, 30, 0, 20] // Margen inferior para dar espacio antes de la tabla de totales
-                    },
-                    {
-                        table: {
-                            widths: ['*', 'auto', 'auto'],
-                            body: [
-                                [
-                                    { text: 'Total Base sin IVA:', bold: true },
-                                    { text: `${baseTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
-                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                                ],
-                                [
-                                    { text: 'Total IVA (21%):', bold: true },
-                                    { text: `${ivaTotal.toFixed(2)} €`, bold: true, alignment: 'right' },
-                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                                ],
-                                [
-                                    { text: 'Total:', bold: true, fontSize: 16 },
-                                    { text: `${totalConIVA} €`, bold: true, fontSize: 16, alignment: 'right' },
-                                    { text: '', margin: [10, 0, 0, 0] } // Espacio vacío
-                                ]
-                            ]
-                        },
-                        layout: 'lightHorizontalLines',
-                        margin: [0, 70, 0, 20] // Margen superior de 20 para separar de la tabla de productos, margen inferior de 60 para estar justo por encima del pie de página
-                    }
-                ],
-                styles: {
-                    header: { fontSize: 18, bold: true },
-                    subheader: { fontSize: 14, bold: true, margin: [0, 15, 0, 0] },
-                    footer: { fontSize: 10, italics: true, margin: [0, 0, 0, 0] }
-                },
-                // Posicionar el pie de página al final de la página
-                footer: function(currentPage, pageCount, pageSize) {
-                    return {
-                        text: 'Este documento es una representación de la transacción y puede ser requerido por las autoridades fiscales. Por favor, conserve este documento como comprobante de la compra.',
-                        style: 'footer',
-                        alignment: 'center',
-                        margin: [0, 0, 0, 0] // Asegura que el pie de página esté al final
-                    };
-                }
-            };
-            
-            pdfMake.createPdf(docDefinition).print();
-            enviarDatosFactura(totalConIVA);
+            enviarDatosFactura(total,metodoPago);
             vaciarCesta();
         }
         
@@ -913,76 +879,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 pdfMake.createPdf(docDefinition).download("ticket_venta.pdf"); // Descargar ticket de venta como PDF
             }
         
-            function genTicket() {
-                // Obtener elementos de la tabla de la cesta
-                var cartRows = document.getElementById('cart').querySelectorAll('tbody tr');
-
-                // Calcular el total de la cesta
-                var total = calcularTotal();
-
-                // Encabezado visual del ticket
-                var docDefinition = {
-                    pageSize: { width: 220, height: 'auto' }, // Ticket pequeño
-                    pageMargins: [10, 10, 10, 10],
-                    content: [
-                        { text: 'TICKET DE VENTA', style: 'ticketHeader', alignment: 'center', margin: [0, 0, 0, 8] },
-                        { text: getFormattedDateTime(), style: 'ticketDate', alignment: 'center', margin: [0, 0, 0, 8] },
-                        {
-                            table: {
-                                headerRows: 1,
-                                widths: [30, '*', 20, 20, 30],
-                                body: [
-                                    [
-                                        { text: 'Cód.', style: 'ticketTableHeader', alignment: 'left' },
-                                        { text: 'Producte', style: 'ticketTableHeader', alignment: 'left' },
-                                        { text: 'Uds', style: 'ticketTableHeader', alignment: 'center' },
-                                        { text: 'Preu', style: 'ticketTableHeader', alignment: 'right' },
-                                        { text: 'Total', style: 'ticketTableHeader', alignment: 'right' }
-                                    ]
-                                ]
-                            },
-                            layout: 'lightHorizontalLines',
-                            margin: [0, 0, 0, 8]
-                        }
-                    ],
-                    styles: {
-                        ticketHeader: { fontSize: 14, bold: true },
-                        ticketDate: { fontSize: 8, italics: true },
-                        ticketTableHeader: { fontSize: 8, bold: true },
-                        ticketTableCell: { fontSize: 8 },
-                        ticketTotal: { fontSize: 10, bold: true, alignment: 'right' }
-                    }
-                };
-
-                // Agregar cada producto de la cesta a la tabla
-                var tableBody = docDefinition.content[2].table.body;
-                cartRows.forEach(function(cartRow) {
-                    var productCode = cartRow.cells[0].innerText;
-                    var productName = cartRow.cells[1].innerText;
-                    var productPrice = cartRow.cells[2].innerText;
-                    var productQuantity = cartRow.cells[4].innerText;
-                    var productTotal = cartRow.cells[6].innerText;
-                    tableBody.push([
-                        { text: productCode, style: 'ticketTableCell', alignment: 'left' },
-                        { text: productName, style: 'ticketTableCell', alignment: 'left' },
-                        { text: productQuantity, style: 'ticketTableCell', alignment: 'center' },
-                        { text: productPrice, style: 'ticketTableCell', alignment: 'right' },
-                        { text: productTotal, style: 'ticketTableCell', alignment: 'right' }
-                    ]);
-                });
-
-                // Línea separadora y total
-                docDefinition.content.push(
-                    { canvas: [ { type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 } ], margin: [0, 8, 0, 8] },
-                    { text: `TOTAL: ${total} €`, style: 'ticketTotal', margin: [0, 0, 0, 8] },
-                    { text: 'Gràcies per la seva compra!', alignment: 'center', fontSize: 9, margin: [0, 10, 0, 0] }
-                );
-
-                pdfMake.createPdf(docDefinition).print();
-
-                enviarDatosTicket(total);
-                vaciarCesta();
-            }      
+              
            
             
             function removeFromCartAndTicket(productName) {
@@ -1023,12 +920,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 //location.reload();
             }
 
-            function genTicketYEnviar() {
-                genTicket();
+          
             
-            }
-            
-            function enviarDatosFactura(totalText) {
+            function enviarDatosFactura(totalText, metodePagament) {
             
                 console.log("Total:", totalText); // Log the total value
                 var csrftoken = getCookie('csrftoken');  // Function to retrieve the CSRF token from cookies
@@ -1052,21 +946,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 xhr.onerror = function () {
                     console.error("Error de red al enviar la solicitud.");
                 };
-                xhr.send(JSON.stringify({num_Cli: num_Cli,totalText:totalText }));
+                xhr.send(JSON.stringify({num_Cli: num_Cli,totalText:totalText, metodePagament }));
             enviarDatosProductosFactura();
                 
                 
             }
-            function enviarDatosTicket(totalText) {
-                var checkboxs = document.querySelectorAll('input[name="pagament"]');
+            function enviarDatosTicket(totalText,metodePagament) {
+                
 
-                // Recorre los checkboxes para encontrar el que está marcado
-                        var pagament = null;
-                        checkboxs.forEach(function(element) {
-                            if (element.checked) {
-                                pagament = element.value;
-                            }
-                        });
+                
 
                         
                 console.log("Total:", totalText); // Log the total value
@@ -1086,7 +974,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 xhr.onerror = function () {
                     console.error("Error de red al enviar la solicitud.");
                 };
-                xhr.send(JSON.stringify({ total: totalText,pagament:pagament }));
+                xhr.send(JSON.stringify({ total: totalText,pagament:metodePagament }));
                 
                 enviarDatosProductosTicket();
                 
@@ -1176,6 +1064,65 @@ document.addEventListener("DOMContentLoaded", () => {
         
             
         </script>
+<style>
+    /* ... Tus estilos existentes ... */
+
+    /* Añade estos nuevos estilos */
+    .main-content {
+        display: flex;
+        flex-wrap: wrap; /* Permite que los elementos se ajusten */
+        gap: 20px;       /* Añade un espacio entre las dos secciones */
+    }
+
+    .products-section {
+        flex: 2; /* Ocupa el doble de espacio que el cistell */
+        min-width: 300px; /* Ancho mínimo antes de que se rompa la línea */
+    }
+
+    .cart-section {
+        flex: 1; /* Ocupa una parte del espacio */
+        min-width: 300px;
+    }
+
+    /* Media Query para pantallas pequeñas (ej. 992px o menos) */
+    @media (max-width: 992px) {
+        
+
+        .products-section, .cart-section {
+            /* Reseteamos el flex para que ocupen el ancho completo */
+            flex: 1 1 100%;
+        }
+    }
+
+    /* ... El resto de tus estilos ... */
+    table img {
+        max-width: 40px;
+        height: auto;
+        border-radius: 5px;
+    }
+    /* ... etc ... */
+</style>
+
+
+<style>
+    /* ... Tus estilos existentes ... */
+
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto; /* ¡Esta es la clave! */
+        -webkit-overflow-scrolling: touch; /* Para un desplazamiento suave en iOS */
+    }
+
+    #productTable {
+        /* Es importante que la tabla pueda ocupar más del 100% del contenedor */
+        /* para que el desplazamiento funcione. */
+        min-width: 800px; /* Ajusta este valor al ancho mínimo que necesite tu tabla */
+    }
+
+    /* ... El resto de tus estilos ... */
+</style>
+        
     </body>
     </html>
     {% endblock %}

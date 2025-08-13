@@ -3,17 +3,8 @@
 
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda</title>
-    
-    <script src="https://kit.fontawesome.com/8e16281abb.js" crossorigin="anonymous"></script>
-</head>
-<body>
-    
+
+
 <style>
     .popup-container {
         display: none;
@@ -111,6 +102,26 @@
 
                 {% endfor %}
 <script>
+
+    
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+
+    
     function calcularMarge(producteId) {
         var preuCompra = parseFloat(document.getElementById('producte_preu_unitat_' + producteId).value);
         var preuVenda = parseFloat(document.getElementById('producte_preu_unitat_venda' + producteId).value);
@@ -236,6 +247,28 @@
        </style>
       
 <script>
+
+    function eliminarPedido(id){
+        var csrftoken = getCookie('csrftoken');
+        console.log(id)
+          
+                        
+        fetch('/eliminar_pedido/', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({id:id})
+        }).then(response => {
+            if (response.ok) {
+            console.log("Pedido eliminado con éxito");
+            } else {
+            console.error("Error al eliminar el pedido");
+            }
+        });
+}
+
     document.addEventListener('DOMContentLoaded', function () {
         const triggerButtons = document.querySelectorAll('.popup-trigger');
         const popup = document.getElementById('popup');
@@ -256,7 +289,7 @@
                             <div class="popup-content">
                             
                                 <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between;">
-                                    <div id="ticket-number"><h2>PRESSUPOST número: ${data.id}</h2>
+                                    <div id="ticket-number"><h2>PRESSUPOST número: <span id="id_factura_compra">${data.id}</span></h2>
                                         
                                         <div class="payment-container">
                                             
@@ -315,7 +348,7 @@
                                         <div class="popup-buttons">
                                             <div id="botons-integrar-factura-compra">
                                                 
-                                                <button onclick="eliminar(${data.id})" class="red-button">ELIMINAR</button>
+                                                <button onclick="eliminarPedido(${data.id})" class="red-button">ELIMINAR</button>
                                                 
                                                 <button onclick="aplicar_rebre('${data.id}')"   class="yellow-button">APLICAR I REBRE</button>
                                             
@@ -393,9 +426,11 @@
         var csrftoken = getCookie('csrftoken');
         var xhr = new XMLHttpRequest();
         var producte = [];
+        
     var rows = document.querySelectorAll('#taula-productes-factura-compra tbody tr');
         rows.forEach(function(row) {
             var producte_id = row.querySelector('td[id="producte"]').innerText;
+
             var nota = row.querySelector('input[id="nota"]').value;
             var quantitat = row.querySelector('input[id="quantitat"]').value;
             producte.push({ producte_id: producte_id, quantitat: quantitat, nota:nota });
@@ -490,6 +525,7 @@
         
         var inputId = "factura_" + producteId;
         var inputTotaldistribuidor ="producte_preu_unitat_" + producteId;
+        
         var inputTotalvenda ="producte_preu_unitat_venda" + producteId;
         var factura=document.getElementById(inputId).value;
         var totalDistribuidor=document.getElementById(inputTotaldistribuidor).value;
@@ -513,28 +549,12 @@
         };
         
 
-        xhr.send(JSON.stringify({producteId:producteId,factura:factura, totalDistribuidor:totalDistribuidor, totalVenda:totalVenda}));
+        xhr.send(JSON.stringify({producteId:producteId,factura:factura, totalDistribuidor:totalDistribuidor,totalVenda:totalVenda}));
         
     }
 
    
 
-    
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
     
     function crearPedidoProducte(){
         var csrftoken = getCookie('csrftoken');
@@ -774,7 +794,6 @@ document.addEventListener('DOMContentLoaded', function () {
     </div> <!-- Moví el cierre de este div al final -->
     
 </div>
-</body>
-</html>
+
 
 {% endblock %}

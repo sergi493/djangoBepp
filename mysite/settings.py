@@ -136,8 +136,9 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [ BASE_DIR / 'myapp' / 'static' ]
 STATIC_ROOT      = BASE_DIR / 'staticfiles'   # ← carpeta donde collectstatic volcará todo
 
-MEDIA_URL  = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'   
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'myapp/static/media'
+
 LOGIN_URL= "/login/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

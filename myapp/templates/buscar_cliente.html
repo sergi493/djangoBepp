@@ -7,6 +7,10 @@
     #overlay{
         z-index:9999;
     }
+
+    #CerrarX{
+        margin-left:300px;
+    }
 </style>
  
    <!-- Overlay para el fondo gris -->
@@ -18,27 +22,44 @@
         <!-- <input type="text" id="searchpeople" placeholder="Joan Martí">  <button>IMPORTAR</button>  -->
             <!--<p>dividir la popup en 2. izq -- crear; drch -- table + search input client amb boto per importar</p> -->
             
-            <label for="username">Nom: </label>             
-        <input type="text" id="Nom" placeholder="Jonh">
-        
-        <label for="username">NIF/DNI</label>
-        <input type="text" id="DNI" placeholder="000 000 00A">
-        
-        
-        <label for="username">Direcció</label>
-        <input type="text" id="Direccio" placeholder="Carrer del Pi, 24, Mora d'Ebre, 43452">
-    
-        <label for="username">Localitat</label>
-        <input type="text" id="Localitat" placeholder="Carrer, Mora d'Ebre, 43452">
-    
-        <label for="username">E-mail</label>
-        <input type="text" id="E-mail" placeholder="example@gmail.com">
-    
-        <label for="username">Num tel</label>
-        <input type="text" id="telf" placeholder=" + 34 629 74 27 68">
-        
-        <label for="username">Compte Banc (Domiciliació)</label>
-        <input type="text" id="comp_banc" placeholder=" ES45 3423 6543 8646 3489 8654">
+        <table class="taula_client_nou">
+                    <thead>
+                        <tr>
+                            <th>LABELS</th>
+                            <th>INPUTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><label>NOM:</label></td>
+                            <td><input class="text" id="Nom" placeholder="Josep Maria"></td>
+                        </tr>
+                        <tr>
+                            <td><label>NIF</label></td>
+                            <td><input class="text" id="DNI" placeholder="21161138b"></td>
+                        </tr>
+                        <tr>
+                            <td><label>LOCALITAT</label></td>
+                            <td><input id="Localitat" placeholder="Masroig"></td>
+                        </tr>
+                        <tr>
+                            <td><label>DIRECCIO</label></td>
+                            <td><input id="Direccio" placeholder="Pinyeres, 38"></td>
+                        </tr>
+                        <tr>
+                            <td><label>EMAIL</label></td>
+                            <td><input id="E-mail" placeholder="exemple@exemple.com"></td>
+                        </tr>
+                        <tr>
+                            <td><label>COMPTE BANCARI (IBAN)</label></td>
+                            <td><input id="comp_banc" placeholder="es12 8465 8167 9435"></td>
+                        </tr>
+                        <tr>
+                            <td><label>NUM.TELEFON</label></td>
+                            <td><input placeholder="635 25 36 91" id="telf" type="number"></td>
+                        </tr>
+                    </tbody>
+                </table>
         <button onclick="guardarInformacion()">Crear e importar</button>
             <button class="close-popup" onclick="hideOverlay()">Salir</button>
         </div>
@@ -59,7 +80,8 @@
                 var banc= document.getElementById("comp_banc").value;
             
             
-                console.log(direccio);
+             
+                console.log(nom, nif, direccio, localitat, banc, email, telefon);
             
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/guardar_cliente/", true);
@@ -91,6 +113,7 @@
         document.getElementById("clientNifSelCrear").textContent=`${data.nif}`;
         document.getElementById("clientTelSelCrear").textContent=`${data.telefon}`;
                 document.getElementById("clientLocalSelCrear").textContent=`${data.localitat}`;
+                document.getElementById("clientBancSelCrear").textContent=`${data.banc}`;
                     
         
 
@@ -109,7 +132,7 @@
         </script>
 
         <div class="dret">
-            <button class="close-popup" onclick="hideOverlay()">X</button>
+            <button class="close-popup" id="CerrarX" onclick="hideOverlay()">X</button>
         <div class="main-content">
             <div class="products-section">
                 <input type="text" id="searchCliente" placeholder="Buscar producto...">
@@ -121,7 +144,7 @@
                             <th>id</th>
                             <th>Nom</th>
                             <th>Localitat</th>
-                            <th>Carrer</th>
+                            <th>Direccio</th>
                             <th>NIF</th>
                             <th>tlf</th>
                             <th>E-mail</th>
@@ -133,11 +156,16 @@
                     <tbody id="tbody_clientes">
                        
                     </tbody>
-                   
+                    <tfoot>
+                         <tr>
+    <td id="paginationCliente" colspan="9" style="text-align:center;">
+      
+    </td>
+  </tr>
+        </tfoot>
                     
                 </table>
-                  <div id="paginationCliente"></div>
-            </div>
+                  
             
         </div>
         
@@ -173,13 +201,13 @@
                             <td>${persona.id}</td>
                             <td>${persona.nombre}</td>
                             <td>${persona.localidad}</td>
-                            <td>${persona.calle}</td>
+                            <td>${persona.direccion}</td>
                             <td>${persona.nif}</td>
                             <td>${persona.telefono}</td>
                             <td>${persona.email}</td>
-                            <td>${persona.compte_banc}</td>
+                            <td>${persona.comp_banc}</td>
                             <td>
-                            <button onclick="importarCliente('${persona.id}', '${persona.nombre}', '${persona.nif}', '${persona.telefono}', '${persona.email}','${persona.localidad}    ')" class="importar-btn">
+                            <button onclick="importarCliente('${persona.id}', '${persona.nombre}', '${persona.nif}', '${persona.telefono}', '${persona.email}','${persona.localidad}','${persona.comp_banc}' )" class="importar-btn">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>
                             </td>`;
@@ -247,7 +275,7 @@
             overlay.style.display = "block";
         }
 
-        function importarCliente(id, nombre, nif, telefono, email,localitat) {
+        function importarCliente(id, nombre, nif, telefono, email,localitat,banc) {
             console.log("Importando cliente:", id, nombre, nif, telefono, email);
 
     var idClient=document.getElementById("clientIdSelCrear");
@@ -255,6 +283,7 @@
     var nifClient=document.getElementById("clientNifSelCrear");
     var telClient=document.getElementById("clientTelSelCrear");
     var locClient=document.getElementById("clientLocalSelCrear");
+    var bancClient=document.getElementById("clientBancSelCrear");
 
     var idClientEdit = document.getElementById("clientIdSelEdit");
     var nomClientEdit = document.getElementById("clientNomSelEdit");
@@ -268,6 +297,7 @@
         nifClientEdit.textContent = nif;
         telClientEdit.textContent = telefono;
         emailClientEdit.textContent = email;
+        
     }
     console.log("aa",nif);
     idClient.innerHTML=id;
@@ -275,6 +305,7 @@
     nifClient.innerHTML=nif;
     telClient.innerHTML=telefono;
     locClient.innerHTML=localitat;
+    bancClient.innerHTML=banc;
 
     
     hideOverlay();
